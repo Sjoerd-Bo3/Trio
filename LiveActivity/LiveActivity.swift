@@ -231,10 +231,12 @@ struct LiveActivity: Widget {
                 .background(BackgroundStyle.background.opacity(0.4))
                 .activityBackgroundTint(Color.clear)
             } else {
-                HStack(spacing: 2) {
+                HStack {
                     VStack {
                         chart(context: context).frame(width: UIScreen.main.bounds.width / 1.8)
-                    }.padding(.all, 15)
+                    }.padding(.horizontal, 15)
+                        .padding(.top, 20)
+                        .padding(.bottom, 5)
                     Divider().foregroundStyle(Color.white)
                     VStack(alignment: .center) {
                         Spacer()
@@ -246,9 +248,9 @@ struct LiveActivity: Widget {
                                 bgLabel(context: context).font(.title2).imageScale(.small)
                                 changeLabel(context: context).font(.callout)
                             }
-                        }.scaleEffect(0.85).offset(y: 18)
+                        }.scaleEffect(0.85).offset(y: 28)
 
-                        mealLabel(context: context).padding(.bottom, 8)
+                        mealLabel(context: context).padding(.bottom, 2)
                         updatedLabel(context: context).font(.caption).padding(.bottom, 70)
                     }
                 }
