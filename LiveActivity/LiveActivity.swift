@@ -168,9 +168,7 @@ struct LiveActivity: Widget {
     }
 
     @ViewBuilder func chart(context: ActivityViewContext<LiveActivityAttributes>) -> some View {
-        if context.isStale {
-            Text("No data available")
-        } else {
+        if context.state.lockScreenView.entityIdentifierString == "Detailed Customized" {
             Chart {
                 ForEach(context.state.chart.indices, id: \.self) { index in
                     let currentValue = context.state.chart[index]
@@ -191,20 +189,104 @@ struct LiveActivity: Widget {
                         ).foregroundStyle(Color.green.gradient).symbolSize(12)
                     }
                 }
-            }.chartPlotStyle { plotContent in
-                plotContent.background(.cyan.opacity(0.1))
             }
+            .chartYScale(domain: context.state.graphMinYGlucose ... context.state.graphMaxYGlucose)
             .chartYAxis {
-                AxisMarks(position: .leading) { _ in
-                    AxisValueLabel().foregroundStyle(Color.white)
-                    AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                if context.state.showLAGraphColouredGlucoseThresholdLines {
+                    AxisMarks(position: .leading, values: [context.state.lowGlucose]) { _ in
+                        AxisGridLine(stroke: .init(lineWidth: 0.5, dash: [3, 2])).foregroundStyle(Color.red)
+                        if context.state.showLAGraphGlucoseLabels {
+                            AxisValueLabel(format: Decimal.FormatStyle.number.precision(.fractionLength(0 ... 1)))
+                                .foregroundStyle(Color.white)
+                        }
+                    }
+                    AxisMarks(position: .leading, values: [context.state.highGlucose]) { _ in
+                        AxisGridLine(stroke: .init(lineWidth: 0.5, dash: [3, 2])).foregroundStyle(Color.orange)
+                        if context.state.showLAGraphGlucoseLabels {
+                            AxisValueLabel(format: Decimal.FormatStyle.number.precision(.fractionLength(0 ... 1)))
+                                .foregroundStyle(Color.white)
+                        }
+                    }
+                    //TODO: Need to get the Hardcoded values out!
+                    AxisMarks(position: .leading, values: [3, 6, 8, 12]) { _ in
+                        if context.state.showLAGraphGlucoseLines {
+                            AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                        }
+                        if context.state.showLAGraphGlucoseLabels {
+                            AxisValueLabel(format: Decimal.FormatStyle.number.precision(.fractionLength(0 ... 1)))
+                                .foregroundStyle(Color.white)
+                        }
+                    }
+                } else {
+                    AxisMarks(position: .leading) { _ in
+                        if context.state.showLAGraphGlucoseLabels {
+                            AxisValueLabel().foregroundStyle(Color.white)
+                        }
+                        if context.state.showLAGraphGlucoseLines {
+                            AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                        }
+                    }
                 }
             }
             .chartXAxis {
+                /* AxisMarks(values: [context.state.chart.indices[context.state.chart.indices.count]]) {
+                 AxisGridLine(stroke: .init(lineWidth: 0.5, dash: [3, 2])).foregroundStyle(Color.orange)
+                 } */
                 AxisMarks(position: .automatic) { _ in
-                    AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .narrow)), anchor: .top)
-                        .foregroundStyle(Color.white)
-                    AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                    if context.state.showLAGraphHourLabels {
+                        AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .narrow)), anchor: .top)
+                            .foregroundStyle(Color.white)
+                    }
+                    if context.state.showLAGraphHourLines {
+                        AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                    }
+                }
+                // Calendar.current.component(.hour, from: Date())
+                /* AxisMarks(position: .automatic, values: [14]) { _ in
+                 AxisValueLabel("Now", anchor: .top)
+                 .foregroundStyle(Color.white)
+                 AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                 } */
+            }
+        } else {
+            if context.isStale {
+                Text("No data available")
+            } else {
+                Chart {
+                    ForEach(context.state.chart.indices, id: \.self) { index in
+                        let currentValue = context.state.chart[index]
+                        if currentValue > context.state.highGlucose {
+                            PointMark(
+                                x: .value("Time", context.state.chartDate[index] ?? Date()),
+                                y: .value("Value", currentValue)
+                            ).foregroundStyle(Color.orange.gradient).symbolSize(12)
+                        } else if currentValue < context.state.lowGlucose {
+                            PointMark(
+                                x: .value("Time", context.state.chartDate[index] ?? Date()),
+                                y: .value("Value", currentValue)
+                            ).foregroundStyle(Color.red.gradient).symbolSize(12)
+                        } else {
+                            PointMark(
+                                x: .value("Time", context.state.chartDate[index] ?? Date()),
+                                y: .value("Value", currentValue)
+                            ).foregroundStyle(Color.green.gradient).symbolSize(12)
+                        }
+                    }
+                }.chartPlotStyle { plotContent in
+                    plotContent.background(.cyan.opacity(0.1))
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { _ in
+                        AxisValueLabel().foregroundStyle(Color.white)
+                        AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(position: .automatic) { _ in
+                        AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .narrow)), anchor: .top)
+                            .foregroundStyle(Color.white)
+                        AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3])).foregroundStyle(Color.white)
+                    }
                 }
             }
         }
@@ -234,10 +316,7 @@ struct LiveActivity: Widget {
                 HStack {
                     VStack {
                         chart(context: context).frame(width: UIScreen.main.bounds.width / 1.8)
-                    }.padding(.horizontal, 15)
-                        .padding(.top, 20)
-                        .padding(.bottom, 5)
-                    Divider().foregroundStyle(Color.white)
+                    }.padding(.top, 8)
                     VStack(alignment: .center) {
                         Spacer()
                         ZStack {
@@ -248,12 +327,13 @@ struct LiveActivity: Widget {
                                 bgLabel(context: context).font(.title2).imageScale(.small)
                                 changeLabel(context: context).font(.callout)
                             }
-                        }.scaleEffect(0.85).offset(y: 28)
+                        }.scaleEffect(0.85).offset(y: 25)
 
-                        mealLabel(context: context).padding(.bottom, 2)
-                        updatedLabel(context: context).font(.caption).padding(.bottom, 70)
+                        mealLabel(context: context).padding(.bottom, 1)
+                        updatedLabel(context: context).font(.caption).padding(.bottom, 60)
                     }
                 }
+                .padding(.all, 15)
                 .privacySensitive()
                 .imageScale(.small)
                 .background(Color.white.opacity(0.2))

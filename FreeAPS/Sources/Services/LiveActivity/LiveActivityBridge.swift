@@ -76,6 +76,14 @@ extension LiveActivityAttributes.ContentState {
         let highGlucose = settings.high / Decimal(conversionFactor)
         let lowGlucose = settings.low / Decimal(conversionFactor)
 
+        let graphLAMinY = settings.graphLAMinY / Decimal(conversionFactor)
+        let graphLAMaxY = settings.graphLAMaxY / Decimal(conversionFactor)
+        let showLAGraphHourLines = settings.showLAGraphHourLines
+        let showLAGraphGlucoseLines = settings.showLAGraphGlucoseLines
+        let showLAGraphColouredGlucoseThresholdLines = settings.showLAGraphColouredGlucoseThresholdLines
+        let showLAGraphGlucoseLabels = settings.showLAGraphGlucoseLabels
+        let showLAGraphHourLabels = settings.showLAGraphHourLabels
+
         let cob = suggestion.cob ?? 0
         let iob = suggestion.iob ?? 0
 
@@ -91,6 +99,13 @@ extension LiveActivityAttributes.ContentState {
             rotationDegrees: rotationDegrees,
             highGlucose: Double(highGlucose),
             lowGlucose: Double(lowGlucose),
+            graphMinYGlucose: Double(graphLAMinY),
+            graphMaxYGlucose: Double(graphLAMaxY),
+            showLAGraphHourLines: Bool(showLAGraphHourLines),
+            showLAGraphGlucoseLines: Bool(showLAGraphGlucoseLines),
+            showLAGraphColouredGlucoseThresholdLines: Bool(showLAGraphColouredGlucoseThresholdLines),
+            showLAGraphGlucoseLabels: Bool(showLAGraphGlucoseLabels),
+            showLAGraphHourLabels: Bool(showLAGraphHourLabels),
             cob: cob,
             iob: iob,
             lockScreenView: lockScreenView
@@ -228,6 +243,13 @@ extension LiveActivityAttributes.ContentState {
                         rotationDegrees: 0,
                         highGlucose: Double(180),
                         lowGlucose: Double(70),
+                        graphMinYGlucose: Double(50),
+                        graphMaxYGlucose: Double(200),
+                        showLAGraphHourLines: Bool(true),
+                        showLAGraphGlucoseLines: Bool(true),
+                        showLAGraphColouredGlucoseThresholdLines: Bool(true),
+                        showLAGraphGlucoseLabels: Bool(true),
+                        showLAGraphHourLabels: Bool(true),
                         cob: 0,
                         iob: 0,
                         lockScreenView: "Simple"

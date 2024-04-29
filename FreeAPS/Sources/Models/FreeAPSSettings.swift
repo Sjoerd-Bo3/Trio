@@ -45,6 +45,14 @@ struct FreeAPSSettings: JSON, Equatable {
     var displayFatAndProteinOnWatch: Bool = false
     var onlyAutotuneBasals: Bool = false
     var useLiveActivity: Bool = false
+    var graphLAMinY: Decimal = 50
+    var graphLAMaxY: Decimal = 200
+    var showLAGraphHourLines: Bool = false
+    var showLAGraphGlucoseLines: Bool = false
+    var showLAGraphColouredGlucoseThresholdLines: Bool = false
+    var showLAGraphGlucoseLabels: Bool = false
+    var showLAGraphHourLabels: Bool = false
+
     var lockScreenView: LockScreenView = .simple
 }
 
@@ -234,6 +242,38 @@ extension FreeAPSSettings: Decodable {
         if let useLiveActivity = try? container.decode(Bool.self, forKey: .useLiveActivity) {
             settings.useLiveActivity = useLiveActivity
         }
+
+        if let graphLAMinY = try? container.decode(Decimal.self, forKey: .graphLAMinY) {
+            settings.graphLAMinY = graphLAMinY
+        }
+
+        if let graphLAMaxY = try? container.decode(Decimal.self, forKey: .graphLAMaxY) {
+            settings.graphLAMaxY = graphLAMaxY
+        }
+
+        if let showLAGraphHourLines = try? container.decode(Bool.self, forKey: .showLAGraphHourLines) {
+            settings.showLAGraphHourLines = showLAGraphHourLines
+        }
+
+        if let showLAGraphGlucoseLines = try? container.decode(Bool.self, forKey: .showLAGraphGlucoseLines) {
+            settings.showLAGraphGlucoseLines = showLAGraphGlucoseLines
+        }
+
+        if let showLAGraphColouredGlucoseThresholdLines = try? container.decode(
+            Bool.self,
+            forKey: .showLAGraphColouredGlucoseThresholdLines
+        ) {
+            settings.showLAGraphColouredGlucoseThresholdLines = showLAGraphColouredGlucoseThresholdLines
+        }
+
+        if let showLAGraphGlucoseLabels = try? container.decode(Bool.self, forKey: .showLAGraphGlucoseLabels) {
+            settings.showLAGraphGlucoseLabels = showLAGraphGlucoseLabels
+        }
+
+        if let showLAGraphHourLabels = try? container.decode(Bool.self, forKey: .showLAGraphHourLabels) {
+            settings.showLAGraphHourLabels = showLAGraphHourLabels
+        }
+
         if let lockScreenView = try? container.decode(LockScreenView.self, forKey: .lockScreenView) {
             settings.lockScreenView = lockScreenView
         }
