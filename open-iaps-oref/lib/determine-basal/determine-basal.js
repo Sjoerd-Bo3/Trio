@@ -656,7 +656,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     //
 
     var sigmoidLog = ""
-
+    
     if (dynISFenabled) {
         // Logarithmic
         if (!enable_sigmoid) {
