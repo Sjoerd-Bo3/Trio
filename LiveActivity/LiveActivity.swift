@@ -386,7 +386,7 @@ struct LiveActivity: Widget {
                     label.fontWidth(.compressed)
                 }
             }
-            .widgetURL(URL(string: "freeaps-x://"))
+            .widgetURL(URL(string: "Trio://"))
             .keylineTint(Color.purple)
             .contentMargins(.horizontal, 0, for: .minimal)
             .contentMargins(.trailing, 0, for: .compactLeading)
