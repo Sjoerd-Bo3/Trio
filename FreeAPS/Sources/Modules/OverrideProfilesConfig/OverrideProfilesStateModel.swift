@@ -248,5 +248,26 @@ extension OverrideProfilesConfig {
             smbMinutes = defaultSmbMinutes
             uamMinutes = defaultUamMinutes
         }
+
+        func updatePreset(_ preset: OverridePresets) {
+            let context = CoreDataStack.shared.persistentContainer.viewContext
+            context.performAndWait {
+                preset.name = profileName
+                preset.percentage = percentage
+                preset.duration = NSDecimalNumber(decimal: duration)
+                let targetValue = override_target ? (units == .mmolL ? target.asMgdL : target) : nil
+                preset.target = targetValue != nil ? NSDecimalNumber(decimal: targetValue!) : nil
+                preset.indefinite = _indefinite
+                preset.advancedSettings = advancedSettings
+                preset.smbIsOff = smbIsOff
+                preset.smbIsScheduledOff = smbIsScheduledOff
+                preset.isf = isf
+                preset.cr = cr
+                preset.smbMinutes = NSDecimalNumber(decimal: smbMinutes)
+                preset.uamMinutes = NSDecimalNumber(decimal: uamMinutes)
+                preset.isfAndCr = isfAndCr
+                try? context.save()
+            }
+        }
     }
 }
