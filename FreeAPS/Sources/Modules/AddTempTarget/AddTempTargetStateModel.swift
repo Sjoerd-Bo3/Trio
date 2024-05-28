@@ -9,7 +9,6 @@ extension AddTempTarget {
         let coredataContext = CoreDataStack.shared.persistentContainer.viewContext
 
         @Published var low: Decimal = 0
-        // @Published var target: Decimal = 0
         @Published var high: Decimal = 0
         @Published var duration: Decimal = 0
         @Published var date = Date()
@@ -101,24 +100,6 @@ extension AddTempTarget {
             }
         }
 
-        func updatePreset(_ preset: TempTarget, low: Decimal) {
-            let roundedLow = convertAndRound(low)
-
-            if let index = presets.firstIndex(where: { $0.id == preset.id }) {
-                presets[index] = TempTarget(
-                    id: preset.id,
-                    name: newPresetName.isEmpty ? preset.name : newPresetName,
-                    createdAt: preset.createdAt,
-                    targetTop: roundedLow,
-                    targetBottom: roundedLow,
-                    duration: duration,
-                    enteredBy: preset.enteredBy,
-                    reason: newPresetName.isEmpty ? preset.reason : newPresetName
-                )
-                storage.storePresets(presets)
-            }
-        }
-
         func save() {
             guard duration > 0 else {
                 return
@@ -129,15 +110,18 @@ extension AddTempTarget {
                 lowTarget = Decimal(round(Double(computeTarget())))
                 saveSettings = true
             }
+            var highTarget = lowTarget
 
-            let roundedLow = convertAndRound(lowTarget)
+            if units == .mmolL, !viewPercantage {
+                lowTarget = Decimal(round(Double(lowTarget.asMgdL)))
+                highTarget = lowTarget
+            }
 
             let entry = TempTarget(
                 name: newPresetName.isEmpty ? TempTarget.custom : newPresetName,
                 createdAt: Date(),
-                targetTop: roundedLow,
-                targetBottom: roundedLow,
-
+                targetTop: highTarget,
+                targetBottom: lowTarget,
                 duration: duration,
                 enteredBy: TempTarget.manual,
                 reason: newPresetName.isEmpty ? TempTarget.custom : newPresetName
@@ -181,7 +165,6 @@ extension AddTempTarget {
                         saveToCoreData.active = true
                         saveToCoreData.date = Date()
                         saveToCoreData.hbt = whichID?.hbt ?? 160
-                        // saveToCoreData.id = id
                         saveToCoreData.startDate = Date()
                         saveToCoreData.duration = whichID?.duration ?? 0
 
@@ -213,13 +196,36 @@ extension AddTempTarget {
             return Decimal(Double(target))
         }
 
+        func computePercentage(target: Decimal) -> Decimal {
+            let c = Decimal(hbt - 100)
+            var ratio = c / (c + target - 100)
+
+            if ratio > maxValue {
+                ratio = maxValue
+            }
+
+            let adjustedPercentage = ratio * 100
+            let roundedPercentage = (adjustedPercentage as NSDecimalNumber).rounding(accordingToBehavior: nil)
+            return roundedPercentage as Decimal
+        }
+
         func updatePreset(_ preset: TempTarget) {
+            var lowTarget = low
+
+            if viewPercantage {
+                lowTarget = Decimal(round(Double(computeTarget())))
+            }
+
+            if units == .mmolL, !viewPercantage {
+                lowTarget = Decimal(round(Double(lowTarget.asMgdL)))
+            }
+
             let updatedPreset = TempTarget(
                 id: preset.id,
                 name: newPresetName.isEmpty ? preset.name : newPresetName,
                 createdAt: preset.createdAt,
-                targetTop: preset.targetTop,
-                targetBottom: low,
+                targetTop: lowTarget,
+                targetBottom: lowTarget,
                 duration: duration,
                 enteredBy: preset.enteredBy,
                 reason: newPresetName.isEmpty ? preset.reason : newPresetName
