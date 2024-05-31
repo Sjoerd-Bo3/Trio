@@ -1,0 +1,188 @@
+---
+name: "\U0001F41B Bug report Form"
+description: Create a report to help us fix things
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+projects: ["nightscout/2"]
+assignees: [""]
+body:
+
+- type: markdown
+  attributes:
+    value: |
+     ## Before you submit a bug report, please make sure you have done the following:
+
+- type: checkboxes
+  attributes:
+    label: Is there an existing issue for this?
+    description: Please search [Here](https://github.com/Sjoerd-Bo3/Trio/issues) to see if an issue already exists for the bug you encountered.
+    options:
+    - label: I have searched the existing issues and found nothing that matches my issue
+      required: true
+          
+- type: markdown
+  attributes:
+    value: |
+        ## Describe the bug
+
+- type: textarea
+  id: description
+  attributes:
+    label: Description
+    description: A clear and concise description of what the bug is.
+    placeholder: Tell us what you saw happen and should not happen.
+  validations:
+    required: true
+
+  
+- type: textarea
+  id: expected-behavior
+  attributes:
+    label: "Expected Behavior"
+    description: A clear and concise description of what you expected to happen.
+    placeholder: Tell us what you expected to happen.
+  validations:
+    required: true
+
+- type: markdown
+  attributes:
+    value: |
+      ## To Reproduce
+
+- type: textarea
+  id: reproduce
+  attributes:
+    label: Steps to Reproduce
+    description: Steps to reproduce the behavior.
+    placeholder: |
+      1. Go to '...'
+      2. Click on '....'
+      3. Scroll down to '....'
+      4. See error
+  validations:
+    required: true
+
+- type: textarea
+  id: logs
+  attributes:
+    label: Logs
+    description: "Attach a Log File: Tap the Trio settings icon at the bottom of the screen, then tap 'Share logs' on the bottom of the list and attach it to this ticket."
+    placeholder: (Optional) Please copy and paste any relevant log output or the log files.
+  validations:
+    required: false
+
+- type: textarea
+  id: screenshots
+  attributes:
+    label: Screenshots
+    description: If applicable, add screenshots to help explain your problem.
+    placeholder: (Optional) Add screenshots here
+  validations:
+    required: false
+
+- type: markdown
+  attributes:
+    value: |
+      ## Setup Information
+
+- type: input
+  id: smartphone
+  attributes:
+    label: Smartphone
+    description: Hardware and OS Version.
+    placeholder: e.g. iPhone 15 Pro, iOS 17.5
+  validations:
+    required: false
+
+- type: dropdown
+  id: pump
+  attributes:
+    label: Pump
+    description: Manufacturer and Model.
+    options:
+      - Omnipod Dash
+      - Omnipod Eros + RileyLink
+      - Medtronic 515
+      - Medtronic 522
+      - Medtronic 523
+      - Medtronic 715
+      - Medtronic 722
+      - Medtronic 723
+      - Medtronic 554
+      - Medtronic 754
+      - Dana-RS
+      - Dana-I
+      - Other
+  validations:
+    required: false
+
+- type: dropdown
+  id: cgm
+  attributes:
+    label: CGM
+    description: Device and Manager app.
+    options:
+      - Dexcom G5
+      - Dexcom G6
+      - Dexcom ONE
+      - Dexcom G7
+      - Dexcom ONE+
+      - Nightscout
+      - xDrip4iOS
+      - Glucose Simulator
+      - Libre Transmitter
+      - Glucose Direct
+      - Medtronic Enlite   
+  validations:
+    required: false
+
+- type: input
+  id: trio-version
+  attributes:
+    label: Trio Version
+    description: Version Number (look in your settings, this should be in the top of the settings after *Trio*)
+    placeholder: e.g. v1.0.0 (1)
+  validations:
+    required: true
+      
+- type: input
+  id: trio-branch-gitref
+  attributes:
+    label: Trio Branch / Git Reference
+    description: Where did you get the the build from? Branch + Commit hash (look in your settings, this should be in the top of the settings after *Branch:*)
+    placeholder: e.g. main f404fc4
+  validations:
+    required: true
+
+
+- type: markdown
+  attributes:
+    value: |
+      ## Other Details
+
+- type: textarea
+  id: technical-details
+  attributes:
+    label: Technical Details
+    description: If applicable, provide any technical details that might help in diagnosing the problem. 
+    placeholder: This could include logs, error messages, or relevant configuration details.
+  validations:
+    required: false
+
+- type: textarea
+  id: additional-context
+  attributes:
+    label: Additional Context
+    placeholder: Add additional context here
+  validations:
+    required: false
+
+
+- type: checkboxes
+  attributes:
+    label: Code of Conduct
+    description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com).
+    options:
+    - label: I agree to follow this project's Code of Conduct
+      required: true
+---
