@@ -63,6 +63,7 @@ struct FreeAPSSettings: JSON, Equatable {
     var maxFat: Decimal = 250
     var maxProtein: Decimal = 250
     var displayFatAndProteinOnWatch: Bool = false
+    var confirmBolusFaster: Bool = false
     var onlyAutotuneBasals: Bool = false
     var useLiveActivity: Bool = false
     var graphLAMinY: Decimal = 50
@@ -262,6 +263,10 @@ extension FreeAPSSettings: Decodable {
 
         if let displayFatAndProteinOnWatch = try? container.decode(Bool.self, forKey: .displayFatAndProteinOnWatch) {
             settings.displayFatAndProteinOnWatch = displayFatAndProteinOnWatch
+        }
+
+        if let confirmBolusFaster = try? container.decode(Bool.self, forKey: .confirmBolusFaster) {
+            settings.confirmBolusFaster = confirmBolusFaster
         }
 
         if let onlyAutotuneBasals = try? container.decode(Bool.self, forKey: .onlyAutotuneBasals) {
