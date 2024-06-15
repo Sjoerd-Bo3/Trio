@@ -8,29 +8,29 @@ import Foundation
     }
 
     func bolus(_ bolusAmount: Double) throws -> LocalizedStringResource {
-        var bolusQ: Decimal = 0
+        var bolusQuantity: Decimal = 0
         switch settingsManager.settings.bolusShortcut {
-        case .noAllowed:
+        case .notAllowed:
             return LocalizedStringResource(
                 "the bolus is not allowed with shortcuts",
                 table: "ShortcutsDetail"
             )
         case .limitBolusMax:
-            bolusQ = apsManager
+            bolusQuantity = apsManager
                 .roundBolus(amount: min(settingsManager.pumpSettings.maxBolus, Decimal(bolusAmount)))
         case .limitInsulinSuggestion:
             let insulinSuggestion = suggestion?.insulinForManualBolus ?? 0
 
-            bolusQ = apsManager
+            bolusQuantity = apsManager
                 .roundBolus(amount: min(
                     insulinSuggestion * (settingsManager.settings.insulinReqPercentage / 100),
                     Decimal(bolusAmount)
                 ))
         }
 
-        apsManager.enactBolus(amount: Double(bolusQ), isSMB: false)
+        apsManager.enactBolus(amount: Double(bolusQuantity), isSMB: false)
         return LocalizedStringResource(
-            "A bolus command of \(bolusQ.formatted()) U of insulin was sent",
+            "A bolus command of \(bolusQuantity.formatted()) U of insulin was sent",
             table: "ShortcutsDetail"
         )
     }
@@ -40,11 +40,10 @@ import Foundation
         guard let lastGlucose = glucose.last, let glucoseValue = lastGlucose.glucose else { return nil }
         let units = settingsManager.settings.units
 
-        return glucoseFormatter
-            .string(from: Double(
-                units == .mmolL ? glucoseValue
-                    .asMmolL : Decimal(glucoseValue)
-            ) as NSNumber)! + " " + units.rawValue
+        let glucoseNumber = units == .mmolL ? glucoseValue.asMmolL : Decimal(glucoseValue)
+        let formattedString = glucoseFormatter.string(from: Double(glucoseNumber) as NSNumber) ?? "0.0"
+
+        return formattedString + " " + units.rawValue
     }
 
     private var glucoseFormatter: NumberFormatter {

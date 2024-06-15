@@ -14,39 +14,40 @@ import Foundation
         return profileArray
     }
 
-    func fetchAll() -> [overridePreset] {
+    func fetchAll() -> [OverridePreset] {
         overrideList.compactMap { override in
             guard let id = override.id, let name = override.name else { return nil }
-            return overridePreset(id: id, name: name)
+            return OverridePreset(id: id, name: name)
         }
         // convert(tt: tempTargetsStorage.presets())
     }
 
-    func fetchIDs(_ uuid: [overridePreset.ID]) -> [overridePreset] {
+    func fetchIDs(_ uuid: [OverridePreset.ID]) -> [OverridePreset] {
         let UUIDTempTarget = overrideList.filter {
             guard let id = $0.id else { return false }
             return uuid.contains(id) }
 
         return UUIDTempTarget.compactMap { override in
             guard let id = override.id, let name = override.name else { return nil }
-            return overridePreset(id: id, name: name)
+            return OverridePreset(id: id, name: name)
         }
     }
 
-    func fetchOne(_ uuid: overridePreset.ID) -> overridePreset? {
-        let UUIDTempTarget = overrideList.filter { uuid == $0.id! }
-        guard let OneTempTarget = UUIDTempTarget.first,
-              let id = OneTempTarget.id,
+    func fetchOne(_ uuid: OverridePreset.ID) -> OverridePreset? {
+        let UUIDTempTarget = overrideList.filter { uuid == $0.id }
+        guard let OneTempTarget = UUIDTempTarget.first
+        else { return nil }
+        guard let id = OneTempTarget.id,
               let name = OneTempTarget.name
         else { return nil }
 
-        return overridePreset(id: id, name: name)
+        return OverridePreset(id: id, name: name)
     }
 
-    func enactTempOverride(_ presetTarget: overridePreset) throws -> Bool {
-        let id_ = presetTarget.id
+    func enactTempOverride(_ presetTarget: OverridePreset) throws -> Bool {
+        let id = presetTarget.id
         coredataContext.performAndWait {
-            guard let profile = overrideList.filter({ $0.id == id_ }).first else { return }
+            guard let profile = overrideList.filter({ $0.id == id }).first else { return }
 
             let saveOverride = Override(context: self.coredataContext)
             saveOverride.duration = (profile.duration ?? 0) as NSDecimalNumber
@@ -57,7 +58,7 @@ import Foundation
             saveOverride.isPreset = true
             saveOverride.date = Date()
             saveOverride.target = profile.target
-            saveOverride.id = id_
+            saveOverride.id = id
 
             if profile.advancedSettings {
                 saveOverride.advancedSettings = true

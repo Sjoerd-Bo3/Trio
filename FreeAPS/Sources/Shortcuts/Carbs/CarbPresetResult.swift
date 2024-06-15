@@ -1,7 +1,7 @@
 import AppIntents
 import Foundation
 
-@available(iOS 16.0, *) struct carbPresetResult: AppEntity, Identifiable {
+@available(iOS 16.0, *) struct CarbPresetResult: AppEntity, Identifiable {
     static var defaultQuery = carbPresetResultQuery()
 
     var id: String
@@ -32,11 +32,11 @@ import Foundation
         intentRequest = CarbPresetIntentRequest()
     }
 
-    func entities(for identifiers: [carbPresetResult.ID]) async throws -> [carbPresetResult] {
+    func entities(for identifiers: [CarbPresetResult.ID]) async throws -> [CarbPresetResult] {
         try await intentRequest.listPresetCarbs(identifiers)
     }
 
-    func suggestedEntities() async throws -> [carbPresetResult] {
+    func suggestedEntities() async throws -> [CarbPresetResult] {
         try await intentRequest.listPresetCarbs()
     }
 }

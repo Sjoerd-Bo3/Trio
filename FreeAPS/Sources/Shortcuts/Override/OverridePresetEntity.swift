@@ -3,8 +3,8 @@ import Foundation
 import Intents
 import Swinject
 
-@available(iOS 16.0, *) struct overridePreset: AppEntity, Identifiable {
-    static var defaultQuery = overridePresetsQuery()
+@available(iOS 16.0, *) struct OverridePreset: AppEntity, Identifiable {
+    static var defaultQuery = OverridePresetsQuery()
 
     var id: String
     var name: String
@@ -16,18 +16,18 @@ import Swinject
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Temporary Override"
 }
 
-@available(iOS 16.0, *) struct overridePresetsQuery: EntityQuery {
+@available(iOS 16.0, *) struct OverridePresetsQuery: EntityQuery {
     internal var intentRequest: OverridePresetsIntentRequest
 
     init() {
         intentRequest = OverridePresetsIntentRequest()
     }
 
-    func entities(for identifiers: [overridePreset.ID]) throws -> [overridePreset] {
+    func entities(for identifiers: [OverridePreset.ID]) throws -> [OverridePreset] {
         intentRequest.fetchIDs(identifiers)
     }
 
-    func suggestedEntities() throws -> [overridePreset] {
+    func suggestedEntities() throws -> [OverridePreset] {
         intentRequest.fetchAll()
     }
 }

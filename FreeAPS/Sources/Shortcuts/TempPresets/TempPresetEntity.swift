@@ -3,8 +3,8 @@ import Foundation
 import Intents
 import Swinject
 
-@available(iOS 16.0, *) struct tempPreset: AppEntity, Identifiable {
-    static var defaultQuery = tempPresetsQuery()
+@available(iOS 16.0, *) struct TempPreset: AppEntity, Identifiable {
+    static var defaultQuery = TempPresetsQuery()
 
     var id: UUID
     var name: String
@@ -18,8 +18,8 @@ import Swinject
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "TempTarget"
 
-    static func convert(_ tempTarget: TempTarget) -> tempPreset {
-        var tp = tempPreset(
+    static func convert(_ tempTarget: TempTarget) -> TempPreset {
+        var tp = TempPreset(
             id: UUID(uuidString: tempTarget.id)!,
             name: tempTarget.displayName,
             duration: tempTarget.duration
@@ -30,19 +30,19 @@ import Swinject
     }
 }
 
-@available(iOS 16.0, *) struct tempPresetsQuery: EntityQuery {
+@available(iOS 16.0, *) struct TempPresetsQuery: EntityQuery {
     internal var intentRequest: TempPresetsIntentRequest
 
     init() {
         intentRequest = TempPresetsIntentRequest()
     }
 
-    func entities(for identifiers: [tempPreset.ID]) async throws -> [tempPreset] {
+    func entities(for identifiers: [TempPreset.ID]) async throws -> [TempPreset] {
         let tempTargets = intentRequest.fetchIDs(identifiers)
         return tempTargets
     }
 
-    func suggestedEntities() async throws -> [tempPreset] {
+    func suggestedEntities() async throws -> [TempPreset] {
         let tempTargets = intentRequest.fetchAll()
         return tempTargets
     }
