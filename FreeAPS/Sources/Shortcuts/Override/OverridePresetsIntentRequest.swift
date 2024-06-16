@@ -87,12 +87,13 @@ import Foundation
         try? coredataContext.perform { [self] in
             let requestOverrides = Override.fetchRequest() as NSFetchRequest<Override>
             requestOverrides.predicate = NSPredicate(format: "enabled == %@", NSNumber(value: true))
-            if let activeOverride = try? self.coredataContext.fetch(requestOverrides).first
-            {
+            if let activeOverride = try? self.coredataContext.fetch(requestOverrides).first {
+                if let activeOverrideId = activeOverride.id, let fetchedOverride = fetchOne(activeOverrideId) {
+                    cancelledOverrideName = fetchedOverride.name
+                }
                 activeOverride.enabled = false
                 activeOverride.date = Date()
                 try? self.coredataContext.save()
-                cancelledOverrideName = activeOverride.description
             } else {
                 throw overridePresetsError.noActiveOverride
             }
