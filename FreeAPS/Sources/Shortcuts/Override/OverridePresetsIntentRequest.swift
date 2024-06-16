@@ -5,6 +5,7 @@ import Foundation
     enum overridePresetsError: Error {
         case noTempOverrideFound
         case noDurationDefined
+        case noActiveOverride
     }
 
     var overrideList: [OverridePresets] {
@@ -81,12 +82,21 @@ import Foundation
         return true
     }
 
-    func cancelOverride() throws {
-        coredataContext.perform { [self] in
-            let profiles = Override(context: self.coredataContext)
-            profiles.enabled = false
-            profiles.date = Date()
-            try? self.coredataContext.save()
+    func cancelOverride() throws -> String? {
+        var cancelledOverrideName: String?
+        try? coredataContext.perform { [self] in
+            let requestOverrides = Override.fetchRequest() as NSFetchRequest<Override>
+            requestOverrides.predicate = NSPredicate(format: "enabled == %@", NSNumber(value: true))
+            if let activeOverride = try? self.coredataContext.fetch(requestOverrides).first
+            {
+                activeOverride.enabled = false
+                activeOverride.date = Date()
+                try? self.coredataContext.save()
+                cancelledOverrideName = activeOverride.description
+            } else {
+                throw overridePresetsError.noActiveOverride
+            }
         }
+        return cancelledOverrideName
     }
 }

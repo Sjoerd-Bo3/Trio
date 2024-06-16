@@ -16,9 +16,21 @@ import Foundation
 
     @MainActor func perform() async throws -> some ProvidesDialog {
         do {
-            try intentRequest.cancelOverride()
+            if let cancelledOverrideName = try intentRequest.cancelOverride() {
+                return .result(
+                    dialog: IntentDialog(LocalizedStringResource(
+                        "Override '\(cancelledOverrideName)' canceled",
+                        table: "ShortcutsDetail"
+                    ))
+                )
+            } else {
+                return .result(
+                    dialog: IntentDialog(LocalizedStringResource("Override canceled", table: "ShortcutsDetail"))
+                )
+            }
+        } catch OverridePresetsIntentRequest.overridePresetsError.noActiveOverride {
             return .result(
-                dialog: IntentDialog(LocalizedStringResource("Override canceled", table: "ShortcutsDetail"))
+                dialog: IntentDialog(LocalizedStringResource("No active Override to cancel", table: "ShortcutsDetail"))
             )
         } catch {
             throw error
