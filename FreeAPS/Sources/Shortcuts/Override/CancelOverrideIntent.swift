@@ -24,9 +24,7 @@ import Foundation
                     ))
                 )
             } else {
-                return .result(
-                    dialog: IntentDialog(LocalizedStringResource("Override canceled", table: "ShortcutsDetail"))
-                )
+                throw OverridePresetsIntentRequest.overridePresetsError.noActiveOverride
             }
         } catch OverridePresetsIntentRequest.overridePresetsError.noActiveOverride {
             return .result(

@@ -2509,6 +2509,9 @@
     "No active Override to cancel" : {
 
     },
+    "No active TempTarget to cancel" : {
+
+    },
     "no adding carbs" : {
       "localizations" : {
         "de" : {
@@ -2675,6 +2678,7 @@
 
     },
     "Override canceled" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3727,6 +3731,9 @@
         }
       }
     },
+    "TempTarget '%@' canceled" : {
+
+    },
     "TempTarget activated for %@" : {
       "localizations" : {
         "de" : {
@@ -3768,6 +3775,7 @@
       }
     },
     "TempTarget canceled" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
