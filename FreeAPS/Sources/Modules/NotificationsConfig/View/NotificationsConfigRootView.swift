@@ -57,6 +57,25 @@ extension NotificationsConfig {
                                 Text(selection.displayName).tag(selection)
                             }
                         }
+                        if $state.lockScreenView.id == "detailedCustomized" {
+                            Toggle("Show Hour Lines", isOn: $state.showLAGraphHourLines)
+                            Toggle("Show Hour Labels", isOn: $state.showLAGraphHourLabels)
+                            Toggle("Show Glucose Lines", isOn: $state.showLAGraphGlucoseLines)
+                            Toggle("Show Glucose Labels", isOn: $state.showLAGraphGlucoseLabels)
+                            Toggle("Show Coloured Glucose ThresholdLines", isOn: $state.showLAGraphColouredGlucoseThresholdLines)
+                            HStack {
+                                Text("Min Glucose in Chart")
+                                Spacer()
+                                DecimalTextField("0", value: $state.graphLAMinY, formatter: glucoseFormatter)
+                                Text(state.units.rawValue).foregroundColor(.secondary)
+                            }
+                            HStack {
+                                Text("Max Glucose in Chart")
+                                Spacer()
+                                DecimalTextField("0", value: $state.graphLAMaxY, formatter: glucoseFormatter)
+                                Text(state.units.rawValue).foregroundColor(.secondary)
+                            }
+                        }
                     }
                 )
                 .onReceive(resolver.resolve(LiveActivityBridge.self)!.$systemEnabled, perform: {

@@ -12,6 +12,15 @@ struct LiveActivityAttributes: ActivityAttributes {
         let rotationDegrees: Double
         let highGlucose: Double
         let lowGlucose: Double
+
+        let graphMinYGlucose: Double
+        let graphMaxYGlucose: Double
+        let showLAGraphHourLines: Bool
+        let showLAGraphGlucoseLines: Bool
+        let showLAGraphColouredGlucoseThresholdLines: Bool
+        let showLAGraphGlucoseLabels: Bool
+        let showLAGraphHourLabels: Bool
+
         let cob: Decimal
         let iob: Decimal
         let lockScreenView: String
