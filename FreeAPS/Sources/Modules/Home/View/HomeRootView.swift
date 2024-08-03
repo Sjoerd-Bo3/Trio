@@ -708,16 +708,16 @@ extension Home {
                         }.padding(.leading, 20)
                     }.padding(.top, 10)
 
-                    mealPanel(geo).padding(.top, 30).padding(.bottom, 20)
+                    mealPanel(geo).padding(.top, 20).padding(.bottom, 20)
 
                     mainChart(geo: geo)
 
-                    timeInterval.padding(.top, 12).padding(.bottom, 12)
+                    // timeInterval.padding(.top, 12).padding(.bottom, 0)
 
                     if let progress = state.bolusProgress {
-                        bolusView(geo: geo, progress).padding(.bottom, 40)
+                        bolusView(geo: geo, progress).padding(.bottom, 0)
                     } else {
-                        profileView(geo: geo).padding(.bottom, 40)
+                        profileView(geo: geo).padding(.bottom, 0)
                     }
                 }
                 .background(color)

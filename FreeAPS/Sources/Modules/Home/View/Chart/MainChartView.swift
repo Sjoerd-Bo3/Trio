@@ -136,7 +136,7 @@ struct MainChartView: View {
                         VStack(spacing: 5) {
                             basalChart
                             mainChart
-                            Spacer()
+                            // Spacer()
                             ZStack {
                                 cobChart
                                 iobChart
@@ -288,7 +288,7 @@ extension MainChartView {
             .onChange(of: didAppearTrigger) { _ in
                 calculateTTs()
             }
-            .frame(minHeight: geo.size.height * 0.28)
+            .frame(minHeight: geo.size.height * 0.4)
             .frame(width: fullWidth(viewWidth: screenSize.width))
             .chartXScale(domain: startMarker ... endMarker)
             .chartXAxis { mainChartXAxis }
@@ -999,8 +999,10 @@ extension MainChartView {
         let minOverall = min(minGlucose, minForecast)
         let maxOverall = max(maxGlucose, maxForecast)
 
-        minValue = minOverall * conversionFactor - 50 * conversionFactor
-        maxValue = maxOverall * conversionFactor + 80 * conversionFactor
+        // minValue = minOverall * conversionFactor - 50 * conversionFactor
+        // maxValue = maxOverall * conversionFactor + 80 * conversionFactor\
+        minValue = 2
+        maxValue = 12
 
         debug(.default, "min \(minValue)")
         debug(.default, "max \(maxValue)")
