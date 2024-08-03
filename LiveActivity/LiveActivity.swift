@@ -118,14 +118,14 @@ struct LiveActivity: Widget {
 
     @ViewBuilder private func bgLabel(
         context: ActivityViewContext<LiveActivityAttributes>,
-        additionalState: LiveActivityAttributes.ContentAdditionalState
+        additionalState _: LiveActivityAttributes.ContentAdditionalState
     ) -> some View {
         HStack(alignment: .center) {
             Text(context.state.bg)
                 .fontWeight(.bold)
                 .font(.largeTitle)
                 .strikethrough(context.isStale, pattern: .solid, color: .red.opacity(0.6))
-            Text(additionalState.unit).foregroundStyle(.secondary).font(.subheadline).offset(x: -5, y: 5)
+            // Text(additionalState.unit).foregroundStyle(.secondary).font(.subheadline).offset(x: -5, y: 5)
         }
     }
 
@@ -216,14 +216,21 @@ struct LiveActivity: Widget {
         } else {
             // Determine scale
             let conversionFactor = additionalState.unit == "mmol/L" ? 0.0555 : 1
-            let min = (additionalState.chart.min() ?? 40 * conversionFactor) - 20 * conversionFactor
-            let max = (additionalState.chart.max() ?? 270 * conversionFactor) + 50 * conversionFactor
+            // let min = (additionalState.chart.min() ?? 40 * conversionFactor) - 20 * conversionFactor
+            let min = 2
+            // let max = (additionalState.chart.max() ?? 270 * conversionFactor) + 50 * conversionFactor
+            let max = 12
 
             Chart {
                 RuleMark(y: .value("High", additionalState.highGlucose))
                     .lineStyle(.init(lineWidth: 0.5, dash: [5]))
+                    .foregroundStyle(Color.orange.gradient)
+                RuleMark(y: .value("Target", additionalState.targetGlucose))
+                    .lineStyle(.init(lineWidth: 0.5, dash: [5]))
+                    .foregroundStyle(Color.blue.gradient)
                 RuleMark(y: .value("Low", additionalState.lowGlucose))
                     .lineStyle(.init(lineWidth: 0.5, dash: [5]))
+                    .foregroundStyle(Color.red.gradient)
 
                 ForEach(additionalState.chart.indices, id: \.self) { index in
                     let currentValue = additionalState.chart[index]
@@ -261,10 +268,10 @@ struct LiveActivity: Widget {
         if let detailedViewState = context.state.detailedViewState {
             HStack(spacing: 12) {
                 chart(context: context, additionalState: detailedViewState).frame(maxWidth: UIScreen.main.bounds.width / 1.8)
-                VStack(alignment: .leading) {
+                VStack(alignment: .center) {
                     Spacer()
                     bgLabel(context: context, additionalState: detailedViewState)
-                    HStack {
+                    HStack(alignment: .center) {
                         changeLabel(context: context)
                         trendArrow(context: context, additionalState: detailedViewState)
                     }

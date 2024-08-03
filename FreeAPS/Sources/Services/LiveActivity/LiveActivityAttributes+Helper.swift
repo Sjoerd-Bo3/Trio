@@ -89,6 +89,7 @@ extension LiveActivityAttributes.ContentState {
             /// glucose limits from UI settings, not from notifications settings
             let highGlucose = settings.high / Decimal(conversionFactor)
             let lowGlucose = settings.low / Decimal(conversionFactor)
+            let targetGlucose = 5.5 / Decimal(conversionFactor)
 
             let cob = determination?.cob ?? 0
             let iob = determination?.iob ?? 0
@@ -101,6 +102,7 @@ extension LiveActivityAttributes.ContentState {
                 rotationDegrees: rotationDegrees,
                 highGlucose: Double(highGlucose),
                 lowGlucose: Double(lowGlucose),
+                targetGlucose: Double(targetGlucose),
                 cob: Decimal(cob),
                 iob: iob as Decimal,
                 unit: unit,
