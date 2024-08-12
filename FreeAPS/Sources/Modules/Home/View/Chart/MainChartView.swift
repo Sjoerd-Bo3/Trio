@@ -127,7 +127,7 @@ struct MainChartView: View {
                 VStack(spacing: 5) {
                     dummyBasalChart
                     staticYAxisChart
-                    Spacer()
+                    //Spacer()
                     dummyCobChart
                 }
 
@@ -214,7 +214,7 @@ extension MainChartView {
             }
         }
         .id("DummyMainChart")
-        .frame(minHeight: geo.size.height * 0.28)
+        .frame(minHeight: geo.size.height * 0.4)
         .frame(width: screenSize.width - 10)
         .chartXAxis { mainChartXAxis }
         .chartXScale(domain: startMarker ... endMarker)
