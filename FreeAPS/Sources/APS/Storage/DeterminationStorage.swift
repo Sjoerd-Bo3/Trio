@@ -155,8 +155,10 @@ final class BaseDeterminationStorage: DeterminationStorage, Injectable {
                     )
                 }
             } catch {
-                debugPrint("\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to fetch managed object with error: \(error.localizedDescription)")
-             }
+                debugPrint(
+                    "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to fetch managed object with error: \(error.localizedDescription)"
+                )
+            }
 
             return result
         }

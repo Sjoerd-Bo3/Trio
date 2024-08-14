@@ -806,9 +806,7 @@ extension Home {
             ZStack(alignment: .bottom) {
                 TabView(selection: $selectedTab) {
                     let carbsRequiredBadge: String? = {
-                        guard let carbsRequired = state.enactedAndNonEnactedDeterminations.first?.carbsRequired else {
-                            return nil
-                        }
+<<<<<<< HEAD
                         guard let carbsRequired = state.determinationsFromPersistence.first?.carbsRequired as? Decimal,
                               state.showCarbsRequiredBadge
                         else { return nil }
@@ -817,6 +815,9 @@ extension Home {
                             let formattedNumber = numberFormatter.string(from: numberAsNSNumber) ?? ""
                             return formattedNumber + " g"
                         } else {
+=======
+                        guard let carbsRequired = state.enactedAndNonEnactedDeterminations.first?.carbsRequired else {
+>>>>>>> properties-to-fetch
                             return nil
                         }
                         let carbsRequiredDecimal = Decimal(carbsRequired)

@@ -159,6 +159,7 @@ final class OpenAPS {
             ascending: false
         )
 
+<<<<<<< HEAD
         let json = await context.perform {
             var jsonArray = self.jsonConverter.convertToJSON(results)
 
@@ -185,11 +186,20 @@ final class OpenAPS {
                         .data(withJSONObject: jsonList ?? [], options: .prettyPrinted)
                     {
                         jsonArray = String(data: updatedJsonData, encoding: .utf8) ?? jsonArray
-        }
-    }
+                    }
+                }
             }
 
             return jsonArray
+=======
+        guard let carbResults = results as? [CarbEntryStored] else {
+            return ""
+        }
+
+        // convert to JSON
+        return await context.perform {
+            return self.jsonConverter.convertToJSON(carbResults)
+>>>>>>> properties-to-fetch
         }
 
         return json
@@ -235,24 +245,24 @@ final class OpenAPS {
     }
 
     private func loadAndMapPumpEvents(_ pumpHistoryObjectIDs: [NSManagedObjectID]) -> [PumpEventDTO] {
-            // Load the pump events from the object IDs
-            let pumpHistory: [PumpEventStored] = pumpHistoryObjectIDs
-                .compactMap { self.context.object(with: $0) as? PumpEventStored }
+        // Load the pump events from the object IDs
+        let pumpHistory: [PumpEventStored] = pumpHistoryObjectIDs
+            .compactMap { self.context.object(with: $0) as? PumpEventStored }
 
-            // Create the DTOs
-            let dtos: [PumpEventDTO] = pumpHistory.flatMap { event -> [PumpEventDTO] in
-                var eventDTOs: [PumpEventDTO] = []
-                if let bolusDTO = event.toBolusDTOEnum() {
-                    eventDTOs.append(bolusDTO)
-                }
+        // Create the DTOs
+        let dtos: [PumpEventDTO] = pumpHistory.flatMap { event -> [PumpEventDTO] in
+            var eventDTOs: [PumpEventDTO] = []
+            if let bolusDTO = event.toBolusDTOEnum() {
+                eventDTOs.append(bolusDTO)
+            }
             if let tempBasalDTO = event.toTempBasalDTOEnum() {
                 eventDTOs.append(tempBasalDTO)
             }
-                if let tempBasalDurationDTO = event.toTempBasalDurationDTOEnum() {
-                    eventDTOs.append(tempBasalDurationDTO)
-                }
-                return eventDTOs
+            if let tempBasalDurationDTO = event.toTempBasalDurationDTOEnum() {
+                eventDTOs.append(tempBasalDurationDTO)
             }
+            return eventDTOs
+        }
         return dtos
     }
 
@@ -275,7 +285,7 @@ final class OpenAPS {
             _type: "Bolus"
         )
         return .bolus(bolusDTO)
-        }
+    }
 
     func determineBasal(
         currentTemp: TempBasal,
@@ -343,7 +353,7 @@ final class OpenAPS {
 
         // TODO: refactor this to core data
         if !simulation {
-        storage.save(iob, as: Monitor.iob)
+            storage.save(iob, as: Monitor.iob)
         }
 
         // Determine basal
@@ -370,8 +380,8 @@ final class OpenAPS {
             determination.timestamp = deliverAt
 
             if !simulation {
-            // save to core data asynchronously
-            await processDetermination(determination)
+                // save to core data asynchronously
+                await processDetermination(determination)
             }
 
             return determination

@@ -58,8 +58,10 @@ struct MainChartView: View {
     @State private var basalProfiles: [BasalProfile] = []
     @State private var chartTempTargets: [ChartTempTarget] = []
     @State private var count: Decimal = 1
-    @State private var startMarker = Date(timeIntervalSince1970: TimeInterval(NSDate().timeIntervalSince1970 - 86400))
-    @State private var endMarker = Date(timeIntervalSince1970: TimeInterval(NSDate().timeIntervalSince1970 + 10800))
+    @State private var startMarker =
+        Date(timeIntervalSince1970: TimeInterval(NSDate().timeIntervalSince1970 - 60 * 60 * 24)) // 24 hours
+    @State private var endMarker =
+        Date(timeIntervalSince1970: TimeInterval(NSDate().timeIntervalSince1970 + 60 * 60 * 3)) // 3 hours
     @State private var minValue: Decimal = 45
     @State private var maxValue: Decimal = 270
     @State private var selection: Date? = nil
@@ -105,10 +107,6 @@ struct MainChartView: View {
 
     private var bolusOffset: Decimal {
         units == .mgdL ? 30 : 1.66
-    }
-
-    private var interpolationFactor: Double {
-        Double(state.enactedAndNonEnactedDeterminations.first?.cob ?? 1) * 10
     }
 
     private var selectedGlucose: GlucoseStored? {
@@ -268,14 +266,34 @@ extension MainChartView {
                 drawCarbs()
 
                 /// show glucose value when hovering over it
-                if let selectedGlucose {
-                    RuleMark(x: .value("Selection", selectedGlucose.date ?? now, unit: .minute))
-                        .foregroundStyle(Color.tabBar)
-                        .offset(yStart: 70)
-                        .lineStyle(.init(lineWidth: 2, dash: [5]))
-                        .annotation(position: .top) {
-                            selectionPopover
-                        }
+                if #available(iOS 17, *) {
+                    if let selectedGlucose {
+                        RuleMark(x: .value("Selection", selectedGlucose.date ?? now, unit: .minute))
+                            .foregroundStyle(Color.tabBar)
+                            .offset(yStart: 70)
+                            .lineStyle(.init(lineWidth: 2, dash: [5]))
+                            .annotation(
+                                position: .top,
+                                alignment: .center,
+                                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+                            ) {
+                                selectionPopover
+                            }
+
+                        PointMark(
+                            x: .value("Time", selectedGlucose.date ?? now, unit: .minute),
+                            y: .value("Value", selectedGlucose.glucose)
+                        )
+                        .symbolSize(CGSize(width: 16, height: 16))
+                        .foregroundStyle(Color.secondary)
+
+                        PointMark(
+                            x: .value("Time", selectedGlucose.date ?? now, unit: .minute),
+                            y: .value("Value", selectedGlucose.glucose)
+                        )
+                        .symbolSize(CGSize(width: 6, height: 6))
+                        .foregroundStyle(Color.primary)
+                    }
                 }
             }
             .id("MainChart")
@@ -326,6 +344,10 @@ extension MainChartView {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.gray.opacity(0.1))
                     .shadow(color: .blue, radius: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.blue, lineWidth: 2)
+                    )
             }
         }
     }
@@ -359,8 +381,7 @@ extension MainChartView {
             .chartXAxis { basalChartXAxis }
             .chartXAxis(.hidden)
             .chartYAxis(.hidden)
-            .rotationEffect(.degrees(180))
-            .scaleEffect(x: -1, y: 1, anchor: .center)
+            .chartPlotStyle { basalChartPlotStyle($0) }
         }
     }
 
@@ -430,13 +451,14 @@ extension MainChartView {
             if let glucose = timeToNearestGlucose(time: carbDate.timeIntervalSince1970)?.glucose {
                 let yPosition = (Decimal(glucose) * conversionFactor) - bolusOffset
                 let size = (Config.carbsSize + CGFloat(carbAmount) * Config.carbsScale)
+                let limitedSize = size > 30 ? 30 : size
 
                 PointMark(
                     x: .value("Time", carbDate, unit: .second),
                     y: .value("Value", yPosition)
                 )
                 .symbol {
-                    Image(systemName: "arrowtriangle.down.fill").font(.system(size: size)).foregroundStyle(Color.orange)
+                    Image(systemName: "arrowtriangle.down.fill").font(.system(size: limitedSize)).foregroundStyle(Color.orange)
                         .rotationEffect(.degrees(180))
                 }
                 .annotation(position: .bottom) {
@@ -512,17 +534,23 @@ extension MainChartView {
     }
 
     private func drawForecasts() -> some ChartContent {
-        ForEach(state.preprocessedData, id: \.id) { tuple in
-            let forecastValue = tuple.forecastValue
-            let forecast = tuple.forecast
-            let valueAsDecimal = Decimal(forecastValue.value)
-            let displayValue = units == .mmolL ? valueAsDecimal.asMmolL : valueAsDecimal
-
-            LineMark(
-                x: .value("Time", timeForIndex(forecastValue.index)),
-                y: .value("Value", displayValue)
-            )
-            .foregroundStyle(by: .value("Predictions", forecast.type ?? ""))
+        // Draw AreaMark for the forecast bounds
+        ForEach(0 ..< max(state.minForecast.count, state.maxForecast.count), id: \.self) { index in
+            if index < state.minForecast.count && index < state.maxForecast.count {
+                AreaMark(
+                    x: .value("Time", timeForIndex(Int32(index))),
+                    yStart: .value(
+                        "Min Value",
+                        units == .mmolL ? Decimal(state.minForecast[index]).asMmolL : Decimal(state.minForecast[index])
+                    ),
+                    yEnd: .value(
+                        "Max Value",
+                        units == .mmolL ? Decimal(state.maxForecast[index]).asMmolL : Decimal(state.maxForecast[index])
+                    )
+                )
+                .foregroundStyle(Color.blue.opacity(0.5))
+                .interpolationMethod(.catmullRom)
+            }
         }
     }
 
@@ -659,7 +687,8 @@ extension MainChartView {
 
     private func drawIOB() -> some ChartContent {
         ForEach(state.enactedAndNonEnactedDeterminations) { iob in
-            let amount: Double = (iob.iob?.doubleValue ?? 0 / interpolationFactor)
+            let rawAmount = iob.iob?.doubleValue ?? 0
+            let amount: Double = rawAmount > 0 ? rawAmount : rawAmount * 2 // weigh negative iob with factor 2
             let date: Date = iob.deliverAt ?? Date()
 
             LineMark(x: .value("Time", date), y: .value("Amount", amount))
@@ -996,8 +1025,11 @@ extension MainChartView {
             return
         }
 
+        // Ensure maxForecast is not more than 100 over maxGlucose
+        let adjustedMaxForecast = min(maxForecast, maxGlucose + 100)
+
         let minOverall = min(minGlucose, minForecast)
-        let maxOverall = max(maxGlucose, maxForecast)
+        let maxOverall = max(maxGlucose, adjustedMaxForecast)
 
         // minValue = minOverall * conversionFactor - 50 * conversionFactor
         // maxValue = maxOverall * conversionFactor + 80 * conversionFactor\
@@ -1038,7 +1070,6 @@ extension MainChartView {
         plotContent
             .rotationEffect(.degrees(180))
             .scaleEffect(x: -1, y: 1)
-            .chartXAxis(.hidden)
     }
 
     private var mainChartXAxis: some AxisContent {

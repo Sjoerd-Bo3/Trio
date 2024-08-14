@@ -34,6 +34,25 @@ extension Home {
 
         let buttonFont = Font.custom("TimeButtonFont", size: 14)
 
+        struct DefinitionRow: View {
+            var term: String
+            var definition: String
+            var color: Color
+
+            var body: some View {
+                VStack(alignment: .leading) {
+                    HStack {
+                        Image(systemName: "circle.fill").foregroundStyle(color)
+                        Text(term).font(.subheadline).fontWeight(.semibold)
+                    }
+                    Text(definition)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.vertical, 5)
+            }
+        }
+
         @Environment(\.managedObjectContext) var moc
         @Environment(\.colorScheme) var colorScheme
 
@@ -268,7 +287,7 @@ extension Home {
                         .foregroundColor(.insulin)
                         .padding(.leading, 8)
                 }
-                if state.totalInsulinDisplayType == .totalInsulinInScope {
+                if state.tins {
                     Text(
                         "TINS: \(state.calculateTINS())" +
                             NSLocalizedString(" U", comment: "Unit in number of units delivered (keep the space character!)")
@@ -335,6 +354,12 @@ extension Home {
 
         @ViewBuilder func mainChart(geo: GeometryProxy) -> some View {
             ZStack {
+                if state.animatedBackground {
+                    SpriteView(scene: spriteScene, options: [.allowsTransparency])
+                        .ignoresSafeArea()
+                        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                }
+
                 MainChartView(
                     geo: geo,
                     units: $state.units,
@@ -462,7 +487,7 @@ extension Home {
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                     }
                 }
-                if state.totalInsulinDisplayType == .totalDailyDose {
+                if !state.tins {
                     Spacer()
                     Text(
                         "TDD: " +
@@ -672,7 +697,7 @@ extension Home {
                         Spacer()
 
                         Button {
-                            state.showProgressView()
+                            state.waitForSuggestion = true
                             state.cancelBolus()
                         } label: {
                             Image(systemName: "xmark.app")
@@ -708,16 +733,16 @@ extension Home {
                         }.padding(.leading, 20)
                     }.padding(.top, 10)
 
-                    mealPanel(geo).padding(.top, 20).padding(.bottom, 20)
+                    mealPanel(geo).padding(.top, 30).padding(.bottom, 20)
 
                     mainChart(geo: geo)
 
-                    // timeInterval.padding(.top, 12).padding(.bottom, 0)
+                    timeInterval.padding(.top, 12).padding(.bottom, 12)
 
                     if let progress = state.bolusProgress {
-                        bolusView(geo: geo, progress).padding(.bottom, 0)
+                        bolusView(geo: geo, progress).padding(.bottom, 40)
                     } else {
-                        profileView(geo: geo).padding(.bottom, 0)
+                        profileView(geo: geo).padding(.bottom, 40)
                     }
                 }
                 .background(color)
@@ -807,16 +832,6 @@ extension Home {
                 TabView(selection: $selectedTab) {
                     let carbsRequiredBadge: String? = {
                         guard let carbsRequired = state.enactedAndNonEnactedDeterminations.first?.carbsRequired else {
-                            return nil
-                        }
-                        guard let carbsRequired = state.determinationsFromPersistence.first?.carbsRequired as? Decimal,
-                              state.showCarbsRequiredBadge
-                        else { return nil }
-                        if carbsRequired > state.settingsManager.settings.carbsRequiredThreshold {
-                            let numberAsNSNumber = NSDecimalNumber(decimal: carbsRequired)
-                            let formattedNumber = numberFormatter.string(from: numberAsNSNumber) ?? ""
-                            return formattedNumber + " g"
-                        } else {
                             return nil
                         }
                         let carbsRequiredDecimal = Decimal(carbsRequired)
