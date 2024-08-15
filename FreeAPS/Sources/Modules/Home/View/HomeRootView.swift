@@ -672,7 +672,7 @@ extension Home {
                         Spacer()
 
                         Button {
-                            state.waitForSuggestion = true
+                            state.showProgressView()
                             state.cancelBolus()
                         } label: {
                             Image(systemName: "xmark.app")

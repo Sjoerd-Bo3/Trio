@@ -17,6 +17,9 @@ extension Bolus {
         @Injected() var glucoseStorage: GlucoseStorage!
         @Injected() var determinationStorage: DeterminationStorage!
 
+        @Published var lowGlucose: Decimal = 4 / 0.0555
+        @Published var highGlucose: Decimal = 10 / 0.0555
+
         @Published var predictions: Predictions?
         @Published var amount: Decimal = 0
         @Published var insulinRecommended: Decimal = 0
@@ -91,10 +94,17 @@ extension Bolus {
         @Published var showInfo: Bool = false
         @Published var glucoseFromPersistence: [GlucoseStored] = []
         @Published var determination: [OrefDetermination] = []
+        @Published var preprocessedData: [(id: UUID, forecast: Forecast, forecastValue: ForecastValue)] = []
+        @Published var predictionsForChart: Predictions?
+        @Published var simulatedDetermination: Determination?
+        @Published var determinationObjectIDs: [NSManagedObjectID] = []
+
+        @Published var minForecast: [Int] = []
+        @Published var maxForecast: [Int] = []
 
         let now = Date.now
 
-        let context = CoreDataStack.shared.persistentContainer.viewContext
+        let viewContext = CoreDataStack.shared.persistentContainer.viewContext
         let backgroundContext = CoreDataStack.shared.newTaskContext()
 
         private var coreDataObserver: CoreDataObserver?
@@ -105,9 +115,14 @@ extension Bolus {
             setupGlucoseNotification()
             coreDataObserver = CoreDataObserver()
             registerHandlers()
-
             setupGlucoseArray()
-            setupDeterminationsArray()
+
+            Task {
+                await setupDeterminationsArray()
+                // Determination has updated, so we can use this to draw the initial Forecast Chart
+                let forecastData = await mapForecastsForChart()
+                await updateForecasts(with: forecastData)
+            }
 
             broadcaster.register(DeterminationObserver.self, observer: self)
             broadcaster.register(BolusFailureObserver.self, observer: self)
@@ -120,6 +135,9 @@ extension Bolus {
             sweetMeals = settings.settings.sweetMeals
             sweetMealFactor = settings.settings.sweetMealFactor
             displayPresets = settings.settings.displayPresets
+
+            lowGlucose = settingsManager.settings.low
+            highGlucose = settingsManager.settings.high
 
             maxCarbs = settings.settings.maxCarbs
             useFPUconversion = settingsManager.settings.useFPUconversion
@@ -138,7 +156,7 @@ extension Bolus {
 
         // MARK: - Basal
 
-        func getCurrentBasal() {
+        func getCurrentBasal() async {
             let basalEntries = provider.getProfile()
             let now = Date()
             let calendar = Calendar.current
@@ -152,11 +170,11 @@ extension Bolus {
                     continue
                 }
 
-                // Combine the current date with the time from entry.start
+                let entryComponents = calendar.dateComponents([.hour, .minute, .second], from: entryTime)
                 let entryStartTime = calendar.date(
-                    bySettingHour: calendar.component(.hour, from: entryTime),
-                    minute: calendar.component(.minute, from: entryTime),
-                    second: calendar.component(.second, from: entryTime),
+                    bySettingHour: entryComponents.hour!,
+                    minute: entryComponents.minute!,
+                    second: entryComponents.second!,
                     of: now
                 )!
 
@@ -164,20 +182,21 @@ extension Bolus {
                 if index < basalEntries.count - 1,
                    let nextEntryTime = dateFormatter.date(from: basalEntries[index + 1].start)
                 {
-                    let nextEntryStartTime = calendar.date(
-                        bySettingHour: calendar.component(.hour, from: nextEntryTime),
-                        minute: calendar.component(.minute, from: nextEntryTime),
-                        second: calendar.component(.second, from: nextEntryTime),
+                    let nextEntryComponents = calendar.dateComponents([.hour, .minute, .second], from: nextEntryTime)
+                    entryEndTime = calendar.date(
+                        bySettingHour: nextEntryComponents.hour!,
+                        minute: nextEntryComponents.minute!,
+                        second: nextEntryComponents.second!,
                         of: now
                     )!
-                    entryEndTime = nextEntryStartTime
                 } else {
-                    // If it's the last entry, use the same start time plus one day as the end time
                     entryEndTime = calendar.date(byAdding: .day, value: 1, to: entryStartTime)!
                 }
 
                 if now >= entryStartTime, now < entryEndTime {
-                    currentBasal = entry.rate
+                    await MainActor.run {
+                        currentBasal = entry.rate
+                    }
                     break
                 }
             }
@@ -267,9 +286,10 @@ extension Bolus {
                 await saveMeal()
 
                 // if glucose data is stale end the custom loading animation by hiding the modal
-//                guard glucoseOfLast20Min.first?.date ?? now >= Date().addingTimeInterval(-12.minutes.timeInterval) else {
-//                    return hideModal()
-//                }
+                guard glucoseStorage.isGlucoseDataFresh(glucoseFromPersistence.first?.date) else {
+                    waitForSuggestion = false
+                    return hideModal()
+                }
             }
         }
 
@@ -310,29 +330,6 @@ extension Bolus {
             }
         }
 
-        private func savePumpInsulin(amount _: Decimal) {
-            context.perform {
-                // create pump event
-                let newPumpEvent = PumpEventStored(context: self.context)
-                newPumpEvent.timestamp = Date()
-                newPumpEvent.type = PumpEvent.bolus.rawValue
-
-                // create bolus entry and specify relationship to pump event
-                let newBolusEntry = BolusStored(context: self.context)
-                newBolusEntry.pumpEvent = newPumpEvent
-                newBolusEntry.amount = self.amount as NSDecimalNumber
-                newBolusEntry.isExternal = false
-                newBolusEntry.isSMB = false
-
-                do {
-                    guard self.context.hasChanges else { return }
-                    try self.context.save()
-                } catch {
-                    print(error.localizedDescription)
-                }
-            }
-        }
-
         // MARK: - EXTERNAL INSULIN
 
         @MainActor func addExternalInsulin() async {
@@ -368,8 +365,11 @@ extension Bolus {
 
         @MainActor func saveMeal() async {
             guard carbs > 0 || fat > 0 || protein > 0 else { return }
-            carbs = min(carbs, maxCarbs)
-            id_ = UUID().uuidString
+
+            await MainActor.run {
+                self.carbs = min(self.carbs, self.maxCarbs)
+                self.id_ = UUID().uuidString
+            }
 
             let carbsToStore = [CarbsEntry(
                 id: id_,
@@ -396,11 +396,11 @@ extension Bolus {
 
         func deletePreset() {
             if selection != nil {
-                context.delete(selection!)
+                viewContext.delete(selection!)
 
                 do {
-                    guard context.hasChanges else { return }
-                    try context.save()
+                    guard viewContext.hasChanges else { return }
+                    try viewContext.save()
                 } catch {
                     print(error.localizedDescription)
                 }
@@ -448,9 +448,10 @@ extension Bolus {
             var protein_: Decimal = 0.0
             var presetArray = [MealPresetStored]()
 
-            context.performAndWait {
+            // TODO: purge Jons code
+            viewContext.performAndWait {
                 let requestPresets = MealPresetStored.fetchRequest() as NSFetchRequest<MealPresetStored>
-                try? presetArray = context.fetch(requestPresets)
+                try? presetArray = viewContext.fetch(requestPresets)
             }
             var waitersNotepad = [String]()
             var stringValue = ""
@@ -532,7 +533,10 @@ extension Bolus.StateModel {
     private func registerHandlers() {
         coreDataObserver?.registerHandler(for: "OrefDetermination") { [weak self] in
             guard let self = self else { return }
-            self.setupDeterminationsArray()
+            Task {
+                await self.setupDeterminationsArray()
+                await self.updateForecasts()
+            }
         }
 
         // Due to the Batch insert this only is used for observing Deletion of Glucose entries
@@ -564,7 +568,8 @@ extension Bolus.StateModel {
     private func setupGlucoseArray() {
         Task {
             let ids = await self.fetchGlucose()
-            await updateGlucoseArray(with: ids)
+            let glucoseObjects: [GlucoseStored] = await CoreDataStack.shared.getNSManagedObject(with: ids, context: viewContext)
+            await updateGlucoseArray(with: glucoseObjects)
         }
     }
 
@@ -572,10 +577,10 @@ extension Bolus.StateModel {
         let results = await CoreDataStack.shared.fetchEntitiesAsync(
             ofType: GlucoseStored.self,
             onContext: backgroundContext,
-            predicate: NSPredicate.predicateFor30MinAgo,
+            predicate: NSPredicate.predicateForFourHoursAgo,
             key: "date",
             ascending: false,
-            fetchLimit: 3
+            fetchLimit: 48
         )
 
         return await backgroundContext.perform {
@@ -583,61 +588,186 @@ extension Bolus.StateModel {
         }
     }
 
-    @MainActor private func updateGlucoseArray(with IDs: [NSManagedObjectID]) {
-        do {
-            let glucoseObjects = try IDs.compactMap { id in
-                try context.existingObject(with: id) as? GlucoseStored
-            }
-            glucoseFromPersistence = glucoseObjects
+    @MainActor private func updateGlucoseArray(with objects: [GlucoseStored]) {
+        glucoseFromPersistence = objects
 
-            let lastGlucose = glucoseFromPersistence.first?.glucose ?? 0
-            let thirdLastGlucose = glucoseFromPersistence.last?.glucose ?? 0
-            let delta = Decimal(lastGlucose) - Decimal(thirdLastGlucose)
+        let lastGlucose = glucoseFromPersistence.first?.glucose ?? 0
+        let thirdLastGlucose = glucoseFromPersistence.dropFirst(2).first?.glucose ?? 0
+        let delta = Decimal(lastGlucose) - Decimal(thirdLastGlucose)
 
-            currentBG = Decimal(lastGlucose)
-            deltaBG = delta
-        } catch {
-            debugPrint(
-                "Home State: \(#function) \(DebuggingIdentifiers.failed) error while updating the glucose array: \(error.localizedDescription)"
-            )
-        }
+        currentBG = Decimal(lastGlucose)
+        deltaBG = delta
     }
 
     // Determinations
-    private func setupDeterminationsArray() {
-        Task {
-            let ids = await determinationStorage.fetchLastDeterminationObjectID(
-                predicate: NSPredicate.predicateFor30MinAgoForDetermination
+    private func setupDeterminationsArray() async {
+        // Fetch object IDs on a background thread
+        let fetchedObjectIDs = await determinationStorage.fetchLastDeterminationObjectID(
+            predicate: NSPredicate.predicateFor30MinAgoForDetermination
+        )
+
+        // Update determinationObjectIDs on the main thread
+        await MainActor.run {
+            determinationObjectIDs = fetchedObjectIDs
+        }
+
+        let determinationObjects: [OrefDetermination] = await CoreDataStack.shared
+            .getNSManagedObject(with: determinationObjectIDs, context: viewContext)
+
+        async let updateDetermination: () = updateDeterminationsArray(with: determinationObjects)
+        async let getCurrentBasal: () = getCurrentBasal()
+
+        await getCurrentBasal
+        await updateDetermination
+    }
+
+    private func mapForecastsForChart() async -> Determination? {
+        let determinationObjects: [OrefDetermination] = await CoreDataStack.shared
+            .getNSManagedObject(with: determinationObjectIDs, context: backgroundContext)
+
+        return await backgroundContext.perform {
+            guard let determinationObject = determinationObjects.first else {
+                return nil
+            }
+
+            let eventualBG = determinationObject.eventualBG?.intValue
+
+            let forecastsSet = determinationObject.forecasts as? Set<Forecast> ?? []
+            let predictions = Predictions(
+                iob: forecastsSet.extractValues(for: "iob"),
+                zt: forecastsSet.extractValues(for: "zt"),
+                cob: forecastsSet.extractValues(for: "cob"),
+                uam: forecastsSet.extractValues(for: "uam")
             )
-            await updateDeterminationsArray(with: ids)
+
+            return Determination(
+                id: UUID(),
+                reason: "",
+                units: 0,
+                insulinReq: 0,
+                eventualBG: eventualBG,
+                sensitivityRatio: 0,
+                rate: 0,
+                duration: 0,
+                iob: 0,
+                cob: 0,
+                predictions: predictions.isEmpty ? nil : predictions,
+                carbsReq: 0,
+                temp: nil,
+                bg: 0,
+                reservoir: 0,
+                isf: 0,
+                tdd: 0,
+                insulin: nil,
+                current_target: 0,
+                insulinForManualBolus: 0,
+                manualBolusErrorString: 0,
+                minDelta: 0,
+                expectedDelta: 0,
+                minGuardBG: 0,
+                minPredBG: 0,
+                threshold: 0,
+                carbRatio: 0,
+                received: false
+            )
         }
     }
 
-    @MainActor private func updateDeterminationsArray(with IDs: [NSManagedObjectID]) {
-        do {
-            let determinationObjects = try IDs.compactMap { id in
-                try context.existingObject(with: id) as? OrefDetermination
-            }
-            guard let mostRecentDetermination = determinationObjects.first else { return }
-            determination = determinationObjects
+    @MainActor private func updateDeterminationsArray(with objects: [OrefDetermination]) {
+        guard let mostRecentDetermination = objects.first else { return }
+        determination = objects
 
-            // setup vars for bolus calculation
-            insulinRequired = (mostRecentDetermination.insulinReq ?? 0) as Decimal
-            evBG = (mostRecentDetermination.eventualBG ?? 0) as Decimal
-            insulin = (mostRecentDetermination.insulinForManualBolus ?? 0) as Decimal
-            target = (mostRecentDetermination.currentTarget ?? 100) as Decimal
-            isf = (mostRecentDetermination.insulinSensitivity ?? 0) as Decimal
-            cob = mostRecentDetermination.cob as Int16
-            iob = (mostRecentDetermination.iob ?? 0) as Decimal
-            basal = (mostRecentDetermination.tempBasal ?? 0) as Decimal
-            carbRatio = (mostRecentDetermination.carbRatio ?? 0) as Decimal
+        // setup vars for bolus calculation
+        insulinRequired = (mostRecentDetermination.insulinReq ?? 0) as Decimal
+        evBG = (mostRecentDetermination.eventualBG ?? 0) as Decimal
+        insulin = (mostRecentDetermination.insulinForManualBolus ?? 0) as Decimal
+        target = (mostRecentDetermination.currentTarget ?? 100) as Decimal
+        isf = (mostRecentDetermination.insulinSensitivity ?? 0) as Decimal
+        cob = mostRecentDetermination.cob as Int16
+        iob = (mostRecentDetermination.iob ?? 0) as Decimal
+        basal = (mostRecentDetermination.tempBasal ?? 0) as Decimal
+        carbRatio = (mostRecentDetermination.carbRatio ?? 0) as Decimal
+        insulinCalculated = calculateInsulin()
+    }
+}
 
-            getCurrentBasal()
-            insulinCalculated = calculateInsulin()
-        } catch {
-            debugPrint(
-                "Home State: \(#function) \(DebuggingIdentifiers.failed) error while updating the determinations array: \(error.localizedDescription)"
-            )
+extension Bolus.StateModel {
+    func calculateForecasts(predictions: Predictions?) -> ([Int], [Int]) {
+        let iob: [Int] = predictions?.iob ?? []
+        let zt: [Int] = predictions?.zt ?? []
+        let cob: [Int] = predictions?.cob ?? []
+        let uam: [Int] = predictions?.uam ?? []
+
+        // Filter out the empty arrays and find the maximum length of the remaining arrays
+        let nonEmptyArrays: [[Int]] = [iob, zt, cob, uam].filter { !$0.isEmpty }
+        guard !nonEmptyArrays.isEmpty, let maxCount = nonEmptyArrays.map(\.count).max(), maxCount > 0 else {
+            return ([], [])
         }
+
+        let minForecast = (0 ..< maxCount).map { index -> Int in
+            let valuesAtCurrentIndex = nonEmptyArrays.compactMap { $0.indices.contains(index) ? $0[index] : nil }
+            return valuesAtCurrentIndex.min() ?? 0
+        }
+
+        let maxForecast = (0 ..< maxCount).map { index -> Int in
+            let valuesAtCurrentIndex = nonEmptyArrays.compactMap { $0.indices.contains(index) ? $0[index] : nil }
+            return valuesAtCurrentIndex.max() ?? 0
+        }
+
+        return (minForecast, maxForecast)
+    }
+
+    @MainActor func updateForecasts(with forecastData: Determination? = nil) async {
+        if let forecastData = forecastData {
+            simulatedDetermination = forecastData
+        } else {
+            simulatedDetermination = await Task.detached { [self] in
+                await apsManager.simulateDetermineBasal(carbs: carbs, iob: amount)
+            }.value
+        }
+
+        predictionsForChart = simulatedDetermination?.predictions
+
+        let nonEmptyArrays = [
+            predictionsForChart?.iob,
+            predictionsForChart?.zt,
+            predictionsForChart?.cob,
+            predictionsForChart?.uam
+        ]
+        .compactMap { $0 }
+        .filter { !$0.isEmpty }
+
+        guard !nonEmptyArrays.isEmpty else {
+            minForecast = []
+            maxForecast = []
+            return
+        }
+
+        let maxCount = min(36, nonEmptyArrays.map(\.count).max() ?? 0)
+        guard maxCount > 0 else { return }
+
+        minForecast = (0 ..< maxCount).map { index in
+            nonEmptyArrays.compactMap { $0.indices.contains(index) ? $0[index] : nil }.min() ?? 0
+        }
+
+        maxForecast = (0 ..< maxCount).map { index in
+            nonEmptyArrays.compactMap { $0.indices.contains(index) ? $0[index] : nil }.max() ?? 0
+        }
+    }
+}
+
+private extension Set where Element == Forecast {
+    func extractValues(for type: String) -> [Int]? {
+        let values = first { $0.type == type }?
+            .forecastValues?
+            .sorted { $0.index < $1.index }
+            .compactMap { Int($0.value) }
+        return values?.isEmpty ?? true ? nil : values
+    }
+}
+
+private extension Predictions {
+    var isEmpty: Bool {
+        iob == nil && zt == nil && cob == nil && uam == nil
     }
 }
