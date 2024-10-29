@@ -1,0 +1,93 @@
+name: Generate Mergely Diff
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  generate-diff:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Child Repository (Current PR)
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          path: child_repo
+
+      - name: Checkout Parent Repository
+        uses: actions/checkout@v3
+        with:
+          repository: parent-org/parent-repo
+          ref: parent-branch-name
+          token: ${{ secrets.PAT_WITH_ACCESS }}
+          path: parent_repo
+
+      - name: Generate Diff
+        run: |
+          diff -urN parent_repo/ child_repo/ > diff.diff || true
+
+      - name: Create Mergely HTML File
+        run: |
+          echo '<!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Mergely Diff</title>
+            <!-- Include Mergely CSS and JS -->
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/mergely/lib/mergely.min.js"></script>
+            <style>
+              body { margin: 0; }
+              #mergely { height: 100vh; }
+            </style>
+          </head>
+          <body>
+            <div id="mergely"></div>
+            <script>
+              document.addEventListener("DOMContentLoaded", function() {
+                var lhs = `'> lhs.txt
+          cat parent_repo_file.txt >> lhs.txt
+          echo '`;
+                var rhs = `'> rhs.txt
+          cat child_repo_file.txt >> rhs.txt
+          echo '`;
+
+          # Escape backticks and dollar signs
+          sed -i 's/`/\\`/g; s/\$/\\\$/g' lhs.txt rhs.txt
+
+          # Continue writing the HTML file
+          echo "$(cat <<EOF
+                $('#mergely').mergely({
+                  cmsettings: { readOnly: true },
+                  lhs: function(setValue) { setValue(lhs); },
+                  rhs: function(setValue) { setValue(rhs); }
+                });
+              });
+            </script>
+          </body>
+          </html>" >> mergely_diff.html
+          EOF
+          )" >> mergely_diff.html
+
+      - name: Upload Diff as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mergely-diff
+          path: mergely_diff.html
+
+      - name: Post Link to Diff in PR Comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const artifactUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+            const body = 'A visual diff is available [here](' + artifactUrl + ').\n\nDownload `mergely_diff.html` and open it in your browser to view the diff.';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
