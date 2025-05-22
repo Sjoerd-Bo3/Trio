@@ -7840,6 +7840,16 @@
         }
       }
     },
+    "%@%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@"
+          }
+        }
+      }
+    },
     "%@%% Insulin" : {
       "localizations" : {
         "bg" : {
@@ -21907,6 +21917,9 @@
         }
       }
     },
+    "Active Algorithm" : {
+
+    },
     "Active Time" : {
       "comment" : "description label for active time pod details rowdescription label for active time pod details row",
       "extractionState" : "manual",
@@ -27870,6 +27883,9 @@
           }
         }
       }
+    },
+    "Adjust parameters and see real-time changes" : {
+
     },
     "Adjust Ring Settings" : {
       "localizations" : {
@@ -59202,6 +59218,9 @@
         }
       }
     },
+    "Common Parameters" : {
+
+    },
     "Cone" : {
       "localizations" : {
         "bg" : {
@@ -65156,6 +65175,9 @@
           }
         }
       }
+    },
+    "Curve Visibility" : {
+
     },
     "Custom" : {
       "comment" : "Custom temp target",
@@ -83216,6 +83238,15 @@
           }
         }
       }
+    },
+    "Dynamic ISF Curves" : {
+
+    },
+    "Dynamic ISF parameters have been updated successfully." : {
+
+    },
+    "Dynamic ISF Playground" : {
+
     },
     "Dynamic ISF produces a Dynamic Ratio, replacing the Autosens Ratio, determining how much your profile ISF will be adjusted every loop cycle, ensuring it stays within safe limits set by your Autosens Min/Max settings. It provides more precise insulin dosing by responding to changes in insulin needs throughout the day." : {
       "localizations" : {
@@ -104537,6 +104568,9 @@
         }
       }
     },
+    "Glucose (%@)" : {
+
+    },
     "Glucose Calculation" : {
       "localizations" : {
         "bg" : {
@@ -123244,6 +123278,9 @@
         }
       }
     },
+    "ISF (mg/dL/U)" : {
+
+    },
     "ISF/CR" : {
       "comment" : "Option for both ISF and CR",
       "localizations" : {
@@ -130122,6 +130159,9 @@
           }
         }
       }
+    },
+    "Logarithmic Parameters" : {
+
     },
     "Loop at %@ failed." : {
       "localizations" : {
@@ -157004,6 +157044,9 @@
         }
       }
     },
+    "Open Playground" : {
+
+    },
     "Open Settings" : {
       "localizations" : {
         "bg" : {
@@ -176587,6 +176630,9 @@
         }
       }
     },
+    "Save Parameters" : {
+
+    },
     "Saved Food" : {
       "comment" : "Saved Food Presets",
       "localizations" : {
@@ -184089,6 +184135,9 @@
         }
       }
     },
+    "Settings Saved" : {
+
+    },
     "Setup & Configuraton" : {
       "localizations" : {
         "bg" : {
@@ -187193,6 +187242,9 @@
           }
         }
       }
+    },
+    "Sigmoid Parameters" : {
+
     },
     "Simple" : {
       "localizations" : {
@@ -198466,6 +198518,9 @@
           }
         }
       }
+    },
+    "Tap to show/hide curves" : {
+
     },
     "tapped save schedules" : {
       "extractionState" : "manual",

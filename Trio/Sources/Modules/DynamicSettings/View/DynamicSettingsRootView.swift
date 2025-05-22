@@ -41,6 +41,15 @@ extension DynamicSettings {
 
         var body: some View {
             List {
+                // Dynamic ISF Graph Section
+                if state.dynamicSensitivityType != .disabled {
+                    Section {
+                        GraphView(resolver: resolver)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
+                }
+
                 Section(
                     header: Text("Dynamic Insulin Sensitivity"),
                     content: {
