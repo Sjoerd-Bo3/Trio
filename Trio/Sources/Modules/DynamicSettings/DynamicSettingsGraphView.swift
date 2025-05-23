@@ -27,14 +27,18 @@ extension DynamicSettings {
                 // Playground Button
                 playgroundButton
             }
-            .sheet(isPresented: $viewModel.showPlayground) {
-                PlaygroundView(
-                    parameters: $viewModel.parameters,
-                    isPresented: $viewModel.showPlayground,
-                    units: viewModel.units,
-                    currentGlucose: viewModel.currentGlucose,
-                    onSave: viewModel.saveParameters
-                )
+            .sheet(isPresented: $viewModel.showPlayground) { [weak viewModel] in
+                if let viewModel = viewModel {
+                    PlaygroundView(
+                        parameters: $viewModel.parameters,
+                        isPresented: $viewModel.showPlayground,
+                        units: viewModel.units,
+                        currentGlucose: viewModel.currentGlucose,
+                        onSave: { parameters in
+                            viewModel.saveParameters(parameters)
+                        }
+                    )
+                }
             }
         }
 

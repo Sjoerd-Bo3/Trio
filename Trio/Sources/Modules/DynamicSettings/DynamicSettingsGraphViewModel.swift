@@ -4,7 +4,7 @@ import SwiftUI
 import Swinject
 
 extension DynamicSettings {
-    final class GraphViewModel: ObservableObject, Injectable, SettingsObserver, PreferencesObserver {
+    final class GraphViewModel: ObservableObject, SettingsObserver, PreferencesObserver {
         @Published var parameters: ISFParameters
         @Published var showLogarithmicCurve: Bool = true
         @Published var showSigmoidCurve: Bool = true
@@ -13,8 +13,8 @@ extension DynamicSettings {
         private let settingsManager: SettingsManager
         private let glucoseStorage: GlucoseStorage
 
-        @Injected() private var storage: FileStorage!
-        @Injected() private var broadcaster: Broadcaster!
+        private var storage: FileStorage
+        private var broadcaster: Broadcaster
 
         var units: GlucoseUnits {
             settingsManager.settings.units
@@ -30,11 +30,12 @@ extension DynamicSettings {
             self.settingsManager = settingsManager
             self.glucoseStorage = glucoseStorage
 
+            // Initialize dependencies manually
+            storage = resolver.resolve(FileStorage.self)!
+            broadcaster = resolver.resolve(Broadcaster.self)!
+
             // Initialize parameters from settings
             parameters = Self.loadParametersFromSettings(settingsManager)
-
-            // Inject dependencies
-            injectServices(resolver)
 
             // Update parameters with therapy settings
             updateParametersFromStorage()
