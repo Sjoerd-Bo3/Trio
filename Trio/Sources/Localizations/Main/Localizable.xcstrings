@@ -15920,6 +15920,12 @@
         }
       }
     },
+    "✓" : {
+
+    },
+    "✗" : {
+
+    },
     "❗ Notifications are Required" : {
       "localizations" : {
         "bg" : {
@@ -22033,6 +22039,9 @@
           }
         }
       }
+    },
+    "Actual %@" : {
+
     },
     "Add" : {
       "comment" : "Add profile basal",
@@ -46030,6 +46039,9 @@
         }
       }
     },
+    "BG %lld:" : {
+
+    },
     "BGI" : {
       "localizations" : {
         "bg" : {
@@ -64730,6 +64742,9 @@
         }
       }
     },
+    "Current Parameters" : {
+
+    },
     "Current Pump Models Supported:" : {
       "localizations" : {
         "bg" : {
@@ -67455,6 +67470,9 @@
         }
       }
     },
+    "Debug" : {
+
+    },
     "Debug options" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -67674,6 +67692,9 @@
           }
         }
       }
+    },
+    "Debug Values" : {
+
     },
     "Decrease sensitivity when glucose is below target if a manual Temp Target < %@ %@ is set." : {
       "localizations" : {
@@ -94815,6 +94836,15 @@
         }
       }
     },
+    "Expected %@" : {
+
+    },
+    "Expected Logarithmic ISF Values (mg/dL/U):" : {
+
+    },
+    "Expected Sigmoid ISF Values (mg/dL/U):" : {
+
+    },
     "Experimental" : {
       "comment" : "New Experimental feature",
       "extractionState" : "manual",
@@ -107804,6 +107834,16 @@
         }
       }
     },
+    "Glucose: %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Glucose: %1$@ %2$@"
+          }
+        }
+      }
+    },
     "GMI" : {
       "localizations" : {
         "bg" : {
@@ -120126,6 +120166,12 @@
         }
       }
     },
+    "Insulin Factor" : {
+
+    },
+    "Insulin Factor: %@" : {
+
+    },
     "Insulin On Board (IOB)" : {
       "localizations" : {
         "bg" : {
@@ -123278,7 +123324,10 @@
         }
       }
     },
-    "ISF (mg/dL/U)" : {
+    "ISF (%@)" : {
+
+    },
+    "ISF Values at Test Points" : {
 
     },
     "ISF/CR" : {
@@ -128661,6 +128710,9 @@
         }
       }
     },
+    "Load Reference Parameters" : {
+
+    },
     "Local glucose source" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -129626,6 +129678,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "記錄血糖"
+          }
+        }
+      }
+    },
+    "Log ISF: %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Log ISF: %1$@ %2$@"
           }
         }
       }
@@ -137298,6 +137360,9 @@
         }
       }
     },
+    "Max ISF" : {
+
+    },
     "Max Meal Absorption Time" : {
       "localizations" : {
         "bg" : {
@@ -142356,6 +142421,9 @@
           }
         }
       }
+    },
+    "Min ISF" : {
+
     },
     "Min Value" : {
       "localizations" : {
@@ -172093,6 +172161,9 @@
         }
       }
     },
+    "Reference Test Values" : {
+
+    },
     "Remaining Carbs Cap" : {
       "comment" : "Remaining Carbs Cap",
       "localizations" : {
@@ -176411,6 +176482,9 @@
         }
       }
     },
+    "Save Dynamic ISF Settings?" : {
+
+    },
     "Save on Pump" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -176630,7 +176704,7 @@
         }
       }
     },
-    "Save Parameters" : {
+    "Save to Therapy Settings" : {
 
     },
     "Saved Food" : {
@@ -187239,6 +187313,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "S型函數"
+          }
+        }
+      }
+    },
+    "Sigmoid ISF: %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sigmoid ISF: %1$@ %2$@"
           }
         }
       }
@@ -199824,6 +199908,12 @@
         }
       }
     },
+    "TDD 2w: %@U" : {
+
+    },
+    "TDD 24h: %@U" : {
+
+    },
     "Temp Basal" : {
       "comment" : "Treatment type",
       "localizations" : {
@@ -207015,6 +207105,9 @@
           }
         }
       }
+    },
+    "These Dynamic ISF parameters will be applied to your therapy settings and affect your insulin dosing calculations.\n\nAre you sure you want to continue?" : {
+
     },
     "These files only contain code-related information that helps us understand where crashes happen. They contain no personal information about you or how you use Trio." : {
       "extractionState" : "stale",
@@ -235725,6 +235818,9 @@
           }
         }
       }
+    },
+    "Weighted TDD: %@U" : {
+
     },
     "Welcome to Trio" : {
       "localizations" : {
