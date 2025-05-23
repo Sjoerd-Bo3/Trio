@@ -23,12 +23,12 @@ extension DynamicSettings {
             [
                 LegendItem(
                     label: "Logarithmic",
-                    color: .blue,
+                    color: .red,
                     isVisible: showLogarithmicCurve
                 ),
                 LegendItem(
                     label: "Sigmoid",
-                    color: .red,
+                    color: .green,
                     isVisible: showSigmoidCurve
                 )
             ]
@@ -46,7 +46,7 @@ extension DynamicSettings {
                     // Logarithmic curve legend
                     legendButton(
                         label: "Logarithmic",
-                        color: .blue,
+                        color: .red,
                         isVisible: showLogarithmicCurve,
                         isActive: activeFormula == .logarithmic
                     ) {
@@ -56,7 +56,7 @@ extension DynamicSettings {
                     // Sigmoid curve legend
                     legendButton(
                         label: "Sigmoid",
-                        color: .red,
+                        color: .green,
                         isVisible: showSigmoidCurve,
                         isActive: activeFormula == .sigmoid
                     ) {

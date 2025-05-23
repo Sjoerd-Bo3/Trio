@@ -25,7 +25,15 @@ extension DynamicSettings {
 
         // Chart configuration (mg/dL values for calculation)
         // Original mmol/L: [2.2, 3.0, 3.9, 5.5, 7.8, 10.0, 13.9, 22.2]
-        let glucoseDataPointsMgdL: [Double] = [40, 54, 70, 100, 140, 180, 250, 400]
+        // Generate smooth curve with many data points for better visualization
+        let glucoseDataPointsMgdL: [Double] = {
+            var points: [Double] = []
+            // Generate points from 40 to 400 mg/dL with smaller steps for smoothness
+            for i in stride(from: 40, through: 400, by: 5) {
+                points.append(Double(i))
+            }
+            return points
+        }()
 
         // Current state
         var currentGlucose: Double = 100.0 // mg/dL
@@ -46,39 +54,57 @@ extension DynamicSettings {
         }
 
         // Calculate logarithmic autosens ratio for given glucose value (mg/dL)
-        // Note: Returns raw ratio without clamping - clamping is applied to final ISF if needed
+        // Based on JavaScript: sensitivity * adjustmentFactor * tdd * Math.log(BG/insulinFactor+1) / 1800
         func logarithmicAutosensRatio(glucose: Double) -> Double {
-            let ratio = (logarithmicProfileISF * logarithmicAdjustmentFactor * weightedTDD * log(glucose / insulinFactor + 1)) /
+            // Direct implementation of JavaScript formula
+            let newRatio = logarithmicProfileISF * logarithmicAdjustmentFactor * weightedTDD * log(glucose / insulinFactor + 1) /
                 1800
-            return ratio // Return unclamped ratio
+
+            // Apply autosens limits
+            let clampedRatio = max(logarithmicAutosensMin, min(logarithmicAutosensMax, newRatio))
+
+            return clampedRatio
         }
 
         // Calculate logarithmic ISF for given glucose value (mg/dL)
         func logarithmicISF(glucose: Double) -> Double {
-            let ratio = logarithmicAutosensRatio(glucose: glucose)
-            let isf = logarithmicProfileISF / ratio
+            // JavaScript implementation: Line 298 and 343
+            // var newRatio = sensitivity * adjustmentFactor * tdd * Math.log(BG/insulinFactor+1) / 1800;
+            // const isf = sensitivity / newRatio;
+            let newRatio = logarithmicProfileISF * logarithmicAdjustmentFactor * weightedTDD * log(glucose / insulinFactor + 1) /
+                1800
+            let isf = logarithmicProfileISF / newRatio
 
-            // Apply autosens limits to ISF calculation if needed
-            let maxISF = logarithmicProfileISF / logarithmicAutosensMin
-            let minISF = logarithmicProfileISF / logarithmicAutosensMax
+            return isf
+        }
 
-            return max(minISF, min(maxISF, isf))
+        // Calculate unbounded logarithmic ISF (for showing domain extensions)
+        func logarithmicISFUnbounded(glucose: Double) -> Double {
+            // Same as logarithmicISF since autosens limits aren't applied to the calculation
+            logarithmicISF(glucose: glucose)
         }
 
         // Calculate sigmoid autosens ratio for given glucose value (mg/dL)
-        // Note: Returns raw ratio without clamping - clamping is applied to final ISF if needed
+        // Based on JavaScript implementation lines 303-320
         func sigmoidAutosensRatio(glucose: Double) -> Double {
-            let autosensRange = sigmoidAutosensMax - sigmoidAutosensMin
-            // Based on reference data analysis, the effective tdd14days = 76.92 to match reference results
-            // This corresponds to tddFactor = 50/76.92 = 0.65
-            let tddFactor = 0.65
-            // fixOffset = 0 based on constraint that ratio = 1.0 at target glucose
-            let fixOffset = 0.0
+            let as_min = sigmoidAutosensMin
+            let autosens_interval = sigmoidAutosensMax - as_min
+            let bg_dev = (glucose - sigmoidTargetBG) * 0.0555
 
-            let exponent = ((glucose - sigmoidTargetBG) * 0.0555 * sigmoidAdjustmentFactor * tddFactor) + fixOffset
+            // Use ratio24hTo2w as TDD factor (similar to tdd24h_14d_Ratio in JS)
+            let tdd_factor = ratio24hTo2w
 
-            let ratio = autosensRange / (1 + exp(-exponent)) + sigmoidAutosensMin
-            return ratio // Return unclamped ratio
+            // Calculate fix_offset to make sigmoid factor = 1 when BG deviation = 0
+            var max_minus_one = sigmoidAutosensMax - 1
+            if sigmoidAutosensMax == 1 {
+                max_minus_one = sigmoidAutosensMax + 0.01 - 1
+            }
+            let fix_offset = log10(1 / max_minus_one - as_min / max_minus_one) / log10(M_E)
+
+            let exponent = bg_dev * sigmoidAdjustmentFactor * tdd_factor + fix_offset
+            let sigmoid_factor = autosens_interval / (1 + exp(-exponent)) + as_min
+
+            return sigmoid_factor
         }
 
         // Calculate sigmoid ISF for given glucose value (mg/dL)
@@ -86,11 +112,8 @@ extension DynamicSettings {
             let ratio = sigmoidAutosensRatio(glucose: glucose)
             let isf = sigmoidProfileISF / ratio
 
-            // Apply autosens limits to ISF calculation if needed
-            let maxISF = sigmoidProfileISF / sigmoidAutosensMin
-            let minISF = sigmoidProfileISF / sigmoidAutosensMax
-
-            return max(minISF, min(maxISF, isf))
+            // No autosens clamping applied (consistent with logarithmic implementation)
+            return isf
         }
 
         // Get ISF value for current active formula
@@ -105,10 +128,17 @@ extension DynamicSettings {
             }
         }
 
-        // Generate chart data points for logarithmic curve
+        // Generate chart data points for logarithmic curve (bounded)
         var logarithmicChartData: [(glucose: Double, isf: Double)] {
             glucoseDataPointsMgdL.map { glucose in
                 (glucose: glucose, isf: logarithmicISF(glucose: glucose))
+            }
+        }
+
+        // Generate chart data points for logarithmic curve (unbounded - for domain extension)
+        var logarithmicUnboundedChartData: [(glucose: Double, isf: Double)] {
+            glucoseDataPointsMgdL.map { glucose in
+                (glucose: glucose, isf: logarithmicISFUnbounded(glucose: glucose))
             }
         }
 
@@ -122,7 +152,8 @@ extension DynamicSettings {
         // Convert glucose for display based on units
         func displayGlucose(_ glucoseMgdL: Double, units: GlucoseUnits) -> Double {
             if units == .mmolL {
-                return Double(glucoseMgdL.asMmolL)
+                let decimal = Decimal(glucoseMgdL)
+                return Double(decimal.asMmolL)
             } else {
                 return glucoseMgdL
             }
@@ -142,11 +173,13 @@ extension DynamicSettings {
         let glucose: Double
         let isf: Double
         let formula: String
+        let isOutsideDomain: Bool
 
-        init(glucose: Double, isf: Double, formula: DynamicSensitivityType) {
+        init(glucose: Double, isf: Double, formula: DynamicSensitivityType, isOutsideDomain: Bool = false) {
             self.glucose = glucose
             self.isf = isf
             self.formula = formula.displayName
+            self.isOutsideDomain = isOutsideDomain
         }
     }
 

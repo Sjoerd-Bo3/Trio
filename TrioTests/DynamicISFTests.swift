@@ -390,4 +390,119 @@ import Testing
             "Glucose data points should be preserved after encoding/decoding"
         )
     }
+
+    // MARK: - Reference Implementation Tests (DO NOT CHANGE THESE VALUES!)
+
+    @Test("Logarithmic ISF with exact reference parameters") func testLogarithmicISFReferenceImplementation() {
+        // These parameters and expected results are REFERENCE VALUES - DO NOT CHANGE!
+        var parameters = DynamicSettings.ISFParameters()
+
+        // Variables Shared
+        parameters.tdd24hr = 50.0
+        parameters.tdd2weeks = 50.0
+        parameters.ratio24hTo2w = 0.65
+
+        // Variables Logarithmic 1
+        parameters.logarithmicAdjustmentFactor = 0.75
+        parameters.logarithmicProfileISF = 50.0 // Corrected: L_profileISF = 50
+        parameters.logarithmicAutosensMax = 1.2
+        parameters.logarithmicAutosensMin = 0.8
+        parameters.insulinPeakTime = 45.0 // Note: rapid-acting = 65, ultra-rapid = 50, or custom peak time
+
+        // Expected results - DO NOT CHANGE THESE VALUES!
+        let referenceResults: [(glucose: Double, expectedISF: Double)] = [
+            (40, 112.29541),
+            (55, 87.265375),
+            (70, 72.810494),
+            (100, 56.65068),
+            (140, 45.577557),
+            (180, 39.222883),
+            (250, 32.734629),
+            (400, 26.004608)
+        ]
+
+        // Verify setup calculations
+        let expectedWeightedTDD = (50.0 * 0.65) + (50.0 * (1.0 - 0.65))
+        #expect(
+            abs(parameters.weightedTDD - expectedWeightedTDD) < 0.001,
+            "Weighted TDD should be \(expectedWeightedTDD), got \(parameters.weightedTDD)"
+        )
+
+        let expectedInsulinFactor = 120.0 - 45.0
+        #expect(
+            abs(parameters.insulinFactor - expectedInsulinFactor) < 0.001,
+            "Insulin factor should be \(expectedInsulinFactor), got \(parameters.insulinFactor)"
+        )
+
+        // Test each reference glucose value against expected ISF
+        for testCase in referenceResults {
+            let calculatedISF = parameters.logarithmicISF(glucose: testCase.glucose)
+
+            #expect(
+                abs(calculatedISF - testCase.expectedISF) < 0.001,
+                "For glucose \(testCase.glucose) mg/dL: expected ISF \(testCase.expectedISF), got \(calculatedISF)"
+            )
+        }
+
+        // Debug output for verification
+        print("✅ Reference implementation test passed!")
+        print(
+            "Parameters: TDD=\(parameters.weightedTDD), ProfileISF=\(parameters.logarithmicProfileISF), AF=\(parameters.logarithmicAdjustmentFactor), IF=\(parameters.insulinFactor)"
+        )
+
+        for testCase in referenceResults {
+            let calculatedISF = parameters.logarithmicISF(glucose: testCase.glucose)
+            print("Glucose \(testCase.glucose): Expected=\(testCase.expectedISF), Calculated=\(calculatedISF)")
+        }
+    }
+
+    @Test("Sigmoid ISF with exact reference parameters") func testSigmoidISFReferenceImplementation() {
+        // These parameters and expected results are REFERENCE VALUES - DO NOT CHANGE!
+        var parameters = DynamicSettings.ISFParameters()
+
+        // Variables Shared
+        parameters.tdd24hr = 50.0
+        parameters.tdd2weeks = 50.0
+        parameters.ratio24hTo2w = 0.65
+
+        // Variables Sigmoid 1
+        parameters.sigmoidAdjustmentFactor = 0.5
+        parameters.sigmoidTargetBG = 100.0
+        parameters.sigmoidAutosensMax = 1.2
+        parameters.sigmoidAutosensMin = 0.8
+        parameters.sigmoidProfileISF = 50.0
+
+        // Expected results - DO NOT CHANGE THESE VALUES!
+        let referenceResults: [(glucose: Double, expectedISF: Double)] = [
+            (40, 55.479599),
+            (55, 54.170453),
+            (70, 52.788814),
+            (100, 50.0),
+            (140, 46.765034),
+            (180, 44.501109),
+            (250, 42.555252),
+            (400, 41.728511)
+        ]
+
+        // Test each reference glucose value against expected ISF
+        for testCase in referenceResults {
+            let calculatedISF = parameters.sigmoidISF(glucose: testCase.glucose)
+
+            #expect(
+                abs(calculatedISF - testCase.expectedISF) < 0.001,
+                "For glucose \(testCase.glucose) mg/dL: expected ISF \(testCase.expectedISF), got \(calculatedISF)"
+            )
+        }
+
+        // Debug output for verification
+        print("✅ Sigmoid reference implementation test passed!")
+        print(
+            "Parameters: TDD=\(parameters.weightedTDD), ProfileISF=\(parameters.sigmoidProfileISF), AF=\(parameters.sigmoidAdjustmentFactor), TargetBG=\(parameters.sigmoidTargetBG)"
+        )
+
+        for testCase in referenceResults {
+            let calculatedISF = parameters.sigmoidISF(glucose: testCase.glucose)
+            print("Glucose \(testCase.glucose): Expected=\(testCase.expectedISF), Calculated=\(calculatedISF)")
+        }
+    }
 }
