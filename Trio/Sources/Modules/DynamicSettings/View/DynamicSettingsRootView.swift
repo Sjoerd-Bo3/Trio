@@ -41,6 +41,18 @@ extension DynamicSettings {
 
         var body: some View {
             List {
+                // Show progress view if Dynamic ISF is not yet available
+                if !state.hasValidTDD {
+                    Section {
+                        DynamicISFProgressView(
+                            currentDataPoints: state.currentDataPoints,
+                            requiredDataPoints: state.requiredDataPoints
+                        )
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowBackground(Color.clear)
+                    }
+                }
+                
                 Section(
                     header: Text("Dynamic Insulin Sensitivity"),
                     content: {
@@ -62,7 +74,7 @@ extension DynamicSettings {
                                         localized: "Dynamically adjust insulin sensitivity using Dynamic Ratio rather than Autosens Ratio."
                                     ) :
                                     String(
-                                        localized: "Trio has only been actively used and looping for less than seven days. Cannot enable dynamic ISF."
+                                        localized: "Dynamic ISF requires 7 days of continuous data."
                                     )
                                 let miniHintTextColorForDisabled: Color = colorScheme == .dark ? .orange :
                                     .accentColor
