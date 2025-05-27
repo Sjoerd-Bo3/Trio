@@ -28,6 +28,8 @@ extension DynamicSettings {
         }
 
         @Published var hasValidTDD: Bool = false
+        @Published var currentDataPoints: Int = 0
+        @Published var requiredDataPoints: Int = Int(Double(7 * 288) * 0.85) // ~1714
         @Published var useNewFormula: Bool = false
         @Published var sigmoid: Bool = false
         @Published var adjustmentFactor: Decimal = 0.8
@@ -61,13 +63,16 @@ extension DynamicSettings {
             Task {
                 do {
                     let hasValidTDD = try await tddStorage.hasSufficientTDD()
+                    let dataCount = try await getTDDDataCount()
                     await MainActor.run {
                         self.hasValidTDD = hasValidTDD
+                        self.currentDataPoints = dataCount
                     }
                 } catch {
                     debug(.coreData, "Error when fetching TDD for validity checking: \(error)")
                     await MainActor.run {
                         hasValidTDD = false
+                        currentDataPoints = 0
                     }
                 }
             }
@@ -118,6 +123,22 @@ extension DynamicSettings {
             }
 
             return result
+        }
+        
+        // Gets the count of TDD data points in the last 7 days
+        // - Returns: The number of TDD records
+        // - Throws: An error if the Core Data count operation fails
+        private func getTDDDataCount() async throws -> Int {
+            try await context.perform {
+                let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "TDDStored")
+                fetchRequest.predicate = NSPredicate(
+                    format: "date > %@ AND total > 0",
+                    Date().addingTimeInterval(-86400 * 7) as NSDate
+                )
+                fetchRequest.resultType = .countResultType
+                
+                return try self.context.count(for: fetchRequest)
+            }
         }
     }
 }
