@@ -489,6 +489,14 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
                 storage.save(startTime, as: OpenAPS.Monitor.podAge)
             }
         }
+        
+        if let medtrumPump = pumpManager as? MedtrumPumpManager {
+            guard let endTime = medtrumPump.state.patchExpiresAt else {
+                pumpExpiresAtDate.send(nil)
+                return
+            }
+            pumpExpiresAtDate.send(endTime)
+        }
 
         if let simulatorPump = pumpManager as? MockPumpManager {
             broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
