@@ -491,6 +491,11 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
         }
         
         if let medtrumPump = pumpManager as? MedtrumPumpManager {
+            storage.save(Decimal(medtrumPump.state.reservoir), as: OpenAPS.Monitor.reservoir)
+            broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
+                $0.pumpReservoirDidChange(Decimal(medtrumPump.state.reservoir))
+            }
+            
             guard let endTime = medtrumPump.state.patchExpiresAt else {
                 pumpExpiresAtDate.send(nil)
                 return
