@@ -495,7 +495,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
             broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
                 $0.pumpReservoirDidChange(Decimal(medtrumPump.state.reservoir))
             }
-            
+
             guard let endTime = medtrumPump.state.patchExpiresAt else {
                 pumpExpiresAtDate.send(nil)
                 return
