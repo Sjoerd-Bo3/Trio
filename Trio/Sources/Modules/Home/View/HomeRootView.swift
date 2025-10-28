@@ -147,6 +147,7 @@ extension Home {
                 reservoir: state.reservoir,
                 name: state.pumpName,
                 expiresAtDate: state.pumpExpiresAtDate,
+                activatedAtDate: state.pumpActivatedAtDate,
                 timerDate: state.timerDate,
                 pumpStatusHighlightMessage: state.pumpStatusHighlightMessage,
                 battery: state.batteryFromPersistence

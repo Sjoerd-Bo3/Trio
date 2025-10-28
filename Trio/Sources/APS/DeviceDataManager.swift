@@ -26,6 +26,7 @@ protocol DeviceDataManager: GlucoseSource {
     var errorSubject: PassthroughSubject<Error, Never> { get }
     var pumpName: CurrentValueSubject<String, Never> { get }
     var pumpExpiresAtDate: CurrentValueSubject<Date?, Never> { get }
+    var pumpActivatedAtDate: CurrentValueSubject<Date?, Never> { get }
 
     func heartbeat(date: Date)
     func createBolusProgressReporter() -> DoseProgressReporter?
@@ -101,6 +102,7 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
                 storage.save(modifiedPreferences, as: OpenAPS.Settings.preferences)
 
                 if let omnipod = pumpManager as? OmnipodPumpManager {
+                    pumpActivatedAtDate.send(nil)
                     guard let endTime = omnipod.state.podState?.expiresAt else {
                         pumpExpiresAtDate.send(nil)
                         return
@@ -108,6 +110,7 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
                     pumpExpiresAtDate.send(endTime)
                 }
                 if let omnipodBLE = pumpManager as? OmniBLEPumpManager {
+                    pumpActivatedAtDate.send(nil)
                     guard let endTime = omnipodBLE.state.podState?.expiresAt else {
                         pumpExpiresAtDate.send(nil)
                         return
@@ -115,11 +118,17 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
                     pumpExpiresAtDate.send(endTime)
                 }
                 if let medtrum = pumpManager as? MedtrumPumpManager {
-                    guard let endTime = medtrum.state.patchExpiresAt else {
+                    if medtrum.state.expirationTimer == 1 {
+                        pumpActivatedAtDate.send(nil)
+                        guard let endTime = medtrum.state.patchExpiresAt else {
+                            pumpExpiresAtDate.send(nil)
+                            return
+                        }
+                        pumpExpiresAtDate.send(endTime)
+                    } else {
+                        pumpActivatedAtDate.send(medtrum.state.patchActivatedAt)
                         pumpExpiresAtDate.send(nil)
-                        return
                     }
-                    pumpExpiresAtDate.send(endTime)
                 }
                 if let simulatorPump = pumpManager as? MockPumpManager {
                     pumpDisplayState.value = PumpDisplayState(name: simulatorPump.localizedTitle, image: simulatorPump.smallImage)
@@ -165,6 +174,7 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
             } else {
                 pumpDisplayState.value = nil
                 pumpExpiresAtDate.send(nil)
+                pumpActivatedAtDate.send(nil)
                 pumpName.send("")
                 // Reset bolusIncrement setting to default value, which is 0.1 U
                 var modifiedPreferences = settingsManager.preferences
@@ -204,6 +214,7 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
 
     let pumpDisplayState = CurrentValueSubject<PumpDisplayState?, Never>(nil)
     let pumpExpiresAtDate = CurrentValueSubject<Date?, Never>(nil)
+    let pumpActivatedAtDate = CurrentValueSubject<Date?, Never>(nil)
     let pumpName = CurrentValueSubject<String, Never>("Pump")
 
     init(resolver: Resolver) {
@@ -446,6 +457,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
                 manualTempBasal.send(false)
             }
 
+            pumpActivatedAtDate.send(nil)
             guard let endTime = omnipod.state.podState?.expiresAt else {
                 pumpExpiresAtDate.send(nil)
                 return
@@ -479,6 +491,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
                 manualTempBasal.send(false)
             }
 
+            pumpActivatedAtDate.send(nil)
             guard let endTime = omnipodBLE.state.podState?.expiresAt else {
                 pumpExpiresAtDate.send(nil)
                 return
@@ -489,18 +502,24 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
                 storage.save(startTime, as: OpenAPS.Monitor.podAge)
             }
         }
-        
+
         if let medtrumPump = pumpManager as? MedtrumPumpManager {
             storage.save(Decimal(medtrumPump.state.reservoir), as: OpenAPS.Monitor.reservoir)
             broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
                 $0.pumpReservoirDidChange(Decimal(medtrumPump.state.reservoir))
             }
 
-            guard let endTime = medtrumPump.state.patchExpiresAt else {
+            if medtrumPump.state.expirationTimer == 1 {
+                pumpActivatedAtDate.send(nil)
+                guard let endTime = medtrumPump.state.patchExpiresAt else {
+                    pumpExpiresAtDate.send(nil)
+                    return
+                }
+                pumpExpiresAtDate.send(endTime)
+            } else {
+                pumpActivatedAtDate.send(medtrumPump.state.patchActivatedAt)
                 pumpExpiresAtDate.send(nil)
-                return
             }
-            pumpExpiresAtDate.send(endTime)
         }
 
         if let simulatorPump = pumpManager as? MockPumpManager {
