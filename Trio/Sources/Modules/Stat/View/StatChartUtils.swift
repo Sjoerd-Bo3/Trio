@@ -223,4 +223,47 @@ struct StatChartUtils {
             Text(label).foregroundStyle(Color.secondary)
         }.font(.caption)
     }
+    
+    /// Calculates the horizontal offset for a chart popover to keep it within bounds.
+    ///
+    /// This function ensures that a popover displayed over a chart stays within the visible chart area
+    /// by calculating the necessary horizontal offset based on the popover's position and size.
+    ///
+    /// - Parameters:
+    ///   - domain: The time domain of the chart (start and end dates).
+    ///   - selectedDate: The date corresponding to the selected point on the chart.
+    ///   - chartWidth: The width of the chart in pixels.
+    ///   - popoverWidth: The width of the popover in pixels.
+    /// - Returns: The horizontal offset to apply to the popover to keep it within chart bounds.
+    static func calculatePopoverXOffset(
+        domain: (start: Date, end: Date),
+        selectedDate: Date,
+        chartWidth: CGFloat,
+        popoverWidth: CGFloat
+    ) -> CGFloat {
+        let domainDuration = domain.end.timeIntervalSince(domain.start)
+        guard domainDuration > 0, chartWidth > 0 else { return 0 }
+        
+        // Convert dates to pixel'd x-condition
+        let dateFraction = selectedDate.timeIntervalSince(domain.start) / domainDuration
+        let x_selected = dateFraction * chartWidth
+        
+        // TODO: this is semi hacky, can this be improved?
+        let x_left = x_selected - (popoverWidth / 2) // Left edge of popover
+        let x_right = x_selected + (popoverWidth / 2) // Right edge of popover
+        
+        var offset: CGFloat = 0 // Default = no shift
+        
+        // Push popover to right if its left edge is (nearing) out-of-bounds
+        if x_left < 0 {
+            offset = abs(x_left) // push to right
+        }
+        
+        // Push popover to left if its right edge is (nearing) out-of-bounds)
+        if x_right > chartWidth {
+            offset = -(x_right - chartWidth) // push to left
+        }
+        
+        return offset
+    }
 }
