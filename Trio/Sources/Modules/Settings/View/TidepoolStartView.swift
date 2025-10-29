@@ -93,17 +93,7 @@ struct TidepoolStartView: BaseView {
                 }
             }
         }
-        .sheet(isPresented: $shouldDisplayHint) {
-            SettingInputHintView(
-                hintDetent: $hintDetent,
-                shouldDisplayHint: $shouldDisplayHint,
-                hintLabel: "Connect to Tidepool",
-                hintText: Text(
-                    "When connected, uploading of carbs, bolus, basal and glucose from Trio to your Tidepool account is enabled.\n\nUse your Tidepool credentials to login. If you dont already have a Tidepool account, you can sign up for one on the login page."
-                ),
-                sheetTitle: String(localized: "Help", comment: "Help sheet title")
-            )
-        }
+        .settingsHint(manager: hintManager)
         .scrollContentBackground(.hidden).background(appState.trioBackgroundColor(for: colorScheme))
         .navigationTitle("Tidepool")
         .navigationBarTitleDisplayMode(.automatic)

@@ -103,15 +103,7 @@ struct NotificationsView: BaseView {
             isPresented: self.$showAlert,
             content: { self.notificationReminder() }
         )
-        .sheet(isPresented: $shouldDisplayHint) {
-            SettingInputHintView(
-                hintDetent: $hintDetent,
-                shouldDisplayHint: $shouldDisplayHint,
-                hintLabel: hintLabel ?? "",
-                hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                sheetTitle: String(localized: "Help", comment: "Help sheet title")
-            )
-        }
+        .settingsHint(manager: hintManager)
         .scrollContentBackground(.hidden)
         .background(appState.trioBackgroundColor(for: colorScheme))
         .navigationTitle("Notifications")

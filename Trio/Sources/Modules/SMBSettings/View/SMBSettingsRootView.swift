@@ -5,12 +5,7 @@ extension SMBSettings {
     struct RootView: BaseView {
         let resolver: Resolver
         @StateObject var state = StateModel()
-        @State private var shouldDisplayHint: Bool = false
-        @State var hintDetent = PresentationDetent.large
-        @State var selectedVerboseHint: AnyView?
-        @State var hintLabel: String?
-        @State private var decimalPlaceholder: Decimal = 0.0
-        @State private var booleanPlaceholder: Bool = false
+        @StateObject private var hintManager = SettingsHintManager()
 
         @Environment(\.colorScheme) var colorScheme
         @EnvironmentObject var appIcons: Icons
@@ -19,15 +14,11 @@ extension SMBSettings {
         var body: some View {
             List {
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: $state.enableSMBAlways,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Enable SMB Always", comment: "Enable SMB Always")
-                        }
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Enable SMB Always", comment: "Enable SMB Always")
                     ),
                     units: state.units,
                     type: .boolean,
@@ -47,16 +38,12 @@ extension SMBSettings {
 
                 if !state.enableSMBAlways {
                     SettingInputSection(
-                        decimalValue: $decimalPlaceholder,
+                        decimalValue: $hintManager.decimalPlaceholder,
                         booleanValue: $state.enableSMBWithCOB,
-                        shouldDisplayHint: $shouldDisplayHint,
-                        selectedVerboseHint: Binding(
-                            get: { selectedVerboseHint },
-                            set: {
-                                selectedVerboseHint = $0.map { AnyView($0) }
-                                hintLabel = String(localized: "Enable SMB With COB", comment: "Enable SMB With COB")
-                            }
-                        ),
+                        shouldDisplayHint: $hintManager.shouldDisplayHint,
+                        selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Enable SMB With COB", comment: "Enable SMB With COB")
+                    ),
                         units: state.units,
                         type: .boolean,
                         label: String(localized: "Enable SMB With COB", comment: "Enable SMB With COB"),
@@ -74,16 +61,12 @@ extension SMBSettings {
                     )
 
                     SettingInputSection(
-                        decimalValue: $decimalPlaceholder,
+                        decimalValue: $hintManager.decimalPlaceholder,
                         booleanValue: $state.enableSMBWithTemptarget,
-                        shouldDisplayHint: $shouldDisplayHint,
-                        selectedVerboseHint: Binding(
-                            get: { selectedVerboseHint },
-                            set: {
-                                selectedVerboseHint = $0.map { AnyView($0) }
-                                hintLabel = String(localized: "Enable SMB With Temptarget", comment: "Enable SMB With Temptarget")
-                            }
-                        ),
+                        shouldDisplayHint: $hintManager.shouldDisplayHint,
+                        selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Enable SMB With Temptarget", comment: "Enable SMB With Temptarget")
+                    ),
                         units: state.units,
                         type: .boolean,
                         label: String(localized: "Enable SMB With Temptarget", comment: "Enable SMB With Temptarget"),
@@ -103,16 +86,12 @@ extension SMBSettings {
                     )
 
                     SettingInputSection(
-                        decimalValue: $decimalPlaceholder,
+                        decimalValue: $hintManager.decimalPlaceholder,
                         booleanValue: $state.enableSMBAfterCarbs,
-                        shouldDisplayHint: $shouldDisplayHint,
-                        selectedVerboseHint: Binding(
-                            get: { selectedVerboseHint },
-                            set: {
-                                selectedVerboseHint = $0.map { AnyView($0) }
-                                hintLabel = String(localized: "Enable SMB After Carbs", comment: "Enable SMB After Carbs")
-                            }
-                        ),
+                        shouldDisplayHint: $hintManager.shouldDisplayHint,
+                        selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Enable SMB After Carbs", comment: "Enable SMB After Carbs")
+                    ),
                         units: state.units,
                         type: .boolean,
                         label: String(localized: "Enable SMB After Carbs", comment: "Enable SMB After Carbs"),
@@ -132,7 +111,7 @@ extension SMBSettings {
                     SettingInputSection(
                         decimalValue: $state.enableSMB_high_bg_target,
                         booleanValue: $state.enableSMB_high_bg,
-                        shouldDisplayHint: $shouldDisplayHint,
+                        shouldDisplayHint: $hintManager.shouldDisplayHint,
                         selectedVerboseHint: Binding(
                             get: { selectedVerboseHint },
                             set: {
@@ -162,9 +141,9 @@ extension SMBSettings {
                 }
 
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: $state.allowSMBWithHighTemptarget,
-                    shouldDisplayHint: $shouldDisplayHint,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
                     selectedVerboseHint: Binding(
                         get: { selectedVerboseHint },
                         set: {
@@ -202,15 +181,11 @@ extension SMBSettings {
                 )
 
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: $state.enableUAM,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Enable UAM", comment: "Enable UAM")
-                        }
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Enable UAM", comment: "Enable UAM")
                     ),
                     units: state.units,
                     type: .boolean,
@@ -233,14 +208,10 @@ extension SMBSettings {
 
                 SettingInputSection(
                     decimalValue: $state.maxSMBBasalMinutes,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Max SMB Basal Minutes", comment: "Max SMB Basal Minutes")
-                        }
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Max SMB Basal Minutes", comment: "Max SMB Basal Minutes")
                     ),
                     units: state.units,
                     type: .decimal("maxSMBBasalMinutes"),
@@ -279,14 +250,10 @@ extension SMBSettings {
 
                 SettingInputSection(
                     decimalValue: $state.maxUAMSMBBasalMinutes,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Max UAM Basal Minutes", comment: "Max UAM Basal Minutes")
-                        }
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Max UAM Basal Minutes", comment: "Max UAM Basal Minutes")
                     ),
                     units: state.units,
                     type: .decimal("maxUAMSMBBasalMinutes"),
@@ -324,8 +291,8 @@ extension SMBSettings {
 
                 SettingInputSection(
                     decimalValue: $state.maxDeltaBGthreshold,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
                     selectedVerboseHint: Binding(
                         get: { selectedVerboseHint },
                         set: {
@@ -357,15 +324,7 @@ extension SMBSettings {
                 )
             }
             .listSectionSpacing(sectionSpacing)
-            .sheet(isPresented: $shouldDisplayHint) {
-                SettingInputHintView(
-                    hintDetent: $hintDetent,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    hintLabel: hintLabel ?? "",
-                    hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                    sheetTitle: String(localized: "Help", comment: "Help sheet title")
-                )
-            }
+            .settingsHint(manager: hintManager)
             .scrollContentBackground(.hidden).background(appState.trioBackgroundColor(for: colorScheme))
             .onAppear(perform: configureView)
             .navigationTitle("SMB Settings")

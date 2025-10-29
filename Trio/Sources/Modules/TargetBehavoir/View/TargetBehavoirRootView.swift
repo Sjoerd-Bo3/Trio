@@ -5,12 +5,7 @@ extension TargetBehavoir {
     struct RootView: BaseView {
         let resolver: Resolver
         @StateObject var state = StateModel()
-        @State private var shouldDisplayHint: Bool = false
-        @State var hintDetent = PresentationDetent.large
-        @State var selectedVerboseHint: AnyView?
-        @State var hintLabel: String?
-        @State private var decimalPlaceholder: Decimal = 0.0
-        @State private var booleanPlaceholder: Bool = false
+        @StateObject private var hintManager = SettingsHintManager()
         @State private var showAutosensMaxAlert = false
 
         @Environment(\.colorScheme) var colorScheme
@@ -20,9 +15,9 @@ extension TargetBehavoir {
         var body: some View {
             List {
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: $state.highTemptargetRaisesSensitivity,
-                    shouldDisplayHint: $shouldDisplayHint,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
                     selectedVerboseHint: Binding(
                         get: { selectedVerboseHint },
                         set: {
@@ -59,9 +54,9 @@ extension TargetBehavoir {
                 )
 
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: effectiveLowTTLowersSensBinding,
-                    shouldDisplayHint: $shouldDisplayHint,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
                     selectedVerboseHint: Binding(
                         get: { selectedVerboseHint },
                         set: {
@@ -97,15 +92,11 @@ extension TargetBehavoir {
                 )
 
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: $state.sensitivityRaisesTarget,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Sensitivity Raises Target", comment: "Sensitivity Raises Target")
-                        }
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Sensitivity Raises Target", comment: "Sensitivity Raises Target")
                     ),
                     units: state.units,
                     type: .boolean,
@@ -120,15 +111,11 @@ extension TargetBehavoir {
                 )
 
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: $state.resistanceLowersTarget,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Resistance Lowers Target", comment: "Resistance Lowers Target")
-                        }
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Resistance Lowers Target", comment: "Resistance Lowers Target")
                     ),
                     units: state.units,
                     type: .boolean,
@@ -144,14 +131,10 @@ extension TargetBehavoir {
 
                 SettingInputSection(
                     decimalValue: $state.halfBasalExerciseTarget,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Half Basal Exercise Target", comment: "Half Basal Exercise Target")
-                        }
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Half Basal Exercise Target", comment: "Half Basal Exercise Target")
                     ),
                     units: state.units,
                     type: .decimal("halfBasalExerciseTarget"),
@@ -176,15 +159,7 @@ extension TargetBehavoir {
                 )
             }
             .listSectionSpacing(sectionSpacing)
-            .sheet(isPresented: $shouldDisplayHint) {
-                SettingInputHintView(
-                    hintDetent: $hintDetent,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    hintLabel: hintLabel ?? "",
-                    hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                    sheetTitle: String(localized: "Help", comment: "Help sheet title")
-                )
-            }
+            .settingsHint(manager: hintManager)
             .scrollContentBackground(.hidden).background(appState.trioBackgroundColor(for: colorScheme))
             .onAppear(perform: configureView)
             .alert(

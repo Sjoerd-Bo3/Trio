@@ -7,12 +7,7 @@ extension NightscoutConfig {
         let resolver: Resolver
         let displayClose: Bool
         @StateObject var state = StateModel()
-        @State private var shouldDisplayHint: Bool = false
-        @State var hintDetent = PresentationDetent.large
-        @State var selectedVerboseHint: AnyView?
-        @State var hintLabel: String?
-        @State private var decimalPlaceholder: Decimal = 0.0
-        @State private var booleanPlaceholder: Bool = false
+        @StateObject private var hintManager = SettingsHintManager()
         @State var backfillAlert: Alert?
         @State var isBackfillAlertPresented = false
 
@@ -104,15 +99,7 @@ extension NightscoutConfig {
                 }
                 .listSectionSpacing(sectionSpacing)
             }
-            .sheet(isPresented: $shouldDisplayHint) {
-                SettingInputHintView(
-                    hintDetent: $hintDetent,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    hintLabel: hintLabel ?? "",
-                    hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                    sheetTitle: String(localized: "Help", comment: "Help sheet title")
-                )
-            }
+            .settingsHint(manager: hintManager)
             .navigationBarTitle("Nightscout")
             .navigationBarTitleDisplayMode(.automatic)
             .scrollContentBackground(.hidden).background(appState.trioBackgroundColor(for: colorScheme))

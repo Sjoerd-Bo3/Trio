@@ -5,13 +5,7 @@ extension AutotuneConfig {
     struct RootView: BaseView {
         let resolver: Resolver
         @StateObject var state = StateModel()
-
-        @State private var shouldDisplayHint: Bool = false
-        @State var hintDetent = PresentationDetent.large
-        @State var selectedVerboseHint: AnyView?
-        @State var hintLabel: String?
-        @State private var decimalPlaceholder: Decimal = 0.0
-        @State private var booleanPlaceholder: Bool = false
+        @StateObject private var hintManager = SettingsHintManager()
 
         @State var replaceAlert = false
 
@@ -42,15 +36,11 @@ extension AutotuneConfig {
         var body: some View {
             Form {
                 SettingInputSection(
-                    decimalValue: $decimalPlaceholder,
+                    decimalValue: $hintManager.decimalPlaceholder,
                     booleanValue: $state.useAutotune,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = "Use Autotune"
-                        }
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: "Use Autotune"
                     ),
                     units: state.units,
                     type: .boolean,
@@ -67,16 +57,12 @@ extension AutotuneConfig {
 
                 if state.useAutotune {
                     SettingInputSection(
-                        decimalValue: $decimalPlaceholder,
+                        decimalValue: $hintManager.decimalPlaceholder,
                         booleanValue: $state.onlyAutotuneBasals,
-                        shouldDisplayHint: $shouldDisplayHint,
-                        selectedVerboseHint: Binding(
-                            get: { selectedVerboseHint },
-                            set: {
-                                selectedVerboseHint = $0.map { AnyView($0) }
-                                hintLabel = "Only Autotune Basal Insulin"
-                            }
-                        ),
+                        shouldDisplayHint: $hintManager.shouldDisplayHint,
+                        selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: "Only Autotune Basal Insulin"
+                    ),
                         units: state.units,
                         type: .boolean,
                         label: "Only Autotune Basal Insulin",
@@ -173,15 +159,7 @@ extension AutotuneConfig {
                     }
                 }
             }
-            .sheet(isPresented: $shouldDisplayHint) {
-                SettingInputHintView(
-                    hintDetent: $hintDetent,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    hintLabel: hintLabel ?? "",
-                    hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                    sheetTitle: "Help"
-                )
-            }
+            .settingsHint(manager: hintManager)
             .scrollContentBackground(.hidden).background(appState.trioBackgroundColor(for: colorScheme))
             .onAppear(perform: configureView)
             .navigationTitle("Autotune")

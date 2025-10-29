@@ -5,12 +5,7 @@ extension UnitsLimitsSettings {
     struct RootView: BaseView {
         let resolver: Resolver
         @StateObject var state = StateModel()
-        @State private var shouldDisplayHint: Bool = false
-        @State var hintDetent = PresentationDetent.large
-        @State var selectedVerboseHint: AnyView?
-        @State var hintLabel: String?
-        @State private var decimalPlaceholder: Decimal = 0.0
-        @State private var booleanPlaceholder: Bool = false
+        @StateObject private var hintManager = SettingsHintManager()
 
         @Environment(\.colorScheme) var colorScheme
         @EnvironmentObject var appIcons: Icons
@@ -30,14 +25,10 @@ extension UnitsLimitsSettings {
 
                 SettingInputSection(
                     decimalValue: $state.maxIOB,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Maximum Insulin on Board (IOB)", comment: "Max IOB")
-                        }
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Maximum Insulin on Board (IOB)", comment: "Max IOB")
                     ),
                     units: state.units,
                     type: .decimal("maxIOB"),
@@ -84,8 +75,8 @@ extension UnitsLimitsSettings {
 
                 SettingInputSection(
                     decimalValue: $state.maxBolus,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
                     selectedVerboseHint: Binding(
                         get: { selectedVerboseHint },
                         set: {
@@ -110,8 +101,8 @@ extension UnitsLimitsSettings {
 
                 SettingInputSection(
                     decimalValue: $state.maxBasal,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
                     selectedVerboseHint: Binding(
                         get: { selectedVerboseHint },
                         set: {
@@ -137,14 +128,10 @@ extension UnitsLimitsSettings {
 
                 SettingInputSection(
                     decimalValue: $state.maxCOB,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: Binding(
-                        get: { selectedVerboseHint },
-                        set: {
-                            selectedVerboseHint = $0.map { AnyView($0) }
-                            hintLabel = String(localized: "Maximum Carbs on Board (COB)", comment: "Max COB")
-                        }
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
+                    selectedVerboseHint: hintManager.verboseHintBinding(
+                        label: String(localized: "Maximum Carbs on Board (COB)", comment: "Max COB")
                     ),
                     units: state.units,
                     type: .decimal("maxCOB"),
@@ -165,8 +152,8 @@ extension UnitsLimitsSettings {
 
                 SettingInputSection(
                     decimalValue: $state.threshold_setting,
-                    booleanValue: $booleanPlaceholder,
-                    shouldDisplayHint: $shouldDisplayHint,
+                    booleanValue: $hintManager.booleanPlaceholder,
+                    shouldDisplayHint: $hintManager.shouldDisplayHint,
                     selectedVerboseHint: Binding(
                         get: { selectedVerboseHint },
                         set: {
@@ -211,15 +198,7 @@ extension UnitsLimitsSettings {
                 )
             }
             .listSectionSpacing(sectionSpacing)
-            .sheet(isPresented: $shouldDisplayHint) {
-                SettingInputHintView(
-                    hintDetent: $hintDetent,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    hintLabel: hintLabel ?? "",
-                    hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                    sheetTitle: String(localized: "Help", comment: "Help sheet title")
-                )
-            }
+            .settingsHint(manager: hintManager)
             .scrollContentBackground(.hidden).background(appState.trioBackgroundColor(for: colorScheme))
             .onAppear(perform: configureView)
             .navigationTitle("Units and Limits")

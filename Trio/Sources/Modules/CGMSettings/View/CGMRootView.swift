@@ -8,12 +8,7 @@ extension CGMSettings {
         let displayClose: Bool
         let bluetoothManager: BluetoothStateManager
         @StateObject var state = StateModel()
-        @State private var shouldDisplayHint: Bool = false
-        @State var hintDetent = PresentationDetent.large
-        @State var selectedVerboseHint: AnyView?
-        @State var hintLabel: String?
-        @State private var decimalPlaceholder: Decimal = 0.0
-        @State private var booleanPlaceholder: Bool = false
+        @StateObject private var hintManager = SettingsHintManager()
         @State var showCGMSelection: Bool = false
 
         @Environment(\.colorScheme) var colorScheme
@@ -100,9 +95,9 @@ extension CGMSettings {
                     }
 
                     SettingInputSection(
-                        decimalValue: $decimalPlaceholder,
+                        decimalValue: $hintManager.decimalPlaceholder,
                         booleanValue: $state.smoothGlucose,
-                        shouldDisplayHint: $shouldDisplayHint,
+                        shouldDisplayHint: $hintManager.shouldDisplayHint,
                         selectedVerboseHint: Binding(
                             get: { selectedVerboseHint },
                             set: {
@@ -176,28 +171,7 @@ extension CGMSettings {
                         }
                     }
                 }
-                .sheet(isPresented: $shouldDisplayHint) {
-                    SettingInputHintView(
-                        hintDetent: $hintDetent,
-                        shouldDisplayHint: $shouldDisplayHint,
-                        hintLabel: hintLabel ?? "",
-                        hintText: AnyView(
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(
-                                    "Current CGM Models Supported:"
-                                )
-                                VStack(alignment: .leading) {
-                                    Text("• Dexcom G5")
-                                    Text("• Dexcom G6 / ONE")
-                                    Text("• Dexcom G7 / ONE+")
-                                    Text("• Dexcom Share")
-                                    Text("• Freestyle Libre")
-                                    Text("• Freestyle Libre Demo")
-                                    Text("• Glucose Simulator")
-                                    Text("• Medtronic Enlite")
-                                    Text("• Nightscout")
-                                    Text("• xDrip4iOS")
-                                }
+                .settingsHint(manager: hintManager)
                                 Text(
                                     "Note: The CGM Heartbeat can come from either a CGM or a pump to wake up Trio when phone is locked or in the background. If CGM is on the same phone as Trio and xDrip4iOS is configured to use the same AppGroup as Trio and the heartbeat feature is turned on in xDrip4iOS, then the CGM can provide a heartbeat to wake up Trio when phone is locked or app is in the background."
                                 )

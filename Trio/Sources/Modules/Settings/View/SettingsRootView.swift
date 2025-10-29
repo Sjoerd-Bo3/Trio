@@ -160,9 +160,9 @@ extension Settings {
                     let miniHintTextColorForDisabled: Color = colorScheme == .dark ? .orange : .accentColor
                     let miniHintTextColor: Color = closedLoopDisabled ? miniHintTextColorForDisabled : .secondary
                     SettingInputSection(
-                        decimalValue: $decimalPlaceholder,
+                        decimalValue: $hintManager.decimalPlaceholder,
                         booleanValue: $state.closedLoop,
-                        shouldDisplayHint: $shouldDisplayHint,
+                        shouldDisplayHint: $hintManager.shouldDisplayHint,
                         selectedVerboseHint: Binding(
                             get: { selectedVerboseHint },
                             set: {
@@ -358,15 +358,7 @@ extension Settings {
 //                }.listRowBackground(Color.chart)
             }
             .scrollContentBackground(.hidden).background(appState.trioBackgroundColor(for: colorScheme))
-            .sheet(isPresented: $shouldDisplayHint) {
-                SettingInputHintView(
-                    hintDetent: $hintDetent,
-                    shouldDisplayHint: $shouldDisplayHint,
-                    hintLabel: hintLabel ?? "",
-                    hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                    sheetTitle: String(localized: "Help", comment: "Help sheet title")
-                )
-            }
+            .settingsHint(manager: hintManager)
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(activityItems: state.logItems())
             }

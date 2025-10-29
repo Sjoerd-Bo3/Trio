@@ -16,9 +16,9 @@ struct NightscoutUploadView: View {
     var body: some View {
         List {
             SettingInputSection(
-                decimalValue: $decimalPlaceholder,
+                decimalValue: $hintManager.decimalPlaceholder,
                 booleanValue: $state.isUploadEnabled,
-                shouldDisplayHint: $shouldDisplayHint,
+                shouldDisplayHint: $hintManager.shouldDisplayHint,
                 selectedVerboseHint: Binding(
                     get: { selectedVerboseHint },
                     set: {
@@ -48,9 +48,9 @@ struct NightscoutUploadView: View {
             )
 
             SettingInputSection(
-                decimalValue: $decimalPlaceholder,
+                decimalValue: $hintManager.decimalPlaceholder,
                 booleanValue: $state.uploadGlucose,
-                shouldDisplayHint: $shouldDisplayHint,
+                shouldDisplayHint: $hintManager.shouldDisplayHint,
                 selectedVerboseHint: Binding(
                     get: { selectedVerboseHint },
                     set: {
@@ -70,15 +70,7 @@ struct NightscoutUploadView: View {
             )
         }
         .listSectionSpacing(sectionSpacing)
-        .sheet(isPresented: $shouldDisplayHint) {
-            SettingInputHintView(
-                hintDetent: $hintDetent,
-                shouldDisplayHint: $shouldDisplayHint,
-                hintLabel: hintLabel ?? "",
-                hintText: selectedVerboseHint ?? AnyView(EmptyView()),
-                sheetTitle: String(localized: "Help", comment: "Help sheet title")
-            )
-        }
+        .settingsHint(manager: hintManager)
         .navigationTitle("Upload")
         .navigationBarTitleDisplayMode(.automatic)
         .scrollContentBackground(.hidden)
