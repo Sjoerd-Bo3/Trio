@@ -268,6 +268,7 @@
 		491D6FBE2D56741C00C49F67 /* TempTargetRunStored+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491D6FB92D56741C00C49F67 /* TempTargetRunStored+CoreDataClass.swift */; };
 		491D6FBF2D56741C00C49F67 /* TempTargetRunStored+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491D6FBA2D56741C00C49F67 /* TempTargetRunStored+CoreDataProperties.swift */; };
 		491D6FC02D56741C00C49F67 /* TempTargetStored+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491D6FBB2D56741C00C49F67 /* TempTargetStored+CoreDataClass.swift */; };
+		49239B432EEA27AD00469145 /* TempTargetCalculations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49239B422EEA27AD00469145 /* TempTargetCalculations.swift */; };
 		49B9B57F2D5768D2009C6B59 /* AdjustmentStored+Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B9B57E2D5768D2009C6B59 /* AdjustmentStored+Helper.swift */; };
 		5075C1608E6249A51495C422 /* TargetsEditorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BDEA2DC60EDE0A3CA54DC73 /* TargetsEditorProvider.swift */; };
 		53F2382465BF74DB1A967C8B /* PumpConfigProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8630D58BDAD6D9C650B9B39 /* PumpConfigProvider.swift */; };
@@ -470,8 +471,6 @@
 		CE1F6DE92BAF37C90064EB8D /* TidepoolConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1F6DE82BAF37C90064EB8D /* TidepoolConfigView.swift */; };
 		CE2FAD3A297D93F0001A872C /* BloodGlucoseExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2FAD39297D93F0001A872C /* BloodGlucoseExtensions.swift */; };
 		CE3EEF9A2D463717001944DD /* CustomCGMOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3EEF992D46370A001944DD /* CustomCGMOptionsView.swift */; };
-		CE48C86428CA69D5007C0598 /* OmniBLEPumpManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE48C86328CA69D5007C0598 /* OmniBLEPumpManagerExtensions.swift */; };
-		CE48C86628CA6B48007C0598 /* OmniPodManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE48C86528CA6B48007C0598 /* OmniPodManagerExtensions.swift */; };
 		CE7950242997D81700FA576E /* CGMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7950232997D81700FA576E /* CGMSettingsView.swift */; };
 		CE7950262998056D00FA576E /* CGMSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7950252998056D00FA576E /* CGMSetupView.swift */; };
 		CE7CA34E2A064973004BE681 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CA3432A064973004BE681 /* AppShortcuts.swift */; };
@@ -1098,6 +1097,7 @@
 		491D6FBA2D56741C00C49F67 /* TempTargetRunStored+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TempTargetRunStored+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		491D6FBB2D56741C00C49F67 /* TempTargetStored+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TempTargetStored+CoreDataClass.swift"; sourceTree = "<group>"; };
 		491D6FBC2D56741C00C49F67 /* TempTargetStored+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TempTargetStored+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		49239B422EEA27AD00469145 /* TempTargetCalculations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempTargetCalculations.swift; sourceTree = "<group>"; };
 		49B9B57E2D5768D2009C6B59 /* AdjustmentStored+Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AdjustmentStored+Helper.swift"; sourceTree = "<group>"; };
 		4DD795BA46B193644D48138C /* TargetsEditorRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TargetsEditorRootView.swift; sourceTree = "<group>"; };
 		505E09DC17A0C3D0AF4B66FE /* ISFEditorStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ISFEditorStateModel.swift; sourceTree = "<group>"; };
@@ -1302,8 +1302,6 @@
 		CE398D17297C9EE800DF218F /* G7SensorKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = G7SensorKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE398D1A297D69A900DF218F /* ShareClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = ShareClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE3EEF992D46370A001944DD /* CustomCGMOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCGMOptionsView.swift; sourceTree = "<group>"; };
-		CE48C86328CA69D5007C0598 /* OmniBLEPumpManagerExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OmniBLEPumpManagerExtensions.swift; sourceTree = "<group>"; };
-		CE48C86528CA6B48007C0598 /* OmniPodManagerExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OmniPodManagerExtensions.swift; sourceTree = "<group>"; };
 		CE51DD1B2A01970800F163F7 /* ConnectIQ 2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = "ConnectIQ 2.xcframework"; path = "Dependencies/ConnectIQ 2.xcframework"; sourceTree = "<group>"; };
 		CE6B025628F350FF000C5502 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS9.1.sdk/System/Library/Frameworks/HealthKit.framework; sourceTree = DEVELOPER_DIR; };
 		CE7950232997D81700FA576E /* CGMSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGMSettingsView.swift; sourceTree = "<group>"; };
@@ -2428,44 +2426,45 @@
 		388E5A5A25B6F05F0019842D /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
-				DDD5889C2DDDC9A900C8848D /* TimeAgoFormatter.swift */,
-				DD82D4B72DCAB2BA00BAFC77 /* PropertyPersistentFlags.swift */,
-				DDCAE8322D78D49C00B1BB51 /* TherapySettingsUtil.swift */,
-				BD249DA62D42FE3800412DEB /* Calendar+GlucoseStatsChart.swift */,
+				E06B9119275B5EEA003C04B6 /* Array+Extension.swift */,
 				DD73FA0E2D74F57300D19D1E /* BackgroundTask+Helper.swift */,
+				DD1DB7CB2BECCA1F0048B367 /* BuildDetails.swift */,
+				FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */,
+				BD249DA62D42FE3800412DEB /* Calendar+GlucoseStatsChart.swift */,
 				CEF1ED6A2D58FB4600FAF41E /* CGMOptions.swift */,
-				C2A0A42E2CE0312C003B98E8 /* ConstantValues.swift */,
-				DD940BAB2CA75889000830A5 /* DynamicGlucoseColor.swift */,
 				38F37827261260DC009DB701 /* Color+Extensions.swift */,
 				389ECE042601144100D86C4F /* ConcurrentMap.swift */,
+				C2A0A42E2CE0312C003B98E8 /* ConstantValues.swift */,
 				38192E0C261BAF980094D973 /* ConvenienceExtensions.swift */,
+				BD1661302B82ADAB00256551 /* CustomProgressView.swift */,
+				581516A32BCED84A00BF67D7 /* DebuggingIdentifiers.swift */,
 				3871F39E25ED895A0013ECB5 /* Decimal+Extensions.swift */,
 				38C4D33625E9A1A200D30B77 /* DispatchQueue+Extensions.swift */,
 				389487392614928B004DF424 /* DispatchTimer.swift */,
+				DD940BAB2CA75889000830A5 /* DynamicGlucoseColor.swift */,
 				3811DE5425C9D4D500A708ED /* Formatters.swift */,
 				38FEF412273B317A00574A46 /* HKUnit.swift */,
 				38B4F3AE25E2979F00E76A18 /* IndexedCollection.swift */,
 				389A571F26079BAA00BC102F /* Interpolation.swift */,
 				388E5A5B25B6F0770019842D /* JSON.swift */,
 				38A00B2225FC2B55006BC0B0 /* LRUCache.swift */,
+				582DF9782C8CE1E5001F516D /* MainChartHelper.swift */,
 				38FCF3D525E8FDF40078B0D1 /* MD5.swift */,
 				38E98A2C25F52DC400C0CED0 /* NSLocking+Extensions.swift */,
 				38C4D33925E9A1ED00D30B77 /* NSObject+AssociatedValues.swift */,
 				3811DE5725C9D4D500A708ED /* ProgressBar.swift */,
-				3811DE5525C9D4D500A708ED /* Publisher.swift */,
-				38E98A3625F5509500C0CED0 /* String+Extensions.swift */,
+				DD82D4B72DCAB2BA00BAFC77 /* PropertyPersistentFlags.swift */,
 				3811DEE325CA063400A708ED /* PropertyWrappers */,
-				E06B9119275B5EEA003C04B6 /* Array+Extension.swift */,
-				CEB434E428B8FF5D00B70274 /* UIColor.swift */,
-				FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */,
-				FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */,
-				CEA4F62229BE10F70011ADF7 /* SavitzkyGolayFilter.swift */,
-				BD2FF19F2AE29D43005D1C5D /* ToggleStyles.swift */,
-				BD1661302B82ADAB00256551 /* CustomProgressView.swift */,
-				581516A32BCED84A00BF67D7 /* DebuggingIdentifiers.swift */,
-				DD1DB7CB2BECCA1F0048B367 /* BuildDetails.swift */,
+				3811DE5525C9D4D500A708ED /* Publisher.swift */,
 				DD6B7CB12C7B6F0800B75029 /* Rounding.swift */,
-				582DF9782C8CE1E5001F516D /* MainChartHelper.swift */,
+				CEA4F62229BE10F70011ADF7 /* SavitzkyGolayFilter.swift */,
+				38E98A3625F5509500C0CED0 /* String+Extensions.swift */,
+				49239B422EEA27AD00469145 /* TempTargetCalculations.swift */,
+				DDCAE8322D78D49C00B1BB51 /* TherapySettingsUtil.swift */,
+				DDD5889C2DDDC9A900C8848D /* TimeAgoFormatter.swift */,
+				BD2FF19F2AE29D43005D1C5D /* ToggleStyles.swift */,
+				CEB434E428B8FF5D00B70274 /* UIColor.swift */,
+				FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -2493,8 +2492,6 @@
 				3BA8D1B22DDB870F0006191F /* DecimalExtensions.swift */,
 				DDB37CC62D05127500D99BF4 /* FontExtensions.swift */,
 				CEB434E628B9053300B70274 /* LoopUIColorPalette+Default.swift */,
-				CE48C86328CA69D5007C0598 /* OmniBLEPumpManagerExtensions.swift */,
-				CE48C86528CA6B48007C0598 /* OmniPodManagerExtensions.swift */,
 				38BF021625E7CBBC00579895 /* PumpManagerExtensions.swift */,
 				38A5049125DD9C4000C5B9E8 /* UserDefaultsExtensions.swift */,
 			);
@@ -4147,7 +4144,7 @@
 				F90692CF274B999A0037068D /* HealthKitDataFlow.swift in Sources */,
 				CE7CA3552A064973004BE681 /* ListStateIntent.swift in Sources */,
 				C28DD7262DBA9A9E00EC02DD /* GlucosePercentileDetailView.swift in Sources */,
-				DD906BF42EA6AA0100262772 /* NightscoutUploadPipeline.swift in Sources */, 
+				DD906BF42EA6AA0100262772 /* NightscoutUploadPipeline.swift in Sources */,
 				BDF530D82B40F8AC002CAF43 /* LockScreenView.swift in Sources */,
 				195D80B72AF697B800D25097 /* DynamicSettingsDataFlow.swift in Sources */,
 				DD98ACC02D71013200C0778F /* StatChartUtils.swift in Sources */,
@@ -4282,6 +4279,7 @@
 				DDF691012DA2CA11008BF16C /* AppDiagnosticsDataFlow.swift in Sources */,
 				DDA6E3202D258E0500C2988C /* OverrideHelpView.swift in Sources */,
 				DDA6E2502D22187500C2988C /* ChartLegendView.swift in Sources */,
+				49239B432EEA27AD00469145 /* TempTargetCalculations.swift in Sources */,
 				3811DEAF25C9D88300A708ED /* KeyValueStorage.swift in Sources */,
 				DDD6D4D32CDE90720029439A /* EstimatedA1cDisplayUnit.swift in Sources */,
 				DDA6E3572D25988500C2988C /* ContactImageHelpView.swift in Sources */,
@@ -4322,7 +4320,6 @@
 				383420D625FFE38C002D46C1 /* LoopView.swift in Sources */,
 				DD1745192C543B5700211FAC /* NotificationsView.swift in Sources */,
 				3811DEAD25C9D88300A708ED /* UserDefaults+Cache.swift in Sources */,
-				CE48C86628CA6B48007C0598 /* OmniPodManagerExtensions.swift in Sources */,
 				CEB434E728B9053300B70274 /* LoopUIColorPalette+Default.swift in Sources */,
 				19F95FF329F10FBC00314DDC /* StatDataFlow.swift in Sources */,
 				582DF97B2C8CE209001F516D /* CarbView.swift in Sources */,
@@ -4568,7 +4565,6 @@
 				DD4C57A82D73ADEA001BFF2C /* RestartLiveActivityIntent.swift in Sources */,
 				19E1F7EA29D082ED005C8D20 /* IconConfigProvider.swift in Sources */,
 				DD09D4822C5986F6003FEA5D /* CalendarEventSettingsRootView.swift in Sources */,
-				CE48C86428CA69D5007C0598 /* OmniBLEPumpManagerExtensions.swift in Sources */,
 				DD5DC9F92CF3DAA900AB8703 /* RadioButton.swift in Sources */,
 				38E44522274E3DDC00EC9A94 /* NetworkReachabilityManager.swift in Sources */,
 				CE7CA34F2A064973004BE681 /* BaseIntentsRequest.swift in Sources */,
