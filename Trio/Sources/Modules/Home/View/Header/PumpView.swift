@@ -11,7 +11,7 @@ struct PumpView: View {
     let battery: [OpenAPS_Battery]
     @Environment(\.colorScheme) var colorScheme
 
-    let NORMAL_PATCH_AGE = TimeInterval.hours(80)
+    let normalPatchAge = TimeInterval.hours(80)
 
     private var batteryFormatter: NumberFormatter {
         let formatter = NumberFormatter()
@@ -211,7 +211,7 @@ struct PumpView: View {
 
     private var timerColor: Color {
         if let activatedAt = activatedAtDate {
-            return abs(activatedAt.timeIntervalSinceNow) > NORMAL_PATCH_AGE ? Color.yellow : Color.loopGreen
+            return abs(activatedAt.timeIntervalSinceNow) > normalPatchAge ? Color.yellow : Color.loopGreen
         }
 
         guard let expiresAt = expiresAtDate else {
