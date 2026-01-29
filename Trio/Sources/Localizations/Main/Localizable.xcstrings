@@ -36161,6 +36161,9 @@
         }
       }
     },
+    "Allow Fetching From Nightscout" : {
+
+    },
     "Allow Notifications" : {
       "localizations" : {
         "bg" : {
@@ -43698,6 +43701,9 @@
           }
         }
       }
+    },
+    "App Version" : {
+
     },
     "Appearance" : {
       "localizations" : {
@@ -51838,6 +51844,9 @@
         }
       }
     },
+    "Basal Rate (%@)" : {
+
+    },
     "Basal Rate Adjustment" : {
       "localizations" : {
         "bg" : {
@@ -57476,6 +57485,9 @@
         }
       }
     },
+    "Branch" : {
+
+    },
     "BRANCH: %@" : {
       "localizations" : {
         "bg" : {
@@ -57593,6 +57605,9 @@
           }
         }
       }
+    },
+    "Build Number" : {
+
     },
     "By default, Trio collects crash reports and other anonymized data related to errors, exceptions, and overall app performance." : {
       "localizations" : {
@@ -60733,6 +60748,9 @@
           }
         }
       }
+    },
+    "Carb Ratio (%@)" : {
+
     },
     "Carb Ratios" : {
       "comment" : "Carb Ratios header",
@@ -72839,6 +72857,9 @@
           }
         }
       }
+    },
+    "Could not access documents directory" : {
+
     },
     "Count" : {
       "localizations" : {
@@ -107449,6 +107470,18 @@
         }
       }
     },
+    "Export Categories" : {
+
+    },
+    "Export Date" : {
+
+    },
+    "Export Error" : {
+
+    },
+    "Export failed: %@" : {
+
+    },
     "Export logs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -107698,6 +107731,12 @@
           }
         }
       }
+    },
+    "Export Settings" : {
+      "comment" : "Export Settings menu item in Trio Settings Root View"
+    },
+    "Exporting..." : {
+
     },
     "Extended" : {
       "comment" : "Title string for BeepPreference.extended",
@@ -110138,6 +110177,9 @@
           }
         }
       }
+    },
+    "Failed to write export file: %@" : {
+
     },
     "Fat" : {
       "comment" : "Add Fat",
@@ -125135,6 +125177,9 @@
         }
       }
     },
+    "High Temptarget Raises Sensitivity" : {
+
+    },
     "High Threshold" : {
       "localizations" : {
         "bg" : {
@@ -133280,6 +133325,9 @@
         }
       }
     },
+    "Indefinite" : {
+
+    },
     "Indicates glucose smoothing is enabled." : {
       "localizations" : {
         "bg" : {
@@ -135695,6 +135743,9 @@
         }
       }
     },
+    "Insulin Type" : {
+
+    },
     "Intercept" : {
       "localizations" : {
         "bg" : {
@@ -137867,6 +137918,12 @@
           }
         }
       }
+    },
+    "ISF (%@)" : {
+
+    },
+    "ISF and CR" : {
+
     },
     "ISF/CR" : {
       "comment" : "Option for both ISF and CR",
@@ -148884,6 +148941,9 @@
         }
       }
     },
+    "Low Temptarget Lowers Sensitivity" : {
+
+    },
     "Low Threshold" : {
       "localizations" : {
         "bg" : {
@@ -158214,6 +158274,9 @@
           }
         }
       }
+    },
+    "Metadata" : {
+
     },
     "Meter glucose" : {
       "comment" : "When adding capillary glucose meater reading",
@@ -168701,6 +168764,9 @@
           }
         }
       }
+    },
+    "Not Connected" : {
+
     },
     "Not enough glucose data. You need at least three glucose readings in the last six hours to run the algorithm." : {
       "localizations" : {
@@ -188993,6 +189059,9 @@
           }
         }
       }
+    },
+    "Pump Type" : {
+
     },
     "Quantity Carbs" : {
       "localizations" : {
@@ -220636,6 +220705,9 @@
         }
       }
     },
+    "Suspend Zeros IOB" : {
+
+    },
     "suspend-end" : {
       "localizations" : {
         "bg" : {
@@ -223252,6 +223324,9 @@
           }
         }
       }
+    },
+    "Target (%@)" : {
+
     },
     "Target Behavior" : {
       "localizations" : {
@@ -246230,6 +246305,9 @@
           }
         }
       }
+    },
+    "Trio Backup" : {
+
     },
     "Trio calculates your current Insulin On Board (IOB) from:" : {
       "localizations" : {
