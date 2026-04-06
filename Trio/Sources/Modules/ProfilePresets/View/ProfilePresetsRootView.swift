@@ -313,7 +313,7 @@ extension ProfilePresets {
                             )
                         } else {
                             Text(
-                                "ISF: – ",
+                                "ISF: –",
                                 comment: "ProfilePresets: ISF placeholder when no entries"
                             )
                         }
@@ -328,7 +328,7 @@ extension ProfilePresets {
                             Text("CR: \(formatDecimal(first.ratio)) g/U")
                         } else {
                             Text(
-                                "CR: – ",
+                                "CR: –",
                                 comment: "ProfilePresets: CR placeholder when no entries"
                             )
                         }
