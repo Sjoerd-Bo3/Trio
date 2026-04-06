@@ -242,6 +242,21 @@ extension ProfilePresets {
                 .padding(.vertical, 4)
             }
             .contextMenu {
+                if preset.id != state.activePreset?.id {
+                    Button {
+                        state.selectedPreset = preset
+                        state.showingActivateConfirmation = true
+                    } label: {
+                        Label(
+                            String(
+                                localized: "Activate",
+                                comment: "ProfilePresets: context menu option to activate preset"
+                            ),
+                            systemImage: "checkmark.circle"
+                        )
+                    }
+                }
+
                 if state.currentProfile != nil {
                     Button {
                         state.beginComparison(presetA: preset, presetB: state.currentProfile)
@@ -280,6 +295,23 @@ extension ProfilePresets {
                         ),
                         systemImage: "trash"
                     )
+                }
+            }
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                if preset.id != state.activePreset?.id {
+                    Button {
+                        state.selectedPreset = preset
+                        state.showingActivateConfirmation = true
+                    } label: {
+                        Label(
+                            String(
+                                localized: "Activate",
+                                comment: "ProfilePresets: swipe action to activate preset"
+                            ),
+                            systemImage: "checkmark.circle"
+                        )
+                    }
+                    .tint(.accentColor)
                 }
             }
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
