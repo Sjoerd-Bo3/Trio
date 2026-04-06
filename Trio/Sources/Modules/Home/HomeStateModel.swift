@@ -146,11 +146,18 @@ extension Home {
         private let queue = DispatchQueue(label: "HomeStateModel.queue", qos: .userInitiated)
         private var coreDataPublisher: AnyPublisher<Set<NSManagedObjectID>, Never>?
         private var subscriptions = Set<AnyCancellable>()
+        private var profilePresetObserver: NSObjectProtocol?
 
         typealias PumpEvent = PumpEventStored.EventType
 
         override init() {
             super.init()
+        }
+
+        deinit {
+            if let observer = profilePresetObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
         }
 
         override func subscribe() {
@@ -168,7 +175,7 @@ extension Home {
 
             activeProfilePreset = profilePresetStorage.activePreset()
 
-            NotificationCenter.default.addObserver(
+            profilePresetObserver = NotificationCenter.default.addObserver(
                 forName: BaseProfilePresetStorage.profilePresetActivatedNotification,
                 object: nil,
                 queue: .main
