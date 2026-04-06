@@ -148,7 +148,7 @@ extension ProfilePresets {
         }
 
         var defaultComparisonPresetB: ProfilePreset? {
-            comparisonPresetB ?? (presets.count > 1 ? presets[1] : nil)
+            comparisonPresetB ?? (presets.count > 1 ? presets[1] : currentProfile)
         }
 
         func beginComparison(presetA: ProfilePreset, presetB: ProfilePreset?) {

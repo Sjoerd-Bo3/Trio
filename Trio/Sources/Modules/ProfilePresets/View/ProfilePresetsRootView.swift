@@ -51,7 +51,7 @@ extension ProfilePresets {
                     .listRowBackground(Color.chart)
                 }
 
-                if state.presets.count >= 2 {
+                if state.presets.count >= 2 || (state.presets.count >= 1 && state.currentProfile != nil) {
                     Section(
                         header: Text(
                             "Compare Presets",
@@ -1079,59 +1079,51 @@ extension ProfilePresets {
         // MARK: - Helpers
 
         @ViewBuilder private var comparePresetsRow: some View {
-            HStack {
-                Picker(
-                    String(localized: "First", comment: "ProfilePresets: first preset picker label"),
-                    selection: Binding(
-                        get: { state.defaultComparisonPresetA },
-                        set: { state.comparisonPresetA = $0 }
-                    )
-                ) {
-                    ForEach(state.presets) { preset in
-                        Text(preset.name).tag(Optional(preset))
-                    }
-                }
-                .pickerStyle(.menu)
-                .font(.subheadline)
+            let allOptions = state.presets + (state.currentProfile.map { [$0] } ?? [])
 
-                Picker(
-                    String(localized: "Second", comment: "ProfilePresets: second preset picker label"),
-                    selection: Binding(
-                        get: { state.defaultComparisonPresetB },
-                        set: { state.comparisonPresetB = $0 }
-                    )
-                ) {
-                    ForEach(state.presets) { preset in
-                        Text(preset.name).tag(Optional(preset))
-                    }
-                    if let currentProfile = state.currentProfile {
-                        Text(currentProfile.name).tag(Optional(currentProfile))
-                    }
+            Picker(
+                String(localized: "First", comment: "ProfilePresets: first preset picker label"),
+                selection: Binding(
+                    get: { state.defaultComparisonPresetA },
+                    set: { state.comparisonPresetA = $0 }
+                )
+            ) {
+                ForEach(allOptions) { preset in
+                    Text(preset.name).tag(Optional(preset))
                 }
-                .pickerStyle(.menu)
-                .font(.subheadline)
             }
+            .font(.subheadline)
+
+            Picker(
+                String(localized: "Second", comment: "ProfilePresets: second preset picker label"),
+                selection: Binding(
+                    get: { state.defaultComparisonPresetB },
+                    set: { state.comparisonPresetB = $0 }
+                )
+            ) {
+                ForEach(allOptions) { preset in
+                    Text(preset.name).tag(Optional(preset))
+                }
+            }
+            .font(.subheadline)
 
             if let presetA = state.defaultComparisonPresetA,
-               let presetB = state.defaultComparisonPresetB
+               let presetB = state.defaultComparisonPresetB,
+               presetA.id != presetB.id
             {
-                NavigationLink {
-                    ComparisonView(
-                        presetA: presetA,
-                        presetB: presetB,
-                        units: state.units
-                    )
+                Button {
+                    state.beginComparison(presetA: presetA, presetB: presetB)
                 } label: {
                     Label {
                         Text(
-                            "Compare Selected Presets",
+                            "Compare",
                             comment: "ProfilePresets: button to compare two selected presets"
                         )
                     } icon: {
                         Image(systemName: "arrow.left.arrow.right")
                     }
                     .font(.subheadline)
-                    .foregroundColor(.accentColor)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
         }
