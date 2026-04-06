@@ -74,6 +74,13 @@ extension Adjustments {
         var isHelpSheetPresented: Bool = false
         var helpSheetDetent = PresentationDetent.large
 
+        // Profile Presets
+        @ObservationIgnored @Injected() var profilePresetStorage: ProfilePresetStorage!
+        var profilePresets: [ProfilePreset] = []
+        var activeProfilePreset: ProfilePreset?
+        var showingProfileActivateConfirmation: Bool = false
+        var selectedProfilePreset: ProfilePreset?
+
         // Combine
         private var cancellables = Set<AnyCancellable>()
 
@@ -93,6 +100,17 @@ extension Adjustments {
                     group.addTask { self.updateLatestOverrideConfiguration() }
                     group.addTask { self.updateLatestTempTargetConfiguration() }
                 }
+            }
+
+            profilePresets = profilePresetStorage.presets()
+            activeProfilePreset = profilePresetStorage.activePreset()
+        }
+
+        // MARK: - Profile Presets
+
+        func activateProfilePreset(_ preset: ProfilePreset) {
+            if profilePresetStorage.activatePreset(preset) {
+                activeProfilePreset = preset
             }
         }
 

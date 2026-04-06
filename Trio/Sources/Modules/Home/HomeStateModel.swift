@@ -22,6 +22,7 @@ extension Home {
         @ObservationIgnored @Injected() var overrideStorage: OverrideStorage!
         @ObservationIgnored @Injected() var bluetoothManager: BluetoothStateManager!
         @ObservationIgnored @Injected() var iobService: IOBService!
+        @ObservationIgnored @Injected() var profilePresetStorage: ProfilePresetStorage!
 
         var cgmStateModel: CGMSettings.StateModel {
             CGMSettings.StateModel.shared
@@ -118,6 +119,7 @@ extension Home {
         var maxForecast: [Int] = []
         var minCount: Int = 12 // count of Forecasts drawn in 5 min distances, i.e. 12 means a min of 1 hour
         var forecastDisplayType: ForecastDisplayType = .cone
+        var activeProfilePreset: ProfilePreset?
 
         var minYAxisValue: Decimal = 39
         var maxYAxisValue: Decimal = 200
@@ -163,6 +165,8 @@ extension Home {
 
             // Parallelize Setup functions
             setupHomeViewConcurrently()
+
+            activeProfilePreset = profilePresetStorage.activePreset()
         }
 
         private func setupHomeViewConcurrently() {

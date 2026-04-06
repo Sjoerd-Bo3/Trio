@@ -751,6 +751,7 @@ A631E9E032EA6B20DC562273 /* ProfilePresetsProvider.swift in Sources */ = {isa = 
 1251C1C60CFB17F89B01BB17 /* ProfilePresetsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */; };
 		B2A3F91E0C4D82A1F73E9D04 /* ProfilePresetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E7C35A1B9F64E2A80C31D7 /* ProfilePresetDetailView.swift */; };
 		C8F1D42B3E5A07C9D16B8A23 /* ProfileComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B2E76F4C8D13A5E07F42B1 /* ProfileComparisonView.swift */; };
+		ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC09FCB2D3640FD781EFD10 /* PresetChartViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1600,6 +1601,7 @@ FCE7ED830845881A9B7BFB13 /* ProfilePresetsDataFlow.swift */ = {isa = PBXFileRefe
 6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsRootView.swift; sourceTree = "<group>"; };
 D4E7C35A1B9F64E2A80C31D7 /* ProfilePresetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetDetailView.swift; sourceTree = "<group>"; };
 A9B2E76F4C8D13A5E07F42B1 /* ProfileComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileComparisonView.swift; sourceTree = "<group>"; };
+EDC09FCB2D3640FD781EFD10 /* PresetChartViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetChartViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -3869,6 +3871,7 @@ children = (
 6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */,
 D4E7C35A1B9F64E2A80C31D7 /* ProfilePresetDetailView.swift */,
 A9B2E76F4C8D13A5E07F42B1 /* ProfileComparisonView.swift */,
+EDC09FCB2D3640FD781EFD10 /* PresetChartViews.swift */,
 );
 path = View;
 sourceTree = "<group>";
@@ -4248,6 +4251,7 @@ A631E9E032EA6B20DC562273 /* ProfilePresetsProvider.swift in Sources */,
 1251C1C60CFB17F89B01BB17 /* ProfilePresetsRootView.swift in Sources */,
 B2A3F91E0C4D82A1F73E9D04 /* ProfilePresetDetailView.swift in Sources */,
 C8F1D42B3E5A07C9D16B8A23 /* ProfileComparisonView.swift in Sources */,
+ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */,
 				3811DE2325C9D48300A708ED /* MainDataFlow.swift in Sources */,
 				C2A0A42F2CE03131003B98E8 /* ConstantValues.swift in Sources */,
 				BD3CC0722B0B89D50013189E /* MainChartView.swift in Sources */,

@@ -60,7 +60,9 @@ extension Adjustments {
                     List {
                         switch state.selectedTab {
                         case .overrides: overrides()
-                        case .tempTargets: tempTargets() }
+                        case .tempTargets: tempTargets()
+                        case .profiles: profilesTab()
+                        }
                     }
                     .scrollContentBackground(.hidden)
                     .background(appState.trioBackgroundColor(for: colorScheme))
@@ -104,6 +106,8 @@ extension Adjustments {
                                     Image(systemName: "plus")
                                 }
                             })
+                        case .profiles:
+                            EmptyView()
                         }
                     }
                 }
@@ -171,6 +175,27 @@ extension Adjustments {
                 } message: {
                     Text("Stop the Temp Target \"\(state.currentActiveTempTarget?.name ?? "")\"?")
                 }
+                .alert(
+                    Text("Activate Profile", comment: "Adjustments: profile activation alert title"),
+                    isPresented: $state.showingProfileActivateConfirmation
+                ) {
+                    Button(String(localized: "Activate", comment: "Adjustments: activate button")) {
+                        if let preset = state.selectedProfilePreset {
+                            state.activateProfilePreset(preset)
+                        }
+                        state.selectedProfilePreset = nil
+                    }
+                    Button(String(localized: "Cancel", comment: "Adjustments: cancel button"), role: .cancel) {
+                        state.selectedProfilePreset = nil
+                    }
+                } message: {
+                    if let preset = state.selectedProfilePreset {
+                        Text(
+                            "This will overwrite your current therapy settings with the settings from '\(preset.name)'. Are you sure?",
+                            comment: "Adjustments: profile activation confirmation message"
+                        )
+                    }
+                }
             }).background(appState.trioBackgroundColor(for: colorScheme))
         }
 
@@ -186,6 +211,14 @@ extension Adjustments {
                 Section {} header: {
                     Text(
                         "Add Preset or Temp Target by tapping 'Add Temp Target +' in the top right-hand corner of the screen."
+                    )
+                    .textCase(nil)
+                    .foregroundStyle(.secondary)
+                }
+            case .profiles:
+                Section {} header: {
+                    Text(
+                        "Manage profile presets in Settings > Profile Presets."
                     )
                     .textCase(nil)
                     .foregroundStyle(.secondary)
@@ -245,6 +278,8 @@ extension Adjustments {
                     }
                 }
                 .listRowBackground(Color.loopGreen.opacity(0.8))
+            case .profiles:
+                EmptyView()
             }
         }
 
@@ -272,6 +307,8 @@ extension Adjustments {
                     .disabled(!state.isTempTargetEnabled)
                     .listRowBackground(!state.isTempTargetEnabled ? Color(.systemGray4) : Color(.systemRed))
                     .tint(.white)
+            case .profiles:
+                EmptyView()
             }
         }
 
@@ -287,6 +324,81 @@ extension Adjustments {
                 return "\(minutes)m \(seconds)s"
             } else {
                 return "<1m"
+            }
+        }
+
+        // MARK: - Profiles Tab
+
+        @ViewBuilder func profilesTab() -> some View {
+            if let active = state.activeProfilePreset {
+                Section(
+                    header: Text("Active Profile", comment: "Adjustments: section header for active profile preset")
+                ) {
+                    HStack {
+                        Image(systemName: active.icon)
+                            .foregroundColor(.accentColor)
+                            .font(.title3)
+                        VStack(alignment: .leading) {
+                            Text(active.name)
+                                .font(.headline)
+                            Text("Currently active", comment: "Adjustments: active profile status")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.accentColor)
+                    }
+                }
+            }
+
+            if state.profilePresets.isEmpty {
+                Section {} header: {
+                    Text(
+                        "No profile presets saved. Create presets in Settings > Profile Presets.",
+                        comment: "Adjustments: empty profile presets message"
+                    )
+                    .textCase(nil)
+                    .foregroundStyle(.secondary)
+                }
+            } else {
+                Section(
+                    header: Text(
+                        "Profile Presets",
+                        comment: "Adjustments: section header for profile preset list"
+                    )
+                ) {
+                    ForEach(state.profilePresets) { preset in
+                        HStack {
+                            Image(systemName: preset.icon)
+                                .foregroundColor(.accentColor)
+                                .font(.title3)
+                            VStack(alignment: .leading) {
+                                Text(preset.name)
+                                    .font(.subheadline)
+                            }
+                            Spacer()
+                            if preset.id == state.activeProfilePreset?.id {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.accentColor)
+                            } else {
+                                Button {
+                                    state.selectedProfilePreset = preset
+                                    state.showingProfileActivateConfirmation = true
+                                } label: {
+                                    Text("Activate", comment: "Adjustments: activate profile button")
+                                        .font(.caption.bold())
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color.accentColor)
+                                        .foregroundColor(.white)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

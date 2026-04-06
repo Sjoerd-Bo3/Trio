@@ -487,6 +487,27 @@ extension Home {
             }
         }
 
+        @ViewBuilder var activeProfileIndicator: some View {
+            if let activePreset = state.activeProfilePreset {
+                HStack(spacing: 6) {
+                    Image(systemName: activePreset.icon)
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                    Text(activePreset.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.accentColor)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.accentColor.opacity(0.1))
+                .clipShape(Capsule())
+                .onTapGesture {
+                    selectedTab = 2
+                }
+            }
+        }
+
         @ViewBuilder func mealPanel(_: GeometryProxy) -> some View {
             HStack {
                 HStack {
@@ -940,6 +961,9 @@ extension Home {
                             .padding(.horizontal, 20)
                     }
                 }
+
+                activeProfileIndicator
+                    .padding(.top, 4)
 
                 mealPanel(geo).padding(.top, UIDevice.adjustPadding(min: nil, max: 30))
                     .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 20))

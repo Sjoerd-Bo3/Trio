@@ -31,6 +31,9 @@ extension ProfilePresets {
             Section(
                 header: Text("Basal Rates", comment: "ProfilePresetDetail: section header for basal rates")
             ) {
+                BasalChartView(basalProfile: preset.basalProfile)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
                 HStack {
                     Text("Total Daily Basal", comment: "ProfilePresetDetail: total daily basal label")
                         .font(.subheadline.bold())
@@ -62,6 +65,9 @@ extension ProfilePresets {
                     comment: "ProfilePresetDetail: section header for ISF"
                 )
             ) {
+                ISFChartView(sensitivities: preset.insulinSensitivities.sensitivities, units: units)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
                 ForEach(Array(preset.insulinSensitivities.sensitivities.enumerated()), id: \.offset) { _, entry in
                     HStack {
                         Text(entry.start)
@@ -81,6 +87,9 @@ extension ProfilePresets {
             Section(
                 header: Text("Carb Ratios (CR)", comment: "ProfilePresetDetail: section header for CR")
             ) {
+                CRChartView(schedule: preset.carbRatios.schedule)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
                 ForEach(Array(preset.carbRatios.schedule.enumerated()), id: \.offset) { _, entry in
                     HStack {
                         Text(entry.start)
@@ -103,6 +112,9 @@ extension ProfilePresets {
             Section(
                 header: Text("Glucose Targets", comment: "ProfilePresetDetail: section header for glucose targets")
             ) {
+                TargetsChartView(targets: preset.bgTargets.targets, units: units)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
                 ForEach(Array(preset.bgTargets.targets.enumerated()), id: \.offset) { _, entry in
                     HStack {
                         Text(entry.start)
