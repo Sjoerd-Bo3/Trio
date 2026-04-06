@@ -36,6 +36,10 @@ extension ProfilePresets {
             profilePresetStorage.deletePreset(id: id)
         }
 
+        func renamePreset(id: String, newName: String) {
+            profilePresetStorage.renamePreset(id: id, newName: newName)
+        }
+
         func loadActivePreset() -> ProfilePreset? {
             profilePresetStorage.activePreset()
         }

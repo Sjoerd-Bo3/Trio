@@ -8,6 +8,7 @@ protocol ProfilePresetStorage {
     func currentProfile() -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
     func deletePreset(id: String)
+    func renamePreset(id: String, newName: String)
     func activePresetId() -> String?
     func activePreset() -> ProfilePreset?
 }
@@ -210,5 +211,13 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         var existingPresets = presets()
         existingPresets.removeAll { $0.id == id }
         savePresets(existingPresets)
+    }
+
+    func renamePreset(id: String, newName: String) {
+        var existingPresets = presets()
+        if let index = existingPresets.firstIndex(where: { $0.id == id }) {
+            existingPresets[index].name = newName
+            savePresets(existingPresets)
+        }
     }
 }

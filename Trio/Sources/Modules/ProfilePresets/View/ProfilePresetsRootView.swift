@@ -191,6 +191,27 @@ extension ProfilePresets {
             .sheet(isPresented: $state.showingAdjustmentSheet) {
                 adjustmentSheet
             }
+            .alert(
+                Text("Rename Preset", comment: "ProfilePresets: alert title for renaming a preset"),
+                isPresented: $state.showingRenameDialog
+            ) {
+                TextField(
+                    String(localized: "Preset Name", comment: "ProfilePresets: rename text field placeholder"),
+                    text: $state.renameNewName
+                )
+                Button(String(localized: "Rename", comment: "ProfilePresets: rename confirm button")) {
+                    state.confirmRename()
+                }
+                Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button"), role: .cancel) {
+                    state.renamePreset_ = nil
+                    state.renameNewName = ""
+                }
+            } message: {
+                Text(
+                    "Enter a new name for this preset.",
+                    comment: "ProfilePresets: rename alert message"
+                )
+            }
             .sheet(isPresented: $state.showingComparisonSheet) {
                 if let presetA = state.comparisonPresetA,
                    let presetB = state.comparisonPresetB
@@ -283,6 +304,18 @@ extension ProfilePresets {
                     )
                 }
 
+                Button {
+                    state.beginRename(for: preset)
+                } label: {
+                    Label(
+                        String(
+                            localized: "Rename",
+                            comment: "ProfilePresets: context menu option to rename preset"
+                        ),
+                        systemImage: "pencil"
+                    )
+                }
+
                 Divider()
 
                 Button(role: .destructive) {
@@ -365,7 +398,7 @@ extension ProfilePresets {
 
                 if preset.dynamicSettings != nil {
                     summaryPill(
-                        text: String(localized: "Dynamic", comment: "ProfilePresets: Dynamic ISF pill label"),
+                        text: String(localized: "dynISF", comment: "ProfilePresets: Dynamic ISF pill label"),
                         icon: "waveform.path",
                         color: .purple
                     )

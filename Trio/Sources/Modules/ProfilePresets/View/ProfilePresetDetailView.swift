@@ -6,124 +6,211 @@ extension ProfilePresets {
         let units: GlucoseUnits
         let formattedBasalTotal: String
 
-        var body: some View {
-            List {
-                basalSection
-                isfSection
-                crSection
-                targetsSection
+        private enum DetailTab: String, CaseIterable {
+            case basal
+            case isf
+            case cr
+            case targets
+            case smbDyn
 
+            var label: String {
+                switch self {
+                case .basal: String(localized: "Basal", comment: "ProfilePresetDetail: tab label for basal rates")
+                case .isf: String(localized: "ISF", comment: "ProfilePresetDetail: tab label for ISF")
+                case .cr: String(localized: "CR", comment: "ProfilePresetDetail: tab label for carb ratios")
+                case .targets: String(localized: "Targets", comment: "ProfilePresetDetail: tab label for glucose targets")
+                case .smbDyn: String(localized: "SMB/dynISF", comment: "ProfilePresetDetail: tab label for SMB and dynamic ISF")
+                }
+            }
+
+            var icon: String {
+                switch self {
+                case .basal: "drop.fill"
+                case .isf: "arrow.up.arrow.down"
+                case .cr: "fork.knife"
+                case .targets: "target"
+                case .smbDyn: "bolt.fill"
+                }
+            }
+        }
+
+        @State private var selectedTab: DetailTab = .basal
+
+        private var availableTabs: [DetailTab] {
+            var tabs: [DetailTab] = [.basal, .isf, .cr, .targets]
+            if preset.smbSettings != nil || preset.dynamicSettings != nil {
+                tabs.append(.smbDyn)
+            }
+            return tabs
+        }
+
+        var body: some View {
+            VStack(spacing: 0) {
+                tabBar
+                TabView(selection: $selectedTab) {
+                    basalTab.tag(DetailTab.basal)
+                    isfTab.tag(DetailTab.isf)
+                    crTab.tag(DetailTab.cr)
+                    targetsTab.tag(DetailTab.targets)
+                    if preset.smbSettings != nil || preset.dynamicSettings != nil {
+                        smbDynTab.tag(DetailTab.smbDyn)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+            }
+            .navigationTitle(Text(preset.name))
+            .navigationBarTitleDisplayMode(.inline)
+        }
+
+        // MARK: - Tab Bar
+
+        private var tabBar: some View {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    ForEach(availableTabs, id: \.self) { tab in
+                        Button {
+                            withAnimation { selectedTab = tab }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: tab.icon)
+                                    .font(.system(size: 10))
+                                Text(tab.label)
+                                    .font(.caption.bold())
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(selectedTab == tab ? Color.accentColor : Color.secondary.opacity(0.15))
+                            .foregroundColor(selectedTab == tab ? .white : .primary)
+                            .clipShape(Capsule())
+                        }
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
+        }
+
+        // MARK: - Basal Tab
+
+        private var basalTab: some View {
+            List {
+                Section(
+                    header: Text("Basal Rates", comment: "ProfilePresetDetail: section header for basal rates")
+                ) {
+                    BasalChartView(basalProfile: preset.basalProfile)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                    HStack {
+                        Text("Total Daily Basal", comment: "ProfilePresetDetail: total daily basal label")
+                            .font(.subheadline.bold())
+                        Spacer()
+                        Text("\(formattedBasalTotal) U/day")
+                            .font(.subheadline.bold())
+                            .foregroundColor(.insulin)
+                    }
+
+                    ForEach(Array(preset.basalProfile.enumerated()), id: \.offset) { _, entry in
+                        HStack {
+                            Text(entry.start)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(formatRate(entry.rate)) U/hr")
+                                .font(.subheadline.monospacedDigit())
+                        }
+                    }
+                }
+            }
+        }
+
+        // MARK: - ISF Tab
+
+        private var isfTab: some View {
+            List {
+                Section(
+                    header: Text(
+                        "Insulin Sensitivities (ISF)",
+                        comment: "ProfilePresetDetail: section header for ISF"
+                    )
+                ) {
+                    ISFChartView(sensitivities: preset.insulinSensitivities.sensitivities, units: units)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                    ForEach(Array(preset.insulinSensitivities.sensitivities.enumerated()), id: \.offset) { _, entry in
+                        HStack {
+                            Text(entry.start)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(formatGlucose(entry.sensitivity)) \(units.rawValue)")
+                                .font(.subheadline.monospacedDigit())
+                        }
+                    }
+                }
+            }
+        }
+
+        // MARK: - CR Tab
+
+        private var crTab: some View {
+            List {
+                Section(
+                    header: Text("Carb Ratios (CR)", comment: "ProfilePresetDetail: section header for CR")
+                ) {
+                    CRChartView(schedule: preset.carbRatios.schedule)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                    ForEach(Array(preset.carbRatios.schedule.enumerated()), id: \.offset) { _, entry in
+                        HStack {
+                            Text(entry.start)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(
+                                "\(formatDecimal(entry.ratio)) g/U",
+                                comment: "ProfilePresetDetail: carb ratio value in grams per unit"
+                            )
+                            .font(.subheadline.monospacedDigit())
+                        }
+                    }
+                }
+            }
+        }
+
+        // MARK: - Targets Tab
+
+        private var targetsTab: some View {
+            List {
+                Section(
+                    header: Text("Glucose Targets", comment: "ProfilePresetDetail: section header for glucose targets")
+                ) {
+                    TargetsChartView(targets: preset.bgTargets.targets, units: units)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                    ForEach(Array(preset.bgTargets.targets.enumerated()), id: \.offset) { _, entry in
+                        HStack {
+                            Text(entry.start)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(formatGlucose(entry.low)) – \(formatGlucose(entry.high)) \(units.rawValue)")
+                                .font(.subheadline.monospacedDigit())
+                        }
+                    }
+                }
+            }
+        }
+
+        // MARK: - SMB / dynISF Tab
+
+        private var smbDynTab: some View {
+            List {
                 if let smb = preset.smbSettings {
                     smbSection(smb)
                 }
 
                 if let dynamic = preset.dynamicSettings {
                     dynamicSection(dynamic)
-                }
-            }
-            .navigationTitle(Text(preset.name))
-            .navigationBarTitleDisplayMode(.inline)
-        }
-
-        // MARK: - Basal Section
-
-        private var basalSection: some View {
-            Section(
-                header: Text("Basal Rates", comment: "ProfilePresetDetail: section header for basal rates")
-            ) {
-                BasalChartView(basalProfile: preset.basalProfile)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-
-                HStack {
-                    Text("Total Daily Basal", comment: "ProfilePresetDetail: total daily basal label")
-                        .font(.subheadline.bold())
-                    Spacer()
-                    Text("\(formattedBasalTotal) U/day")
-                        .font(.subheadline.bold())
-                        .foregroundColor(.insulin)
-                }
-
-                ForEach(Array(preset.basalProfile.enumerated()), id: \.offset) { _, entry in
-                    HStack {
-                        Text(entry.start)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(formatRate(entry.rate)) U/hr")
-                            .font(.subheadline.monospacedDigit())
-                    }
-                }
-            }
-        }
-
-        // MARK: - ISF Section
-
-        private var isfSection: some View {
-            Section(
-                header: Text(
-                    "Insulin Sensitivities (ISF)",
-                    comment: "ProfilePresetDetail: section header for ISF"
-                )
-            ) {
-                ISFChartView(sensitivities: preset.insulinSensitivities.sensitivities, units: units)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-
-                ForEach(Array(preset.insulinSensitivities.sensitivities.enumerated()), id: \.offset) { _, entry in
-                    HStack {
-                        Text(entry.start)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(formatGlucose(entry.sensitivity)) \(units.rawValue)")
-                            .font(.subheadline.monospacedDigit())
-                    }
-                }
-            }
-        }
-
-        // MARK: - CR Section
-
-        private var crSection: some View {
-            Section(
-                header: Text("Carb Ratios (CR)", comment: "ProfilePresetDetail: section header for CR")
-            ) {
-                CRChartView(schedule: preset.carbRatios.schedule)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-
-                ForEach(Array(preset.carbRatios.schedule.enumerated()), id: \.offset) { _, entry in
-                    HStack {
-                        Text(entry.start)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(
-                            "\(formatDecimal(entry.ratio)) g/U",
-                            comment: "ProfilePresetDetail: carb ratio value in grams per unit"
-                        )
-                        .font(.subheadline.monospacedDigit())
-                    }
-                }
-            }
-        }
-
-        // MARK: - Targets Section
-
-        private var targetsSection: some View {
-            Section(
-                header: Text("Glucose Targets", comment: "ProfilePresetDetail: section header for glucose targets")
-            ) {
-                TargetsChartView(targets: preset.bgTargets.targets, units: units)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-
-                ForEach(Array(preset.bgTargets.targets.enumerated()), id: \.offset) { _, entry in
-                    HStack {
-                        Text(entry.start)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(formatGlucose(entry.low)) – \(formatGlucose(entry.high)) \(units.rawValue)")
-                            .font(.subheadline.monospacedDigit())
-                    }
                 }
             }
         }
@@ -196,7 +283,7 @@ extension ProfilePresets {
         private func dynamicSection(_ dynamic: DynamicPresetSettings) -> some View {
             Section(
                 header: Text(
-                    "Dynamic ISF Settings",
+                    "dynISF Settings",
                     comment: "ProfilePresetDetail: section header for Dynamic ISF settings"
                 )
             ) {

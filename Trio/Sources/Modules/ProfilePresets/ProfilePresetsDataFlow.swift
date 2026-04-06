@@ -11,5 +11,6 @@ protocol ProfilePresetsProvider: Provider {
     func savePreset(_ preset: ProfilePreset)
     func activatePreset(_ preset: ProfilePreset) -> Bool
     func deletePreset(id: String)
+    func renamePreset(id: String, newName: String)
     func loadActivePreset() -> ProfilePreset?
 }

@@ -37,6 +37,11 @@ extension ProfilePresets {
         // Save preview
         var savePreviewProfile: ProfilePreset?
 
+        // Rename
+        var showingRenameDialog: Bool = false
+        var renamePreset_: ProfilePreset?
+        var renameNewName: String = ""
+
         override func subscribe() {
             units = settingsManager.settings.units
             presets = provider.loadPresets()
@@ -78,6 +83,28 @@ extension ProfilePresets {
         func deletePreset(_ preset: ProfilePreset) {
             provider.deletePreset(id: preset.id)
             presets.removeAll { $0.id == preset.id }
+        }
+
+        func beginRename(for preset: ProfilePreset) {
+            renamePreset_ = preset
+            renameNewName = preset.name
+            showingRenameDialog = true
+        }
+
+        func confirmRename() {
+            guard let preset = renamePreset_ else { return }
+            let trimmed = renameNewName.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return }
+
+            provider.renamePreset(id: preset.id, newName: trimmed)
+            if let index = presets.firstIndex(where: { $0.id == preset.id }) {
+                presets[index].name = trimmed
+            }
+            if activePreset?.id == preset.id {
+                activePreset?.name = trimmed
+            }
+            renamePreset_ = nil
+            renameNewName = ""
         }
 
         func formattedBasalTotal(_ preset: ProfilePreset) -> String {

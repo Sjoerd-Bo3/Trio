@@ -37,9 +37,10 @@ extension ProfilePresets {
                         .font(.subheadline)
                     Spacer()
                     valueColumns(
-                        left: "\(formattedBasalTotal(presetA)) U",
-                        right: "\(formattedBasalTotal(presetB)) U",
-                        isDifferent: presetA.totalDailyBasal != presetB.totalDailyBasal
+                        leftValue: presetA.totalDailyBasal,
+                        rightValue: presetB.totalDailyBasal,
+                        leftText: "\(formattedBasalTotal(presetA)) U",
+                        rightText: "\(formattedBasalTotal(presetB)) U"
                     )
                 }
 
@@ -50,9 +51,10 @@ extension ProfilePresets {
                     let countA = presetA.insulinSensitivities.sensitivities.count
                     let countB = presetB.insulinSensitivities.sensitivities.count
                     valueColumns(
-                        left: "\(countA)",
-                        right: "\(countB)",
-                        isDifferent: countA != countB
+                        leftValue: Decimal(countA),
+                        rightValue: Decimal(countB),
+                        leftText: "\(countA)",
+                        rightText: "\(countB)"
                     )
                 }
 
@@ -63,9 +65,10 @@ extension ProfilePresets {
                     let countA = presetA.carbRatios.schedule.count
                     let countB = presetB.carbRatios.schedule.count
                     valueColumns(
-                        left: "\(countA)",
-                        right: "\(countB)",
-                        isDifferent: countA != countB
+                        leftValue: Decimal(countA),
+                        rightValue: Decimal(countB),
+                        leftText: "\(countA)",
+                        rightText: "\(countB)"
                     )
                 }
             }
@@ -92,9 +95,10 @@ extension ProfilePresets {
                             .frame(width: 55, alignment: .leading)
                         Spacer()
                         valueColumns(
-                            left: entryA.map { formatRate($0.rate) } ?? "—",
-                            right: entryB.map { formatRate($0.rate) } ?? "—",
-                            isDifferent: entryA?.rate != entryB?.rate
+                            leftValue: entryA?.rate,
+                            rightValue: entryB?.rate,
+                            leftText: entryA.map { formatRate($0.rate) } ?? "—",
+                            rightText: entryB.map { formatRate($0.rate) } ?? "—"
                         )
                     }
                 }
@@ -128,9 +132,10 @@ extension ProfilePresets {
                             .frame(width: 55, alignment: .leading)
                         Spacer()
                         valueColumns(
-                            left: entryA.map { formatGlucose($0.sensitivity) } ?? "—",
-                            right: entryB.map { formatGlucose($0.sensitivity) } ?? "—",
-                            isDifferent: entryA?.sensitivity != entryB?.sensitivity
+                            leftValue: entryA?.sensitivity,
+                            rightValue: entryB?.sensitivity,
+                            leftText: entryA.map { formatGlucose($0.sensitivity) } ?? "—",
+                            rightText: entryB.map { formatGlucose($0.sensitivity) } ?? "—"
                         )
                     }
                 }
@@ -161,9 +166,10 @@ extension ProfilePresets {
                             .frame(width: 55, alignment: .leading)
                         Spacer()
                         valueColumns(
-                            left: entryA.map { formatDecimal($0.ratio) } ?? "—",
-                            right: entryB.map { formatDecimal($0.ratio) } ?? "—",
-                            isDifferent: entryA?.ratio != entryB?.ratio
+                            leftValue: entryA?.ratio,
+                            rightValue: entryB?.ratio,
+                            leftText: entryA.map { formatDecimal($0.ratio) } ?? "—",
+                            rightText: entryB.map { formatDecimal($0.ratio) } ?? "—"
                         )
                     }
                 }
@@ -186,6 +192,7 @@ extension ProfilePresets {
                     let entryA = index < targetsA.count ? targetsA[index] : nil
                     let entryB = index < targetsB.count ? targetsB[index] : nil
                     let time = entryA?.start ?? entryB?.start ?? ""
+                    let isDifferent = entryA?.low != entryB?.low || entryA?.high != entryB?.high
 
                     HStack {
                         Text(time)
@@ -193,11 +200,21 @@ extension ProfilePresets {
                             .foregroundColor(.secondary)
                             .frame(width: 55, alignment: .leading)
                         Spacer()
-                        valueColumns(
-                            left: entryA.map { "\(formatGlucose($0.low))–\(formatGlucose($0.high))" } ?? "—",
-                            right: entryB.map { "\(formatGlucose($0.low))–\(formatGlucose($0.high))" } ?? "—",
-                            isDifferent: entryA?.low != entryB?.low || entryA?.high != entryB?.high
-                        )
+                        let leftText = entryA.map { "\(formatGlucose($0.low))–\(formatGlucose($0.high))" } ?? "—"
+                        let rightText = entryB.map { "\(formatGlucose($0.low))–\(formatGlucose($0.high))" } ?? "—"
+                        Text(leftText)
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundColor(isDifferent ? .accentColor : .primary)
+                            .frame(width: 80, alignment: .trailing)
+                        if isDifferent {
+                            Image(systemName: "arrowshape.right.fill")
+                                .font(.system(size: 8))
+                                .foregroundColor(.orange)
+                        }
+                        Text(rightText)
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundColor(isDifferent ? .purple : .primary)
+                            .frame(width: 80, alignment: .trailing)
                     }
                 }
             }
@@ -266,7 +283,7 @@ extension ProfilePresets {
         private var dynamicComparisonSection: some View {
             Section(
                 header: Text(
-                    "Dynamic ISF Settings",
+                    "dynISF Settings",
                     comment: "ProfileComparison: section header for Dynamic ISF settings"
                 )
             ) {
@@ -281,7 +298,20 @@ extension ProfilePresets {
                     Spacer()
                     let typeA = dynA.map { dynamicISFType(for: $0) } ?? "—"
                     let typeB = dynB.map { dynamicISFType(for: $0) } ?? "—"
-                    valueColumns(left: typeA, right: typeB, isDifferent: typeA != typeB)
+                    let isDifferent = typeA != typeB
+                    Text(typeA)
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundColor(isDifferent ? .accentColor : .primary)
+                        .frame(width: 80, alignment: .trailing)
+                    if isDifferent {
+                        Image(systemName: "arrowshape.right.fill")
+                            .font(.system(size: 8))
+                            .foregroundColor(.orange)
+                    }
+                    Text(typeB)
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundColor(isDifferent ? .purple : .primary)
+                        .frame(width: 80, alignment: .trailing)
                 }
 
                 decimalComparisonRow(
@@ -331,12 +361,29 @@ extension ProfilePresets {
             }
         }
 
-        @ViewBuilder private func valueColumns(left: String, right: String, isDifferent: Bool) -> some View {
-            Text(left)
+        /// Value columns with arrow indicator when values differ.
+        /// Uses numeric comparison to show directional arrows.
+        @ViewBuilder private func valueColumns(
+            leftValue: Decimal?,
+            rightValue: Decimal?,
+            leftText: String,
+            rightText: String
+        ) -> some View {
+            let isDifferent = leftValue != rightValue
+            Text(leftText)
                 .font(.subheadline.monospacedDigit())
                 .foregroundColor(isDifferent ? .accentColor : .primary)
                 .frame(width: 80, alignment: .trailing)
-            Text(right)
+            if isDifferent, let lv = leftValue, let rv = rightValue {
+                Image(systemName: lv < rv ? "arrow.up.right" : "arrow.down.right")
+                    .font(.system(size: 8))
+                    .foregroundColor(lv < rv ? .loopGreen : .orange)
+            } else if isDifferent {
+                Image(systemName: "arrowshape.right.fill")
+                    .font(.system(size: 8))
+                    .foregroundColor(.orange)
+            }
+            Text(rightText)
                 .font(.subheadline.monospacedDigit())
                 .foregroundColor(isDifferent ? .purple : .primary)
                 .frame(width: 80, alignment: .trailing)
@@ -347,11 +394,22 @@ extension ProfilePresets {
                 Text(label)
                     .font(.subheadline)
                 Spacer()
-                valueColumns(
-                    left: valueA.map { $0 ? "✓" : "✗" } ?? "—",
-                    right: valueB.map { $0 ? "✓" : "✗" } ?? "—",
-                    isDifferent: valueA != valueB
-                )
+                let isDifferent = valueA != valueB
+                let leftText = valueA.map { $0 ? "✓" : "✗" } ?? "—"
+                let rightText = valueB.map { $0 ? "✓" : "✗" } ?? "—"
+                Text(leftText)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundColor(isDifferent ? .accentColor : .primary)
+                    .frame(width: 80, alignment: .trailing)
+                if isDifferent {
+                    Image(systemName: "arrowshape.right.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.orange)
+                }
+                Text(rightText)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundColor(isDifferent ? .purple : .primary)
+                    .frame(width: 80, alignment: .trailing)
             }
         }
 
@@ -367,9 +425,10 @@ extension ProfilePresets {
                     .font(.subheadline)
                 Spacer()
                 valueColumns(
-                    left: valueA.map { formatDecimal($0, decimals: decimals) + suffix } ?? "—",
-                    right: valueB.map { formatDecimal($0, decimals: decimals) + suffix } ?? "—",
-                    isDifferent: valueA != valueB
+                    leftValue: valueA,
+                    rightValue: valueB,
+                    leftText: valueA.map { formatDecimal($0, decimals: decimals) + suffix } ?? "—",
+                    rightText: valueB.map { formatDecimal($0, decimals: decimals) + suffix } ?? "—"
                 )
             }
         }
