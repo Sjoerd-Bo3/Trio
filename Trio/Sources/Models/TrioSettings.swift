@@ -297,7 +297,8 @@ extension TrioSettings: Decodable {
         if let insulinConcentration = try? container.decode(InsulinConcentration.self, forKey: .insulinConcentration) {
             settings.insulinConcentration = insulinConcentration
         } else if let legacyFactor = try? container.decode(Decimal.self, forKey: .insulinConcentration) {
-            // Backward compatibility: convert legacy Decimal factor to InsulinConcentration enum
+            // Backward compatibility: the legacy field stored a Decimal factor (1.0 = U-100, 2.0 = U-200, 0.5 = U-50).
+            // Convert to rawValue (units per mL) by multiplying by 100.
             let rawValue = Int(truncating: (legacyFactor * 100) as NSDecimalNumber)
             settings.insulinConcentration = InsulinConcentration(rawValue: rawValue) ?? .u100
         }

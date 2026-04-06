@@ -118,6 +118,7 @@ final class BasePumpHistoryStorage: PumpHistoryStorage, Injectable {
                     // Convert pump-reported rate to real insulin units/hr
                     let rate = self.concentrationService.toRealRate(pumpUnitsPerHour: Decimal(dose.unitsPerHour))
                     let minutes = (dose.endDate - dose.startDate).timeInterval / 60
+                    // deliveredUnits is only checked for nil (cancel detection); value is not stored
                     let delivered = dose.deliveredUnits
                     let date = event.date
 
