@@ -83,6 +83,4 @@ ConfigOverride.xcconfig
 
 # Node.js
 node_modules/
-package.json
-package-lock.json
 scripts/dist/

@@ -160,7 +160,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     var dynISFenabled = preferences.useNewFormula
 
     // Override: Disable Dynamic ISF when override is active and disableDynamicISF is set
-    if (trio_custom_variables.useOverride && trio_custom_variables.disableDynamicISF) {
+    if (trio_custom_variables.useOverride && trio_custom_variables.disableDynamicISF === true) {
         dynISFenabled = false;
         console.log("Dynamic ISF disabled by active override");
     }
