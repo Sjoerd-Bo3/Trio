@@ -307,10 +307,16 @@ extension ProfilePresets {
 
                 HStack(spacing: 16) {
                     Label {
-                        Text(
-                            "ISF: \(preset.insulinSensitivities.sensitivities.count) entries",
-                            comment: "ProfilePresets: number of ISF schedule entries"
-                        )
+                        if let first = preset.insulinSensitivities.sensitivities.first {
+                            Text(
+                                "ISF: \(state.formatGlucose(first.sensitivity)) \(state.units.rawValue)"
+                            )
+                        } else {
+                            Text(
+                                "ISF: – ",
+                                comment: "ProfilePresets: ISF placeholder when no entries"
+                            )
+                        }
                     } icon: {
                         Image(systemName: "arrow.up.arrow.down")
                             .foregroundColor(.loopYellow)
@@ -318,10 +324,14 @@ extension ProfilePresets {
                     .font(.caption)
 
                     Label {
-                        Text(
-                            "CR: \(preset.carbRatios.schedule.count) entries",
-                            comment: "ProfilePresets: number of CR schedule entries"
-                        )
+                        if let first = preset.carbRatios.schedule.first {
+                            Text("CR: \(formatDecimal(first.ratio)) g/U")
+                        } else {
+                            Text(
+                                "CR: – ",
+                                comment: "ProfilePresets: CR placeholder when no entries"
+                            )
+                        }
                     } icon: {
                         Image(systemName: "fork.knife")
                             .foregroundColor(.loopGreen)
@@ -435,7 +445,12 @@ extension ProfilePresets {
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button(String(localized: "Save", comment: "ProfilePresets: save button")) {
+                        Button(
+                            String(
+                                localized: "Confirm & Save",
+                                comment: "ProfilePresets: confirm and save adjusted preset button"
+                            )
+                        ) {
                             state.createAdjustedPreset()
                             state.showingAdjustmentSheet = false
                         }
@@ -522,154 +537,80 @@ extension ProfilePresets {
 
         // MARK: - Save Preset Sheet
 
+        private enum SaveTab: Int, CaseIterable {
+            case setup = 0
+            case basal
+            case isf
+            case cr
+            case targets
+            case summary
+
+            var title: String {
+                switch self {
+                case .setup:
+                    return String(localized: "Setup", comment: "ProfilePresets: save tab for name/icon/options")
+                case .basal:
+                    return String(localized: "Basal", comment: "ProfilePresets: save tab for basal rates")
+                case .isf:
+                    return String(localized: "ISF", comment: "ProfilePresets: save tab for ISF")
+                case .cr:
+                    return String(localized: "CR", comment: "ProfilePresets: save tab for carb ratios")
+                case .targets:
+                    return String(localized: "Targets", comment: "ProfilePresets: save tab for glucose targets")
+                case .summary:
+                    return String(localized: "Summary", comment: "ProfilePresets: save tab for final summary")
+                }
+            }
+        }
+
+        @State private var saveTabSelection: SaveTab = .setup
+
         private var savePresetSheet: some View {
             NavigationView {
-                Form {
-                    Section(
-                        header: Text(
-                            "Preset Name",
-                            comment: "ProfilePresets: section header for preset name input"
-                        )
-                    ) {
-                        TextField(
-                            String(
-                                localized: "Enter a name",
-                                comment: "ProfilePresets: placeholder for preset name input"
-                            ),
-                            text: $state.newPresetName
-                        )
-                    }
-
-                    Section(
-                        header: Text(
-                            "Preset Icon",
-                            comment: "ProfilePresets: section header for preset icon selection"
-                        )
-                    ) {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
-                            ForEach(ProfilePreset.availableIcons, id: \.self) { iconName in
+                VStack(spacing: 0) {
+                    // Tab bar
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 4) {
+                            ForEach(SaveTab.allCases, id: \.rawValue) { tab in
                                 Button {
-                                    state.newPresetIcon = iconName
+                                    saveTabSelection = tab
                                 } label: {
-                                    Image(systemName: iconName)
-                                        .font(.title2)
-                                        .frame(width: 44, height: 44)
+                                    Text(tab.title)
+                                        .font(.caption.bold())
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
                                         .background(
-                                            state.newPresetIcon == iconName
-                                                ? Color.accentColor.opacity(0.2)
-                                                : Color.clear
+                                            saveTabSelection == tab
+                                                ? Color.accentColor
+                                                : Color.secondary.opacity(0.15)
                                         )
+                                        .foregroundColor(saveTabSelection == tab ? .white : .primary)
                                         .clipShape(RoundedRectangle(cornerRadius: 8))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .stroke(
-                                                    state.newPresetIcon == iconName
-                                                        ? Color.accentColor
-                                                        : Color.clear,
-                                                    lineWidth: 2
-                                                )
-                                        )
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
 
-                    saveOptionsSection
+                    Divider()
 
-                    if let preview = state.savePreviewProfile {
-                        Section(
-                            header: Text(
-                                "Settings Summary",
-                                comment: "ProfilePresets: section header for settings summary in save sheet"
-                            )
-                        ) {
-                            HStack {
-                                Label {
-                                    Text(
-                                        "Total Daily Basal",
-                                        comment: "ProfilePresets: total daily basal label in save summary"
-                                    )
-                                } icon: {
-                                    Image(systemName: "drop.fill")
-                                        .foregroundColor(.insulin)
-                                }
-                                .font(.subheadline)
-                                Spacer()
-                                Text("\(state.formattedBasalTotal(preview)) U/day")
-                                    .font(.subheadline.monospacedDigit())
-                                    .foregroundColor(.secondary)
-                            }
-
-                            ForEach(Array(preview.basalProfile.enumerated()), id: \.offset) { _, entry in
-                                HStack {
-                                    Text(entry.start)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Text("\(formatRate(entry.rate)) U/hr")
-                                        .font(.caption.monospacedDigit())
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-
-                            HStack {
-                                Label {
-                                    Text("ISF", comment: "ProfilePresets: ISF label in save summary")
-                                } icon: {
-                                    Image(systemName: "arrow.up.arrow.down")
-                                        .foregroundColor(.loopYellow)
-                                }
-                                .font(.subheadline)
-                                Spacer()
-                                if let first = preview.insulinSensitivities.sensitivities.first {
-                                    Text(
-                                        "\(state.formatGlucose(first.sensitivity)) \(state.units.rawValue) (\(preview.insulinSensitivities.sensitivities.count) entries)"
-                                    )
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundColor(.secondary)
-                                }
-                            }
-
-                            HStack {
-                                Label {
-                                    Text("CR", comment: "ProfilePresets: CR label in save summary")
-                                } icon: {
-                                    Image(systemName: "fork.knife")
-                                        .foregroundColor(.loopGreen)
-                                }
-                                .font(.subheadline)
-                                Spacer()
-                                if let first = preview.carbRatios.schedule.first {
-                                    Text(
-                                        "\(formatDecimal(first.ratio)) g/U (\(preview.carbRatios.schedule.count) entries)"
-                                    )
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundColor(.secondary)
-                                }
-                            }
-
-                            HStack {
-                                Label {
-                                    Text(
-                                        "Targets",
-                                        comment: "ProfilePresets: glucose targets label in save summary"
-                                    )
-                                } icon: {
-                                    Image(systemName: "target")
-                                        .foregroundColor(.loopGreen)
-                                }
-                                .font(.subheadline)
-                                Spacer()
-                                if let first = preview.bgTargets.targets.first {
-                                    Text(
-                                        "\(state.formatGlucose(first.low))–\(state.formatGlucose(first.high)) \(state.units.rawValue)"
-                                    )
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundColor(.secondary)
-                                }
-                            }
+                    // Tab content
+                    Group {
+                        switch saveTabSelection {
+                        case .setup:
+                            saveSetupTab
+                        case .basal:
+                            saveBasalTab
+                        case .isf:
+                            saveISFTab
+                        case .cr:
+                            saveCRTab
+                        case .targets:
+                            saveTargetsTab
+                        case .summary:
+                            saveSummaryTab
                         }
                     }
                 }
@@ -679,6 +620,7 @@ extension ProfilePresets {
                 .navigationBarTitleDisplayMode(.inline)
                 .onAppear {
                     state.prepareSavePreview()
+                    saveTabSelection = .setup
                 }
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -691,12 +633,369 @@ extension ProfilePresets {
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button(String(localized: "Save", comment: "ProfilePresets: save button")) {
-                            state.saveCurrentProfileAsPreset()
-                            state.showingSaveDialog = false
+                        if saveTabSelection == .summary {
+                            Button(String(localized: "Confirm & Save", comment: "ProfilePresets: confirm save button")) {
+                                state.saveCurrentProfileAsPreset()
+                                state.showingSaveDialog = false
+                            }
+                            .disabled(state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty)
+                        } else {
+                            Button(String(localized: "Next", comment: "ProfilePresets: next tab button")) {
+                                if let currentIndex = SaveTab.allCases.firstIndex(of: saveTabSelection),
+                                   currentIndex + 1 < SaveTab.allCases.count
+                                {
+                                    saveTabSelection = SaveTab.allCases[currentIndex + 1]
+                                }
+                            }
                         }
-                        .disabled(state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
+                }
+            }
+        }
+
+        // MARK: - Save Sheet Tabs
+
+        private var saveSetupTab: some View {
+            Form {
+                Section(
+                    header: Text(
+                        "Preset Name",
+                        comment: "ProfilePresets: section header for preset name input"
+                    )
+                ) {
+                    TextField(
+                        String(
+                            localized: "Enter a name",
+                            comment: "ProfilePresets: placeholder for preset name input"
+                        ),
+                        text: $state.newPresetName
+                    )
+                }
+
+                Section(
+                    header: Text(
+                        "Preset Icon",
+                        comment: "ProfilePresets: section header for preset icon selection"
+                    )
+                ) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
+                        ForEach(ProfilePreset.availableIcons, id: \.self) { iconName in
+                            Button {
+                                state.newPresetIcon = iconName
+                            } label: {
+                                Image(systemName: iconName)
+                                    .font(.title2)
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        state.newPresetIcon == iconName
+                                            ? Color.accentColor.opacity(0.2)
+                                            : Color.clear
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(
+                                                state.newPresetIcon == iconName
+                                                    ? Color.accentColor
+                                                    : Color.clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                saveOptionsSection
+            }
+        }
+
+        private var saveBasalTab: some View {
+            List {
+                if let preview = state.savePreviewProfile {
+                    Section(
+                        header: Text("Basal Rates", comment: "ProfilePresets: basal rates tab header")
+                    ) {
+                        BasalChartView(basalProfile: preview.basalProfile)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                        HStack {
+                            Text("Total Daily Basal", comment: "ProfilePresets: total daily basal label")
+                                .font(.subheadline.bold())
+                            Spacer()
+                            Text("\(state.formattedBasalTotal(preview)) U/day")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.insulin)
+                        }
+
+                        ForEach(Array(preview.basalProfile.enumerated()), id: \.offset) { _, entry in
+                            HStack {
+                                Text(entry.start)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(formatRate(entry.rate)) U/hr")
+                                    .font(.subheadline.monospacedDigit())
+                            }
+                        }
+                    }
+                } else {
+                    Text("Loading…", comment: "ProfilePresets: loading placeholder")
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+
+        private var saveISFTab: some View {
+            List {
+                if let preview = state.savePreviewProfile {
+                    Section(
+                        header: Text(
+                            "Insulin Sensitivities (ISF)",
+                            comment: "ProfilePresets: ISF tab header"
+                        )
+                    ) {
+                        ISFChartView(sensitivities: preview.insulinSensitivities.sensitivities, units: state.units)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                        ForEach(
+                            Array(preview.insulinSensitivities.sensitivities.enumerated()),
+                            id: \.offset
+                        ) { _, entry in
+                            HStack {
+                                Text(entry.start)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(state.formatGlucose(entry.sensitivity)) \(state.units.rawValue)")
+                                    .font(.subheadline.monospacedDigit())
+                            }
+                        }
+                    }
+                } else {
+                    Text("Loading…", comment: "ProfilePresets: loading placeholder")
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+
+        private var saveCRTab: some View {
+            List {
+                if let preview = state.savePreviewProfile {
+                    Section(
+                        header: Text("Carb Ratios (CR)", comment: "ProfilePresets: CR tab header")
+                    ) {
+                        CRChartView(schedule: preview.carbRatios.schedule)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                        ForEach(Array(preview.carbRatios.schedule.enumerated()), id: \.offset) { _, entry in
+                            HStack {
+                                Text(entry.start)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(formatDecimal(entry.ratio)) g/U")
+                                    .font(.subheadline.monospacedDigit())
+                            }
+                        }
+                    }
+                } else {
+                    Text("Loading…", comment: "ProfilePresets: loading placeholder")
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+
+        private var saveTargetsTab: some View {
+            List {
+                if let preview = state.savePreviewProfile {
+                    Section(
+                        header: Text("Glucose Targets", comment: "ProfilePresets: targets tab header")
+                    ) {
+                        TargetsChartView(targets: preview.bgTargets.targets, units: state.units)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+
+                        ForEach(Array(preview.bgTargets.targets.enumerated()), id: \.offset) { _, entry in
+                            HStack {
+                                Text(entry.start)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text(
+                                    "\(state.formatGlucose(entry.low)) – \(state.formatGlucose(entry.high)) \(state.units.rawValue)"
+                                )
+                                .font(.subheadline.monospacedDigit())
+                            }
+                        }
+                    }
+                } else {
+                    Text("Loading…", comment: "ProfilePresets: loading placeholder")
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+
+        private var saveSummaryTab: some View {
+            Form {
+                if state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Section {
+                        Label {
+                            Text(
+                                "Please enter a preset name on the Setup tab before saving.",
+                                comment: "ProfilePresets: warning when name is empty on summary"
+                            )
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundColor(.orange)
+                        }
+                        .font(.subheadline)
+                    }
+                }
+
+                Section(
+                    header: Text("Preset Info", comment: "ProfilePresets: summary section header for preset info")
+                ) {
+                    HStack {
+                        Image(systemName: state.newPresetIcon)
+                            .font(.title2)
+                            .foregroundColor(.accentColor)
+                        Text(
+                            state.newPresetName.isEmpty
+                                ? String(localized: "(No name)", comment: "ProfilePresets: placeholder when no name entered")
+                                : state.newPresetName
+                        )
+                        .font(.headline)
+                    }
+                }
+
+                if let preview = state.savePreviewProfile {
+                    Section(
+                        header: Text(
+                            "Settings to Save",
+                            comment: "ProfilePresets: summary section header for settings"
+                        )
+                    ) {
+                        HStack {
+                            Label {
+                                Text(
+                                    "Total Daily Basal",
+                                    comment: "ProfilePresets: total daily basal label in summary"
+                                )
+                            } icon: {
+                                Image(systemName: "drop.fill")
+                                    .foregroundColor(.insulin)
+                            }
+                            .font(.subheadline)
+                            Spacer()
+                            Text("\(state.formattedBasalTotal(preview)) U/day")
+                                .font(.subheadline.monospacedDigit())
+                                .foregroundColor(.secondary)
+                        }
+
+                        HStack {
+                            Label {
+                                Text("ISF", comment: "ProfilePresets: ISF label in summary")
+                            } icon: {
+                                Image(systemName: "arrow.up.arrow.down")
+                                    .foregroundColor(.loopYellow)
+                            }
+                            .font(.subheadline)
+                            Spacer()
+                            if let first = preview.insulinSensitivities.sensitivities.first {
+                                Text(
+                                    "\(state.formatGlucose(first.sensitivity)) \(state.units.rawValue) (\(preview.insulinSensitivities.sensitivities.count) entries)"
+                                )
+                                .font(.caption.monospacedDigit())
+                                .foregroundColor(.secondary)
+                            }
+                        }
+
+                        HStack {
+                            Label {
+                                Text("CR", comment: "ProfilePresets: CR label in summary")
+                            } icon: {
+                                Image(systemName: "fork.knife")
+                                    .foregroundColor(.loopGreen)
+                            }
+                            .font(.subheadline)
+                            Spacer()
+                            if let first = preview.carbRatios.schedule.first {
+                                Text(
+                                    "\(formatDecimal(first.ratio)) g/U (\(preview.carbRatios.schedule.count) entries)"
+                                )
+                                .font(.caption.monospacedDigit())
+                                .foregroundColor(.secondary)
+                            }
+                        }
+
+                        HStack {
+                            Label {
+                                Text(
+                                    "Targets",
+                                    comment: "ProfilePresets: glucose targets label in summary"
+                                )
+                            } icon: {
+                                Image(systemName: "target")
+                                    .foregroundColor(.loopGreen)
+                            }
+                            .font(.subheadline)
+                            Spacer()
+                            if let first = preview.bgTargets.targets.first {
+                                Text(
+                                    "\(state.formatGlucose(first.low))–\(state.formatGlucose(first.high)) \(state.units.rawValue)"
+                                )
+                                .font(.caption.monospacedDigit())
+                                .foregroundColor(.secondary)
+                            }
+                        }
+
+                        if state.includeSMBSettings {
+                            HStack {
+                                Label {
+                                    Text("SMB Settings", comment: "ProfilePresets: SMB label in summary")
+                                } icon: {
+                                    Image(systemName: "bolt.fill")
+                                        .foregroundColor(.orange)
+                                }
+                                .font(.subheadline)
+                                Spacer()
+                                Text("Included", comment: "ProfilePresets: included label")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+
+                        if state.includeDynamicSettings {
+                            HStack {
+                                Label {
+                                    Text("Dynamic ISF", comment: "ProfilePresets: Dynamic ISF label in summary")
+                                } icon: {
+                                    Image(systemName: "waveform.path")
+                                        .foregroundColor(.purple)
+                                }
+                                .font(.subheadline)
+                                Spacer()
+                                Text("Included", comment: "ProfilePresets: included label")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    Label {
+                        Text(
+                            "Tap 'Confirm & Save' to save this preset. You can activate it later from the preset list or the Adjustments tab.",
+                            comment: "ProfilePresets: save confirmation info text"
+                        )
+                    } icon: {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.accentColor)
+                    }
+                    .font(.footnote)
                 }
             }
         }
