@@ -87,7 +87,12 @@ enum SettingItems {
                 "Max IOB",
                 "Max COB",
                 "Minimum Safety Threshold",
-                "Delivery Limits"
+                "Delivery Limits",
+                "Insulin Concentration",
+                "U-100",
+                "U-200",
+                "U-500",
+                "Dilution"
             ],
             path: ["Therapy Settings", "Units and Limits"]
         ),
