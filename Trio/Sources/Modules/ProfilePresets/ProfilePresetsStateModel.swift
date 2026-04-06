@@ -64,7 +64,7 @@ extension ProfilePresets {
         func beginAdjustment(for preset: ProfilePreset) {
             adjustmentSourcePreset = preset
             adjustmentPercentage = 100
-            adjustmentPresetName = preset.name
+            adjustmentPresetName = "\(preset.name) (Adjusted)"
             showingAdjustmentSheet = true
         }
 

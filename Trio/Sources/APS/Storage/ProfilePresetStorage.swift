@@ -113,30 +113,32 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         storage.save(preset.carbRatios, as: OpenAPS.Settings.carbRatios)
         storage.save(preset.bgTargets, as: OpenAPS.Settings.bgTargets)
 
-        if let smb = preset.smbSettings {
+        if preset.smbSettings != nil || preset.dynamicSettings != nil {
             var prefs = settingsManager.preferences
-            prefs.enableSMBAlways = smb.enableSMBAlways
-            prefs.enableSMBWithCOB = smb.enableSMBWithCOB
-            prefs.enableSMBWithTemptarget = smb.enableSMBWithTemptarget
-            prefs.enableSMBAfterCarbs = smb.enableSMBAfterCarbs
-            prefs.allowSMBWithHighTemptarget = smb.allowSMBWithHighTemptarget
-            prefs.enableSMB_high_bg = smb.enableSMBHighBG
-            prefs.enableSMB_high_bg_target = smb.enableSMBHighBGTarget
-            prefs.maxSMBBasalMinutes = smb.maxSMBBasalMinutes
-            prefs.maxUAMSMBBasalMinutes = smb.maxUAMSMBBasalMinutes
-            prefs.enableUAM = smb.enableUAM
-            prefs.maxDeltaBGthreshold = smb.maxDeltaBGthreshold
-            settingsManager.preferences = prefs
-        }
 
-        if let dynamic = preset.dynamicSettings {
-            var prefs = settingsManager.preferences
-            prefs.useNewFormula = dynamic.useNewFormula
-            prefs.sigmoid = dynamic.sigmoid
-            prefs.adjustmentFactor = dynamic.adjustmentFactor
-            prefs.adjustmentFactorSigmoid = dynamic.adjustmentFactorSigmoid
-            prefs.weightPercentage = dynamic.weightPercentage
-            prefs.tddAdjBasal = dynamic.tddAdjBasal
+            if let smb = preset.smbSettings {
+                prefs.enableSMBAlways = smb.enableSMBAlways
+                prefs.enableSMBWithCOB = smb.enableSMBWithCOB
+                prefs.enableSMBWithTemptarget = smb.enableSMBWithTemptarget
+                prefs.enableSMBAfterCarbs = smb.enableSMBAfterCarbs
+                prefs.allowSMBWithHighTemptarget = smb.allowSMBWithHighTemptarget
+                prefs.enableSMB_high_bg = smb.enableSMBHighBG
+                prefs.enableSMB_high_bg_target = smb.enableSMBHighBGTarget
+                prefs.maxSMBBasalMinutes = smb.maxSMBBasalMinutes
+                prefs.maxUAMSMBBasalMinutes = smb.maxUAMSMBBasalMinutes
+                prefs.enableUAM = smb.enableUAM
+                prefs.maxDeltaBGthreshold = smb.maxDeltaBGthreshold
+            }
+
+            if let dynamic = preset.dynamicSettings {
+                prefs.useNewFormula = dynamic.useNewFormula
+                prefs.sigmoid = dynamic.sigmoid
+                prefs.adjustmentFactor = dynamic.adjustmentFactor
+                prefs.adjustmentFactorSigmoid = dynamic.adjustmentFactorSigmoid
+                prefs.weightPercentage = dynamic.weightPercentage
+                prefs.tddAdjBasal = dynamic.tddAdjBasal
+            }
+
             settingsManager.preferences = prefs
         }
 
