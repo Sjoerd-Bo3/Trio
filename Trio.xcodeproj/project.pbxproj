@@ -743,6 +743,12 @@
 		FE41E4D629463EE20047FD55 /* NightscoutPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE41E4D529463EE20047FD55 /* NightscoutPreferences.swift */; };
 		FE66D16B291F74F8005D6F77 /* Bundle+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */; };
 		FEFFA7A22929FE49007B8193 /* UIDevice+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */; };
+4A46020CE79D50DE354388D2 /* ProfilePreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454A047D1EAFCC939EE5F78F /* ProfilePreset.swift */; };
+14D41039DA2596F4C61FF78D /* ProfilePresetStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1483D2092478350967C2F187 /* ProfilePresetStorage.swift */; };
+431717ABC2142AA702DBE4BA /* ProfilePresetsDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE7ED830845881A9B7BFB13 /* ProfilePresetsDataFlow.swift */; };
+A631E9E032EA6B20DC562273 /* ProfilePresetsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 088BDB99FF13DF5C230E6505 /* ProfilePresetsProvider.swift */; };
+562F7BCF655FE3E27FFDEAD7 /* ProfilePresetsStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4206D510BF1723B0AE70D025 /* ProfilePresetsStateModel.swift */; };
+1251C1C60CFB17F89B01BB17 /* ProfilePresetsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1584,6 +1590,12 @@
 		FE41E4D529463EE20047FD55 /* NightscoutPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutPreferences.swift; sourceTree = "<group>"; };
 		FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Extensions.swift"; sourceTree = "<group>"; };
 		FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extensions.swift"; sourceTree = "<group>"; };
+454A047D1EAFCC939EE5F78F /* ProfilePreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePreset.swift; sourceTree = "<group>"; };
+1483D2092478350967C2F187 /* ProfilePresetStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetStorage.swift; sourceTree = "<group>"; };
+FCE7ED830845881A9B7BFB13 /* ProfilePresetsDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsDataFlow.swift; sourceTree = "<group>"; };
+088BDB99FF13DF5C230E6505 /* ProfilePresetsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsProvider.swift; sourceTree = "<group>"; };
+4206D510BF1723B0AE70D025 /* ProfilePresetsStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsStateModel.swift; sourceTree = "<group>"; };
+6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsRootView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1939,6 +1951,7 @@
 				19D466A129AA2B0A004D5F33 /* MealSettings */,
 				D533BF261CDC1C3F871E7BFD /* NightscoutConfig */,
 				BD47FD142D88AACC0043966B /* Onboarding */,
+618FF40ED4142BF1E47414B8 /* ProfilePresets */,
 				99C01B871ACAB3F32CE755C7 /* PumpConfig */,
 				DD9ECB6B2CA99FA400AA7C45 /* RemoteControlConfig */,
 				3811DE3825C9D4A100A708ED /* Settings */,
@@ -2460,6 +2473,7 @@
 				BDF530D72B40F8AC002CAF43 /* LockScreenView.swift */,
 				583684072BD195A700070A60 /* Determination.swift */,
 				BDC2EA462C3045AD00E5BBD0 /* Override.swift */,
+454A047D1EAFCC939EE5F78F /* ProfilePreset.swift */,
 				DD21FCB42C6952AD00AF2C25 /* DecimalPickerSettings.swift */,
 				DD6B7CB32C7B71F700B75029 /* ForecastDisplayType.swift */,
 				DD9ECB692CA99F6C00AA7C45 /* CommandPayload.swift */,
@@ -3833,6 +3847,25 @@
 			path = View;
 			sourceTree = "<group>";
 		};
+618FF40ED4142BF1E47414B8 /* ProfilePresets */ = {
+isa = PBXGroup;
+children = (
+F801374D2248527BC2D92195 /* View */,
+FCE7ED830845881A9B7BFB13 /* ProfilePresetsDataFlow.swift */,
+088BDB99FF13DF5C230E6505 /* ProfilePresetsProvider.swift */,
+4206D510BF1723B0AE70D025 /* ProfilePresetsStateModel.swift */,
+);
+path = ProfilePresets;
+sourceTree = "<group>";
+};
+F801374D2248527BC2D92195 /* View */ = {
+isa = PBXGroup;
+children = (
+6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */,
+);
+path = View;
+sourceTree = "<group>";
+};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -4200,6 +4233,12 @@
 			files = (
 				DDA40BBA2F4DB18800257798 /* AlgorithmGlucose.swift in Sources */,
 				DD5DC9F12CF3D97C00AB8703 /* AdjustmentsStateModel+Overrides.swift in Sources */,
+4A46020CE79D50DE354388D2 /* ProfilePreset.swift in Sources */,
+14D41039DA2596F4C61FF78D /* ProfilePresetStorage.swift in Sources */,
+431717ABC2142AA702DBE4BA /* ProfilePresetsDataFlow.swift in Sources */,
+A631E9E032EA6B20DC562273 /* ProfilePresetsProvider.swift in Sources */,
+562F7BCF655FE3E27FFDEAD7 /* ProfilePresetsStateModel.swift in Sources */,
+1251C1C60CFB17F89B01BB17 /* ProfilePresetsRootView.swift in Sources */,
 				3811DE2325C9D48300A708ED /* MainDataFlow.swift in Sources */,
 				C2A0A42F2CE03131003B98E8 /* ConstantValues.swift in Sources */,
 				BD3CC0722B0B89D50013189E /* MainChartView.swift in Sources */,
