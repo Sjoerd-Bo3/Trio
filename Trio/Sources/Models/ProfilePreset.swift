@@ -1,6 +1,6 @@
 import Foundation
 
-struct ProfilePreset: JSON, Identifiable, Equatable {
+struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
     let id: String
     var name: String
     var basalProfile: [BasalProfileEntry]
@@ -32,6 +32,10 @@ struct ProfilePreset: JSON, Identifiable, Equatable {
 
     static func == (lhs: ProfilePreset, rhs: ProfilePreset) -> Bool {
         lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 

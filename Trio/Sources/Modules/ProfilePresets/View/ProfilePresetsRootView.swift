@@ -388,10 +388,7 @@ extension ProfilePresets {
                                 .monospacedDigit()
                             }
 
-                            Text(
-                                adjustmentDescription,
-                                comment: "ProfilePresets: description of the percentage adjustment effect"
-                            )
+                            Text(adjustmentDescription)
                             .font(.footnote)
                             .foregroundColor(.secondary)
                         }
