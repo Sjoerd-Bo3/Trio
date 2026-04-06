@@ -749,6 +749,8 @@
 A631E9E032EA6B20DC562273 /* ProfilePresetsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 088BDB99FF13DF5C230E6505 /* ProfilePresetsProvider.swift */; };
 562F7BCF655FE3E27FFDEAD7 /* ProfilePresetsStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4206D510BF1723B0AE70D025 /* ProfilePresetsStateModel.swift */; };
 1251C1C60CFB17F89B01BB17 /* ProfilePresetsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */; };
+		B2A3F91E0C4D82A1F73E9D04 /* ProfilePresetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E7C35A1B9F64E2A80C31D7 /* ProfilePresetDetailView.swift */; };
+		C8F1D42B3E5A07C9D16B8A23 /* ProfileComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B2E76F4C8D13A5E07F42B1 /* ProfileComparisonView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1596,6 +1598,8 @@ FCE7ED830845881A9B7BFB13 /* ProfilePresetsDataFlow.swift */ = {isa = PBXFileRefe
 088BDB99FF13DF5C230E6505 /* ProfilePresetsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsProvider.swift; sourceTree = "<group>"; };
 4206D510BF1723B0AE70D025 /* ProfilePresetsStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsStateModel.swift; sourceTree = "<group>"; };
 6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetsRootView.swift; sourceTree = "<group>"; };
+D4E7C35A1B9F64E2A80C31D7 /* ProfilePresetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePresetDetailView.swift; sourceTree = "<group>"; };
+A9B2E76F4C8D13A5E07F42B1 /* ProfileComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileComparisonView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -3862,6 +3866,8 @@ F801374D2248527BC2D92195 /* View */ = {
 isa = PBXGroup;
 children = (
 6EB73A32687A94A200129336 /* ProfilePresetsRootView.swift */,
+D4E7C35A1B9F64E2A80C31D7 /* ProfilePresetDetailView.swift */,
+A9B2E76F4C8D13A5E07F42B1 /* ProfileComparisonView.swift */,
 );
 path = View;
 sourceTree = "<group>";
@@ -4239,6 +4245,8 @@ sourceTree = "<group>";
 A631E9E032EA6B20DC562273 /* ProfilePresetsProvider.swift in Sources */,
 562F7BCF655FE3E27FFDEAD7 /* ProfilePresetsStateModel.swift in Sources */,
 1251C1C60CFB17F89B01BB17 /* ProfilePresetsRootView.swift in Sources */,
+B2A3F91E0C4D82A1F73E9D04 /* ProfilePresetDetailView.swift in Sources */,
+C8F1D42B3E5A07C9D16B8A23 /* ProfileComparisonView.swift in Sources */,
 				3811DE2325C9D48300A708ED /* MainDataFlow.swift in Sources */,
 				C2A0A42F2CE03131003B98E8 /* ConstantValues.swift in Sources */,
 				BD3CC0722B0B89D50013189E /* MainChartView.swift in Sources */,

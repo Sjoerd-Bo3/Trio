@@ -5,6 +5,7 @@ protocol ProfilePresetStorage {
     func presets() -> [ProfilePreset]
     func savePresets(_ presets: [ProfilePreset])
     func saveCurrentProfileAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
+    func currentProfile() -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
     func deletePreset(id: String)
 }
@@ -24,6 +25,66 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
 
     func savePresets(_ presets: [ProfilePreset]) {
         storage.save(presets, as: OpenAPS.Trio.profilePresets)
+    }
+
+    func currentProfile() -> ProfilePreset? {
+        let basalProfile = storage.retrieve(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
+            ?? [BasalProfileEntry](from: OpenAPS.defaults(for: OpenAPS.Settings.basalProfile))
+            ?? []
+
+        let insulinSensitivities = storage.retrieve(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
+            ?? InsulinSensitivities(from: OpenAPS.defaults(for: OpenAPS.Settings.insulinSensitivities))
+            ?? InsulinSensitivities(units: .mgdL, userPreferredUnits: .mgdL, sensitivities: [])
+
+        let carbRatios = storage.retrieve(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
+            ?? CarbRatios(from: OpenAPS.defaults(for: OpenAPS.Settings.carbRatios))
+            ?? CarbRatios(units: .grams, schedule: [])
+
+        let bgTargets = storage.retrieve(OpenAPS.Settings.bgTargets, as: BGTargets.self)
+            ?? BGTargets(from: OpenAPS.defaults(for: OpenAPS.Settings.bgTargets))
+            ?? BGTargets(units: .mgdL, userPreferredUnits: .mgdL, targets: [])
+
+        guard !basalProfile.isEmpty,
+              !insulinSensitivities.sensitivities.isEmpty,
+              !carbRatios.schedule.isEmpty,
+              !bgTargets.targets.isEmpty
+        else {
+            return nil
+        }
+
+        let prefs = settingsManager.preferences
+        let smbSettings = SMBPresetSettings(
+            enableSMBAlways: prefs.enableSMBAlways,
+            enableSMBWithCOB: prefs.enableSMBWithCOB,
+            enableSMBWithTemptarget: prefs.enableSMBWithTemptarget,
+            enableSMBAfterCarbs: prefs.enableSMBAfterCarbs,
+            allowSMBWithHighTemptarget: prefs.allowSMBWithHighTemptarget,
+            enableSMBHighBG: prefs.enableSMB_high_bg,
+            enableSMBHighBGTarget: prefs.enableSMB_high_bg_target,
+            maxSMBBasalMinutes: prefs.maxSMBBasalMinutes,
+            maxUAMSMBBasalMinutes: prefs.maxUAMSMBBasalMinutes,
+            enableUAM: prefs.enableUAM,
+            maxDeltaBGthreshold: prefs.maxDeltaBGthreshold
+        )
+
+        let dynamicSettings = DynamicPresetSettings(
+            useNewFormula: prefs.useNewFormula,
+            sigmoid: prefs.sigmoid,
+            adjustmentFactor: prefs.adjustmentFactor,
+            adjustmentFactorSigmoid: prefs.adjustmentFactorSigmoid,
+            weightPercentage: prefs.weightPercentage,
+            tddAdjBasal: prefs.tddAdjBasal
+        )
+
+        return ProfilePreset(
+            name: String(localized: "Current Profile", comment: "ProfilePresets: name for the current active profile"),
+            basalProfile: basalProfile,
+            insulinSensitivities: insulinSensitivities,
+            carbRatios: carbRatios,
+            bgTargets: bgTargets,
+            smbSettings: smbSettings,
+            dynamicSettings: dynamicSettings
+        )
     }
 
     func saveCurrentProfileAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {

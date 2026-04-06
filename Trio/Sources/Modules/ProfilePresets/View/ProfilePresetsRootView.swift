@@ -52,6 +52,18 @@ extension ProfilePresets {
                     .listRowBackground(Color.chart)
                 }
 
+                if state.presets.count >= 2 {
+                    Section(
+                        header: Text(
+                            "Compare Presets",
+                            comment: "ProfilePresets: section header for comparing two presets"
+                        )
+                    ) {
+                        comparePresetsRow
+                    }
+                    .listRowBackground(Color.chart)
+                }
+
                 Section(
                     header: Text(
                         "About Profile Presets",
@@ -207,22 +219,68 @@ extension ProfilePresets {
 
                 presetDetails(preset)
 
-                // Adjust button
-                Button {
-                    state.beginAdjustment(for: preset)
-                } label: {
-                    Label {
-                        Text(
-                            "Create Adjusted Copy",
-                            comment: "ProfilePresets: button to create a percentage-adjusted copy of a preset"
+                HStack(spacing: 12) {
+                    // Detail button
+                    NavigationLink {
+                        PresetDetailView(
+                            preset: preset,
+                            units: state.units,
+                            formattedBasalTotal: state.formattedBasalTotal(preset)
                         )
-                    } icon: {
-                        Image(systemName: "plusminus")
+                    } label: {
+                        Label {
+                            Text(
+                                "View Details",
+                                comment: "ProfilePresets: button to view full preset details"
+                            )
+                        } icon: {
+                            Image(systemName: "list.bullet")
+                        }
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
                     }
-                    .font(.caption)
-                    .foregroundColor(.accentColor)
+                    .buttonStyle(.plain)
+
+                    // Compare with current
+                    if let currentProfile = state.currentProfile {
+                        NavigationLink {
+                            ComparisonView(
+                                presetA: preset,
+                                presetB: currentProfile,
+                                units: state.units
+                            )
+                        } label: {
+                            Label {
+                                Text(
+                                    "Compare with Current",
+                                    comment: "ProfilePresets: button to compare preset with current profile"
+                                )
+                            } icon: {
+                                Image(systemName: "arrow.left.arrow.right")
+                            }
+                            .font(.caption)
+                            .foregroundColor(.accentColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    // Adjust button
+                    Button {
+                        state.beginAdjustment(for: preset)
+                    } label: {
+                        Label {
+                            Text(
+                                "Create Adjusted Copy",
+                                comment: "ProfilePresets: button to create a percentage-adjusted copy of a preset"
+                            )
+                        } icon: {
+                            Image(systemName: "plusminus")
+                        }
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.vertical, 4)
         }
@@ -484,19 +542,108 @@ extension ProfilePresets {
 
                     saveOptionsSection
 
-                    Section {
-                        Text(
-                            "Your current Basal Rates, ISF, CR, and Glucose Targets will be saved.",
-                            comment: "ProfilePresets: info text about what will be saved"
-                        )
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
+                    if let preview = state.savePreviewProfile {
+                        Section(
+                            header: Text(
+                                "Settings Summary",
+                                comment: "ProfilePresets: section header for settings summary in save sheet"
+                            )
+                        ) {
+                            HStack {
+                                Label {
+                                    Text(
+                                        "Total Daily Basal",
+                                        comment: "ProfilePresets: total daily basal label in save summary"
+                                    )
+                                } icon: {
+                                    Image(systemName: "drop.fill")
+                                        .foregroundColor(.insulin)
+                                }
+                                .font(.subheadline)
+                                Spacer()
+                                Text("\(state.formattedBasalTotal(preview)) U/day")
+                                    .font(.subheadline.monospacedDigit())
+                                    .foregroundColor(.secondary)
+                            }
+
+                            ForEach(Array(preview.basalProfile.enumerated()), id: \.offset) { _, entry in
+                                HStack {
+                                    Text(entry.start)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text("\(formatRate(entry.rate)) U/hr")
+                                        .font(.caption.monospacedDigit())
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+
+                            HStack {
+                                Label {
+                                    Text("ISF", comment: "ProfilePresets: ISF label in save summary")
+                                } icon: {
+                                    Image(systemName: "arrow.up.arrow.down")
+                                        .foregroundColor(.loopYellow)
+                                }
+                                .font(.subheadline)
+                                Spacer()
+                                if let first = preview.insulinSensitivities.sensitivities.first {
+                                    Text(
+                                        "\(state.formatGlucose(first.sensitivity)) \(state.units.rawValue) (\(preview.insulinSensitivities.sensitivities.count) entries)"
+                                    )
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
+                                }
+                            }
+
+                            HStack {
+                                Label {
+                                    Text("CR", comment: "ProfilePresets: CR label in save summary")
+                                } icon: {
+                                    Image(systemName: "fork.knife")
+                                        .foregroundColor(.loopGreen)
+                                }
+                                .font(.subheadline)
+                                Spacer()
+                                if let first = preview.carbRatios.schedule.first {
+                                    Text(
+                                        "\(formatDecimal(first.ratio)) g/U (\(preview.carbRatios.schedule.count) entries)"
+                                    )
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
+                                }
+                            }
+
+                            HStack {
+                                Label {
+                                    Text(
+                                        "Targets",
+                                        comment: "ProfilePresets: glucose targets label in save summary"
+                                    )
+                                } icon: {
+                                    Image(systemName: "target")
+                                        .foregroundColor(.loopGreen)
+                                }
+                                .font(.subheadline)
+                                Spacer()
+                                if let first = preview.bgTargets.targets.first {
+                                    Text(
+                                        "\(state.formatGlucose(first.low))–\(state.formatGlucose(first.high)) \(state.units.rawValue)"
+                                    )
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
+                                }
+                            }
+                        }
                     }
                 }
                 .navigationTitle(
                     Text("Save Profile Preset", comment: "ProfilePresets: navigation title for save sheet")
                 )
                 .navigationBarTitleDisplayMode(.inline)
+                .onAppear {
+                    state.prepareSavePreview()
+                }
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button")) {
@@ -551,6 +698,64 @@ extension ProfilePresets {
 
         // MARK: - Helpers
 
+        @ViewBuilder private var comparePresetsRow: some View {
+            HStack {
+                Picker(
+                    String(localized: "First", comment: "ProfilePresets: first preset picker label"),
+                    selection: Binding(
+                        get: { state.comparisonPresetA ?? state.presets.first },
+                        set: { state.comparisonPresetA = $0 }
+                    )
+                ) {
+                    ForEach(state.presets) { preset in
+                        Text(preset.name).tag(Optional(preset))
+                    }
+                }
+                .pickerStyle(.menu)
+                .font(.subheadline)
+
+                Picker(
+                    String(localized: "Second", comment: "ProfilePresets: second preset picker label"),
+                    selection: Binding(
+                        get: { state.comparisonPresetB ?? (state.presets.count > 1 ? state.presets[1] : state.presets.first) },
+                        set: { state.comparisonPresetB = $0 }
+                    )
+                ) {
+                    ForEach(state.presets) { preset in
+                        Text(preset.name).tag(Optional(preset))
+                    }
+                    if let currentProfile = state.currentProfile {
+                        Text(currentProfile.name).tag(Optional(currentProfile))
+                    }
+                }
+                .pickerStyle(.menu)
+                .font(.subheadline)
+            }
+
+            if let presetA = state.comparisonPresetA ?? state.presets.first,
+               let presetB = state.comparisonPresetB ?? (state.presets.count > 1 ? state.presets[1] : nil)
+            {
+                NavigationLink {
+                    ComparisonView(
+                        presetA: presetA,
+                        presetB: presetB,
+                        units: state.units
+                    )
+                } label: {
+                    Label {
+                        Text(
+                            "Compare Selected Presets",
+                            comment: "ProfilePresets: button to compare two selected presets"
+                        )
+                    } icon: {
+                        Image(systemName: "arrow.left.arrow.right")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.accentColor)
+                }
+            }
+        }
+
         private func deletePresets(at offsets: IndexSet) {
             for index in offsets {
                 let preset = state.presets[index]
@@ -575,6 +780,10 @@ extension ProfilePresets {
 
         private func formatDecimal(_ value: Decimal) -> String {
             String(format: "%.1f", NSDecimalNumber(decimal: value).doubleValue)
+        }
+
+        private func formatRate(_ value: Decimal) -> String {
+            String(format: "%.2f", NSDecimalNumber(decimal: value).doubleValue)
         }
     }
 }

@@ -9,6 +9,10 @@ extension ProfilePresets {
             profilePresetStorage.presets()
         }
 
+        func loadCurrentProfile() -> ProfilePreset? {
+            profilePresetStorage.currentProfile()
+        }
+
         func saveCurrentAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {
             profilePresetStorage.saveCurrentProfileAsPreset(name: name, includeSMB: includeSMB, includeDynamic: includeDynamic)
         }
