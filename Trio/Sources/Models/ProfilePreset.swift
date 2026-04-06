@@ -38,4 +38,18 @@ extension ProfilePreset {
         case carbRatios = "carb_ratios"
         case bgTargets = "bg_targets"
     }
+
+    var totalDailyBasal: Decimal {
+        basalProfile.enumerated().reduce(Decimal.zero) { result, entry in
+            let current = entry.element
+            let nextMinutes: Int
+            if entry.offset + 1 < basalProfile.count {
+                nextMinutes = basalProfile[entry.offset + 1].minutes
+            } else {
+                nextMinutes = 24 * 60
+            }
+            let durationHours = Decimal(nextMinutes - current.minutes) / 60
+            return result + current.rate * durationHours
+        }
+    }
 }
