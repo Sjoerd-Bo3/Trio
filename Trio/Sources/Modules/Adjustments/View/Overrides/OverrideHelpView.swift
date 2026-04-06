@@ -19,7 +19,7 @@ struct OverrideHelpView: View {
                         Text("• Glucose Target")
                     }
                     Text(
-                        "There are also options to override your Max SMB Minutes and Max UAM SMB Minutes, as well as to disable SMBs."
+                        "There are also options to override your Max SMB Minutes and Max UAM SMB Minutes, disable SMBs, and temporarily disable Dynamic ISF."
                     )
                     Text(
                         "Select \"Start Override\" to immediately start using the Override, or select \"Save as Preset\" to be able to easily start the Override at a later time."

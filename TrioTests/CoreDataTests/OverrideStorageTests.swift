@@ -62,7 +62,8 @@ import Testing
             start: 1,
             end: 2,
             smbMinutes: 100,
-            uamMinutes: 120
+            uamMinutes: 120,
+            disableDynamicISF: false
         )
 
         // When
@@ -108,7 +109,8 @@ import Testing
             start: 1,
             end: 2,
             smbMinutes: 100,
-            uamMinutes: 120
+            uamMinutes: 120,
+            disableDynamicISF: false
         )
 
         // When
@@ -152,7 +154,8 @@ import Testing
             start: 1,
             end: 2,
             smbMinutes: 100,
-            uamMinutes: 120
+            uamMinutes: 120,
+            disableDynamicISF: false
         )
 
         // Store the preset
@@ -208,7 +211,8 @@ import Testing
             start: 1,
             end: 2,
             smbMinutes: 100,
-            uamMinutes: 120
+            uamMinutes: 120,
+            disableDynamicISF: false
         )
 
         // When
