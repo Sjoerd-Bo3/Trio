@@ -245,7 +245,7 @@ extension UnitsLimitsSettings {
                                 }
 
                                 Text(
-                                    "Using \(state.insulinConcentration.displayName) insulin means the pump delivers \(state.insulinConcentration.factor > 1 ? "more" : "fewer") actual units per volume than it believes. Trio automatically translates all commands and readings. Verify your concentration matches the insulin loaded in your pump."
+                                    "Using \(state.insulinConcentration.displayName) insulin: each volume unit from the pump contains \(NSDecimalNumber(decimal: state.insulinConcentration.factor))× the insulin of U-100. Trio automatically translates all commands and readings. Verify your concentration matches the insulin loaded in your pump."
                                 )
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
