@@ -72,11 +72,22 @@ extension ProfilePresets {
 
                         Label {
                             Text(
-                                "Each preset stores: Basal Rates, Insulin Sensitivities (ISF), Carb Ratios (CR), and Glucose Targets.",
+                                "Each preset stores: Basal Rates, Insulin Sensitivities (ISF), Carb Ratios (CR), and Glucose Targets. Optionally also SMB and Dynamic ISF settings.",
                                 comment: "ProfilePresets: description of what is stored in a preset"
                             )
                         } icon: {
                             Image(systemName: "list.bullet.clipboard")
+                                .foregroundColor(.accentColor)
+                        }
+                        .font(.footnote)
+
+                        Label {
+                            Text(
+                                "Use the percentage adjustment to create stronger or weaker variations of an existing preset as a starting point.",
+                                comment: "ProfilePresets: explanation of percentage adjustment feature"
+                            )
+                        } icon: {
+                            Image(systemName: "percent")
                                 .foregroundColor(.accentColor)
                         }
                         .font(.footnote)
@@ -113,28 +124,8 @@ extension ProfilePresets {
             .onAppear(perform: configureView)
             .navigationTitle(Text("Profile Presets", comment: "ProfilePresets: navigation title"))
             .navigationBarTitleDisplayMode(.automatic)
-            .alert(
-                Text("Save Profile Preset", comment: "ProfilePresets: alert title for saving a new preset"),
-                isPresented: $state.showingSaveDialog
-            ) {
-                TextField(
-                    String(
-                        localized: "Preset Name",
-                        comment: "ProfilePresets: placeholder for preset name input"
-                    ),
-                    text: $state.newPresetName
-                )
-                Button(String(localized: "Save", comment: "ProfilePresets: save button")) {
-                    state.saveCurrentProfileAsPreset()
-                }
-                Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button"), role: .cancel) {
-                    state.newPresetName = ""
-                }
-            } message: {
-                Text(
-                    "Enter a name for this profile preset. Your current Basal Rates, ISF, CR, and Glucose Targets will be saved.",
-                    comment: "ProfilePresets: alert message explaining what will be saved"
-                )
+            .sheet(isPresented: $state.showingSaveDialog) {
+                savePresetSheet
             }
             .alert(
                 Text("Activate Preset", comment: "ProfilePresets: alert title for activating a preset"),
@@ -151,8 +142,9 @@ extension ProfilePresets {
                 }
             } message: {
                 if let preset = state.selectedPreset {
+                    let extraSettings = activateExtraSettingsDescription(for: preset)
                     Text(
-                        "This will overwrite your current Basal Rates, ISF, CR, and Glucose Targets with the settings from '\(preset.name)'. Are you sure?",
+                        "This will overwrite your current Basal Rates, ISF, CR, and Glucose Targets with the settings from '\(preset.name)'.\(extraSettings) Are you sure?",
                         comment: "ProfilePresets: confirmation message for activating a preset"
                     )
                 }
@@ -185,7 +177,12 @@ extension ProfilePresets {
                     comment: "ProfilePresets: error message when preset is invalid"
                 )
             }
+            .sheet(isPresented: $state.showingAdjustmentSheet) {
+                adjustmentSheet
+            }
         }
+
+        // MARK: - Preset Row
 
         @ViewBuilder private func presetRow(_ preset: ProfilePreset) -> some View {
             VStack(alignment: .leading, spacing: 6) {
@@ -209,9 +206,28 @@ extension ProfilePresets {
                 }
 
                 presetDetails(preset)
+
+                // Adjust button
+                Button {
+                    state.beginAdjustment(for: preset)
+                } label: {
+                    Label {
+                        Text(
+                            "Create Adjusted Copy",
+                            comment: "ProfilePresets: button to create a percentage-adjusted copy of a preset"
+                        )
+                    } icon: {
+                        Image(systemName: "plusminus")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.accentColor)
+                }
+                .buttonStyle(.plain)
             }
             .padding(.vertical, 4)
         }
+
+        // MARK: - Preset Details
 
         @ViewBuilder private func presetDetails(_ preset: ProfilePreset) -> some View {
             VStack(alignment: .leading, spacing: 4) {
@@ -251,15 +267,314 @@ extension ProfilePresets {
                     }
                     .font(.caption)
                 }
+
+                // Extra settings badges
+                HStack(spacing: 8) {
+                    if preset.smbSettings != nil {
+                        Label {
+                            Text("SMB", comment: "ProfilePresets: badge indicating SMB settings are included")
+                        } icon: {
+                            Image(systemName: "bolt.fill")
+                        }
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.2))
+                        .foregroundColor(.orange)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+
+                    if preset.dynamicSettings != nil {
+                        Label {
+                            Text(
+                                "Dynamic ISF",
+                                comment: "ProfilePresets: badge indicating Dynamic ISF settings are included"
+                            )
+                        } icon: {
+                            Image(systemName: "waveform.path")
+                        }
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.purple.opacity(0.2))
+                        .foregroundColor(.purple)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+                }
             }
             .foregroundColor(.secondary)
         }
+
+        // MARK: - Adjustment Sheet
+
+        private var adjustmentSheet: some View {
+            NavigationView {
+                Form {
+                    if let source = state.adjustmentSourcePreset {
+                        Section(
+                            header: Text(
+                                "Percentage Adjustment",
+                                comment: "ProfilePresets: section header for percentage adjustment"
+                            )
+                        ) {
+                            Stepper(
+                                value: $state.adjustmentPercentage,
+                                in: 50 ... 150,
+                                step: 5
+                            ) {
+                                Text(
+                                    "\(state.adjustmentPercentage)%",
+                                    comment: "ProfilePresets: percentage adjustment value"
+                                )
+                                .font(.title2.bold())
+                                .monospacedDigit()
+                            }
+
+                            Text(
+                                adjustmentDescription,
+                                comment: "ProfilePresets: description of the percentage adjustment effect"
+                            )
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                        }
+
+                        Section(
+                            header: Text(
+                                "New Preset Name",
+                                comment: "ProfilePresets: section header for adjusted preset name"
+                            )
+                        ) {
+                            TextField(
+                                String(
+                                    localized: "Preset Name",
+                                    comment: "ProfilePresets: placeholder for adjusted preset name"
+                                ),
+                                text: $state.adjustmentPresetName
+                            )
+                        }
+
+                        Section(
+                            header: Text(
+                                "Preview",
+                                comment: "ProfilePresets: section header for adjusted values preview"
+                            )
+                        ) {
+                            adjustmentPreview(source: source)
+                        }
+                    }
+                }
+                .navigationTitle(
+                    Text(
+                        "Create Adjusted Profile",
+                        comment: "ProfilePresets: navigation title for adjustment sheet"
+                    )
+                )
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button")) {
+                            state.showingAdjustmentSheet = false
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(String(localized: "Save", comment: "ProfilePresets: save button")) {
+                            state.createAdjustedPreset()
+                            state.showingAdjustmentSheet = false
+                        }
+                        .disabled(state.adjustmentPresetName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+            }
+        }
+
+        private var adjustmentDescription: String {
+            let pct = state.adjustmentPercentage
+            if pct > 100 {
+                return String(
+                    localized: "Increases basal rates by \(pct - 100)% and makes ISF/CR more aggressive (lower values).",
+                    comment: "ProfilePresets: description when percentage is above 100"
+                )
+            } else if pct < 100 {
+                return String(
+                    localized: "Decreases basal rates by \(100 - pct)% and makes ISF/CR less aggressive (higher values).",
+                    comment: "ProfilePresets: description when percentage is below 100"
+                )
+            } else {
+                return String(
+                    localized: "Creates an exact copy of the original preset.",
+                    comment: "ProfilePresets: description when percentage is 100"
+                )
+            }
+        }
+
+        @ViewBuilder private func adjustmentPreview(source: ProfilePreset) -> some View {
+            let adjusted = source.scaled(by: state.adjustmentPercentage, name: "")
+
+            VStack(alignment: .leading, spacing: 6) {
+                previewRow(
+                    label: String(localized: "Basal Total", comment: "ProfilePresets: basal total label in preview"),
+                    original: "\(state.formattedBasalTotal(source)) U/day",
+                    adjusted: "\(state.formattedBasalTotal(adjusted)) U/day"
+                )
+
+                if let firstISFOriginal = source.insulinSensitivities.sensitivities.first,
+                   let firstISFAdjusted = adjusted.insulinSensitivities.sensitivities.first
+                {
+                    previewRow(
+                        label: String(
+                            localized: "ISF (first entry)",
+                            comment: "ProfilePresets: ISF first entry label in preview"
+                        ),
+                        original: formatDecimal(firstISFOriginal.sensitivity),
+                        adjusted: formatDecimal(firstISFAdjusted.sensitivity)
+                    )
+                }
+
+                if let firstCROriginal = source.carbRatios.schedule.first,
+                   let firstCRAdjusted = adjusted.carbRatios.schedule.first
+                {
+                    previewRow(
+                        label: String(
+                            localized: "CR (first entry)",
+                            comment: "ProfilePresets: CR first entry label in preview"
+                        ),
+                        original: formatDecimal(firstCROriginal.ratio),
+                        adjusted: formatDecimal(firstCRAdjusted.ratio)
+                    )
+                }
+            }
+        }
+
+        @ViewBuilder private func previewRow(label: String, original: String, adjusted: String) -> some View {
+            HStack {
+                Text(label)
+                    .font(.caption)
+                Spacer()
+                Text(original)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Image(systemName: "arrow.right")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Text(adjusted)
+                    .font(.caption.bold())
+                    .foregroundColor(original == adjusted ? .primary : .accentColor)
+            }
+        }
+
+        // MARK: - Save Preset Sheet
+
+        private var savePresetSheet: some View {
+            NavigationView {
+                Form {
+                    Section(
+                        header: Text(
+                            "Preset Name",
+                            comment: "ProfilePresets: section header for preset name input"
+                        )
+                    ) {
+                        TextField(
+                            String(
+                                localized: "Enter a name",
+                                comment: "ProfilePresets: placeholder for preset name input"
+                            ),
+                            text: $state.newPresetName
+                        )
+                    }
+
+                    saveOptionsSection
+
+                    Section {
+                        Text(
+                            "Your current Basal Rates, ISF, CR, and Glucose Targets will be saved.",
+                            comment: "ProfilePresets: info text about what will be saved"
+                        )
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    }
+                }
+                .navigationTitle(
+                    Text("Save Profile Preset", comment: "ProfilePresets: navigation title for save sheet")
+                )
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button")) {
+                            state.newPresetName = ""
+                            state.includeSMBSettings = false
+                            state.includeDynamicSettings = false
+                            state.showingSaveDialog = false
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(String(localized: "Save", comment: "ProfilePresets: save button")) {
+                            state.saveCurrentProfileAsPreset()
+                            state.showingSaveDialog = false
+                        }
+                        .disabled(state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+            }
+        }
+
+        // MARK: - Save Options Section
+
+        private var saveOptionsSection: some View {
+            Section(
+                header: Text(
+                    "Include Extra Settings",
+                    comment: "ProfilePresets: section header for extra settings toggles"
+                )
+            ) {
+                Toggle(isOn: $state.includeSMBSettings) {
+                    Label {
+                        Text("SMB Settings", comment: "ProfilePresets: toggle label for including SMB settings")
+                    } icon: {
+                        Image(systemName: "bolt.fill")
+                            .foregroundColor(.orange)
+                    }
+                }
+
+                Toggle(isOn: $state.includeDynamicSettings) {
+                    Label {
+                        Text(
+                            "Dynamic ISF Settings",
+                            comment: "ProfilePresets: toggle label for including Dynamic ISF settings"
+                        )
+                    } icon: {
+                        Image(systemName: "waveform.path")
+                            .foregroundColor(.purple)
+                    }
+                }
+            }
+        }
+
+        // MARK: - Helpers
 
         private func deletePresets(at offsets: IndexSet) {
             for index in offsets {
                 let preset = state.presets[index]
                 state.deletePreset(preset)
             }
+        }
+
+        private func activateExtraSettingsDescription(for preset: ProfilePreset) -> String {
+            var extras: [String] = []
+            if preset.smbSettings != nil {
+                extras.append(String(localized: "SMB", comment: "ProfilePresets: SMB settings label"))
+            }
+            if preset.dynamicSettings != nil {
+                extras.append(String(localized: "Dynamic ISF", comment: "ProfilePresets: Dynamic ISF settings label"))
+            }
+            if extras.isEmpty { return "" }
+            return " " + String(
+                localized: "This will also apply \(extras.joined(separator: " and ")) settings.",
+                comment: "ProfilePresets: extra settings description in activate confirmation"
+            )
+        }
+
+        private func formatDecimal(_ value: Decimal) -> String {
+            String(format: "%.1f", NSDecimalNumber(decimal: value).doubleValue)
         }
     }
 }

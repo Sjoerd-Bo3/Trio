@@ -4,7 +4,7 @@ import Swinject
 protocol ProfilePresetStorage {
     func presets() -> [ProfilePreset]
     func savePresets(_ presets: [ProfilePreset])
-    func saveCurrentProfileAsPreset(name: String) -> ProfilePreset?
+    func saveCurrentProfileAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
     func deletePreset(id: String)
 }
@@ -12,6 +12,7 @@ protocol ProfilePresetStorage {
 final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     @Injected() private var storage: FileStorage!
     @Injected() private var broadcaster: Broadcaster!
+    @Injected() private var settingsManager: SettingsManager!
 
     init(resolver: Resolver) {
         injectServices(resolver)
@@ -25,7 +26,7 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         storage.save(presets, as: OpenAPS.Trio.profilePresets)
     }
 
-    func saveCurrentProfileAsPreset(name: String) -> ProfilePreset? {
+    func saveCurrentProfileAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {
         let basalProfile = storage.retrieve(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
             ?? [BasalProfileEntry](from: OpenAPS.defaults(for: OpenAPS.Settings.basalProfile))
             ?? []
@@ -50,12 +51,45 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             return nil
         }
 
+        var smbSettings: SMBPresetSettings?
+        if includeSMB {
+            let prefs = settingsManager.preferences
+            smbSettings = SMBPresetSettings(
+                enableSMBAlways: prefs.enableSMBAlways,
+                enableSMBWithCOB: prefs.enableSMBWithCOB,
+                enableSMBWithTemptarget: prefs.enableSMBWithTemptarget,
+                enableSMBAfterCarbs: prefs.enableSMBAfterCarbs,
+                allowSMBWithHighTemptarget: prefs.allowSMBWithHighTemptarget,
+                enableSMBHighBG: prefs.enableSMB_high_bg,
+                enableSMBHighBGTarget: prefs.enableSMB_high_bg_target,
+                maxSMBBasalMinutes: prefs.maxSMBBasalMinutes,
+                maxUAMSMBBasalMinutes: prefs.maxUAMSMBBasalMinutes,
+                enableUAM: prefs.enableUAM,
+                maxDeltaBGthreshold: prefs.maxDeltaBGthreshold
+            )
+        }
+
+        var dynamicSettings: DynamicPresetSettings?
+        if includeDynamic {
+            let prefs = settingsManager.preferences
+            dynamicSettings = DynamicPresetSettings(
+                useNewFormula: prefs.useNewFormula,
+                sigmoid: prefs.sigmoid,
+                adjustmentFactor: prefs.adjustmentFactor,
+                adjustmentFactorSigmoid: prefs.adjustmentFactorSigmoid,
+                weightPercentage: prefs.weightPercentage,
+                tddAdjBasal: prefs.tddAdjBasal
+            )
+        }
+
         let preset = ProfilePreset(
             name: name,
             basalProfile: basalProfile,
             insulinSensitivities: insulinSensitivities,
             carbRatios: carbRatios,
-            bgTargets: bgTargets
+            bgTargets: bgTargets,
+            smbSettings: smbSettings,
+            dynamicSettings: dynamicSettings
         )
 
         var existingPresets = presets()
@@ -78,6 +112,33 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         storage.save(preset.insulinSensitivities, as: OpenAPS.Settings.insulinSensitivities)
         storage.save(preset.carbRatios, as: OpenAPS.Settings.carbRatios)
         storage.save(preset.bgTargets, as: OpenAPS.Settings.bgTargets)
+
+        if let smb = preset.smbSettings {
+            var prefs = settingsManager.preferences
+            prefs.enableSMBAlways = smb.enableSMBAlways
+            prefs.enableSMBWithCOB = smb.enableSMBWithCOB
+            prefs.enableSMBWithTemptarget = smb.enableSMBWithTemptarget
+            prefs.enableSMBAfterCarbs = smb.enableSMBAfterCarbs
+            prefs.allowSMBWithHighTemptarget = smb.allowSMBWithHighTemptarget
+            prefs.enableSMB_high_bg = smb.enableSMBHighBG
+            prefs.enableSMB_high_bg_target = smb.enableSMBHighBGTarget
+            prefs.maxSMBBasalMinutes = smb.maxSMBBasalMinutes
+            prefs.maxUAMSMBBasalMinutes = smb.maxUAMSMBBasalMinutes
+            prefs.enableUAM = smb.enableUAM
+            prefs.maxDeltaBGthreshold = smb.maxDeltaBGthreshold
+            settingsManager.preferences = prefs
+        }
+
+        if let dynamic = preset.dynamicSettings {
+            var prefs = settingsManager.preferences
+            prefs.useNewFormula = dynamic.useNewFormula
+            prefs.sigmoid = dynamic.sigmoid
+            prefs.adjustmentFactor = dynamic.adjustmentFactor
+            prefs.adjustmentFactorSigmoid = dynamic.adjustmentFactorSigmoid
+            prefs.weightPercentage = dynamic.weightPercentage
+            prefs.tddAdjBasal = dynamic.tddAdjBasal
+            settingsManager.preferences = prefs
+        }
 
         broadcaster.notify(BasalProfileObserver.self, on: .main) {
             $0.basalProfileDidChange(preset.basalProfile)

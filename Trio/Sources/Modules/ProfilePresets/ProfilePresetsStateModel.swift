@@ -13,6 +13,16 @@ extension ProfilePresets {
         var selectedPreset: ProfilePreset?
         var units: GlucoseUnits = .mgdL
 
+        // Save options
+        var includeSMBSettings: Bool = false
+        var includeDynamicSettings: Bool = false
+
+        // Percentage adjustment
+        var showingAdjustmentSheet: Bool = false
+        var adjustmentPercentage: Int = 100
+        var adjustmentPresetName: String = ""
+        var adjustmentSourcePreset: ProfilePreset?
+
         override func subscribe() {
             units = settingsManager.settings.units
             presets = provider.loadPresets()
@@ -20,12 +30,18 @@ extension ProfilePresets {
 
         func saveCurrentProfileAsPreset() {
             guard !newPresetName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-            if let preset = provider.saveCurrentAsPreset(name: newPresetName.trimmingCharacters(in: .whitespaces)) {
+            if let preset = provider.saveCurrentAsPreset(
+                name: newPresetName.trimmingCharacters(in: .whitespaces),
+                includeSMB: includeSMBSettings,
+                includeDynamic: includeDynamicSettings
+            ) {
                 presets.append(preset)
             } else {
                 showingSaveError = true
             }
             newPresetName = ""
+            includeSMBSettings = false
+            includeDynamicSettings = false
         }
 
         func activatePreset(_ preset: ProfilePreset) {
@@ -41,6 +57,29 @@ extension ProfilePresets {
 
         func formattedBasalTotal(_ preset: ProfilePreset) -> String {
             String(format: "%.2f", NSDecimalNumber(decimal: preset.totalDailyBasal).doubleValue)
+        }
+
+        // MARK: - Percentage Adjustment
+
+        func beginAdjustment(for preset: ProfilePreset) {
+            adjustmentSourcePreset = preset
+            adjustmentPercentage = 100
+            adjustmentPresetName = preset.name
+            showingAdjustmentSheet = true
+        }
+
+        func createAdjustedPreset() {
+            guard let source = adjustmentSourcePreset else { return }
+            let trimmedName = adjustmentPresetName.trimmingCharacters(in: .whitespaces)
+            guard !trimmedName.isEmpty else { return }
+
+            let adjusted = source.scaled(by: adjustmentPercentage, name: trimmedName)
+            provider.savePreset(adjusted)
+            presets.append(adjusted)
+
+            adjustmentSourcePreset = nil
+            adjustmentPresetName = ""
+            adjustmentPercentage = 100
         }
     }
 }
