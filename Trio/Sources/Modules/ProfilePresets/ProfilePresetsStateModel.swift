@@ -40,18 +40,7 @@ extension ProfilePresets {
         }
 
         func formattedBasalTotal(_ preset: ProfilePreset) -> String {
-            let total = preset.basalProfile.enumerated().reduce(Decimal.zero) { result, entry in
-                let current = entry.element
-                let nextMinutes: Int
-                if entry.offset + 1 < preset.basalProfile.count {
-                    nextMinutes = preset.basalProfile[entry.offset + 1].minutes
-                } else {
-                    nextMinutes = 24 * 60
-                }
-                let durationHours = Decimal(nextMinutes - current.minutes) / 60
-                return result + current.rate * durationHours
-            }
-            return String(format: "%.2f", NSDecimalNumber(decimal: total).doubleValue)
+            String(format: "%.2f", NSDecimalNumber(decimal: preset.totalDailyBasal).doubleValue)
         }
     }
 }
