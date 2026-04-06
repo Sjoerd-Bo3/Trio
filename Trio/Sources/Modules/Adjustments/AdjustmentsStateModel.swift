@@ -114,6 +114,11 @@ extension Adjustments {
             }
         }
 
+        func deactivateProfilePreset() {
+            profilePresetStorage.deactivatePreset()
+            activeProfilePreset = nil
+        }
+
         /// Retrieves the current glucose target based on the time of day.
         func getCurrentGlucoseTarget() async {
             let now = Date()

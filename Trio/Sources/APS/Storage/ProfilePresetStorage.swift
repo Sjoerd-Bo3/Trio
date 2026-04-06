@@ -7,6 +7,7 @@ protocol ProfilePresetStorage {
     func saveCurrentProfileAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
     func currentProfile() -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
+    func deactivatePreset()
     func deletePreset(id: String)
     func renamePreset(id: String, newName: String)
     func activePresetId() -> String?
@@ -205,6 +206,11 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     func activePreset() -> ProfilePreset? {
         guard let id = activePresetId() else { return nil }
         return presets().first { $0.id == id }
+    }
+
+    func deactivatePreset() {
+        storage.remove(OpenAPS.Trio.activeProfilePresetId)
+        Foundation.NotificationCenter.default.post(name: BaseProfilePresetStorage.profilePresetActivatedNotification, object: nil)
     }
 
     func deletePreset(id: String) {

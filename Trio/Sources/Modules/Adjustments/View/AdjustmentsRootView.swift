@@ -23,6 +23,9 @@ extension Adjustments {
         @State var isEditingTT = false
         @State var showCancelOverrideConfirmDialog = false
         @State var showCancelTempTargetConfirmDialog = false
+        @State var showProfileCheckmark: Bool = false
+        @State var selectedProfilePresetID: String?
+        @State var showDeactivateProfileConfirmDialog = false
 
         private var shouldDisplayStickyOverrideStopButton: Bool {
             state.isOverrideEnabled && state.activeOverrideName.isNotEmpty
@@ -30,6 +33,10 @@ extension Adjustments {
 
         private var shouldDisplayStickyTempTargetStopButton: Bool {
             state.isTempTargetEnabled && state.activeTempTargetName.isNotEmpty
+        }
+
+        private var shouldDisplayStickyProfileDeactivateButton: Bool {
+            state.activeProfilePreset != nil
         }
 
         @Environment(\.colorScheme) var colorScheme
@@ -70,12 +77,14 @@ extension Adjustments {
                 .listSectionSpacing(10)
                 .safeAreaInset(
                     edge: .bottom,
-                    spacing: shouldDisplayStickyOverrideStopButton || shouldDisplayStickyTempTargetStopButton ? 30 : 0
+                    spacing: shouldDisplayStickyOverrideStopButton || shouldDisplayStickyTempTargetStopButton || shouldDisplayStickyProfileDeactivateButton ? 30 : 0
                 ) {
                     if shouldDisplayStickyOverrideStopButton, state.selectedTab == .overrides {
                         stickyStopOverrideButton
                     } else if shouldDisplayStickyTempTargetStopButton, state.selectedTab == .tempTargets {
                         stickyStopTempTargetButton
+                    } else if shouldDisplayStickyProfileDeactivateButton, state.selectedTab == .profiles {
+                        stickyDeactivateProfileButton
                     } else {
                         EmptyView()
                     }
@@ -182,6 +191,11 @@ extension Adjustments {
                     Button(String(localized: "Activate", comment: "Adjustments: activate button")) {
                         if let preset = state.selectedProfilePreset {
                             state.activateProfilePreset(preset)
+                            selectedProfilePresetID = preset.id
+                            showProfileCheckmark = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                showProfileCheckmark = false
+                            }
                         }
                         state.selectedProfilePreset = nil
                     }
@@ -195,6 +209,23 @@ extension Adjustments {
                             comment: "Adjustments: profile activation confirmation message"
                         )
                     }
+                }
+                .confirmationDialog(
+                    "Deactivate Profile",
+                    isPresented: $showDeactivateProfileConfirmDialog
+                ) {
+                    Button(
+                        String(localized: "Deactivate", comment: "Adjustments: deactivate profile button"),
+                        role: .destructive
+                    ) {
+                        state.deactivateProfilePreset()
+                    }
+                    Button(String(localized: "Cancel", comment: "Adjustments: cancel button"), role: .cancel) {}
+                } message: {
+                    Text(
+                        "This will clear the active profile indicator. Your current therapy settings will remain unchanged.",
+                        comment: "Adjustments: deactivate profile confirmation message"
+                    )
                 }
             }).background(appState.trioBackgroundColor(for: colorScheme))
         }
@@ -279,7 +310,20 @@ extension Adjustments {
                 }
                 .listRowBackground(Color.loopGreen.opacity(0.8))
             case .profiles:
-                EmptyView()
+                if let active = state.activeProfilePreset {
+                    Section {
+                        HStack {
+                            Image(systemName: active.icon)
+                                .foregroundStyle(Color.primary)
+                            Text(
+                                "'\(active.name)' is active",
+                                comment: "Adjustments: active profile preset indicator"
+                            )
+                            Spacer()
+                        }
+                    }
+                    .listRowBackground(Color.accentColor.opacity(0.8))
+                }
             }
         }
 
@@ -330,26 +374,8 @@ extension Adjustments {
         // MARK: - Profiles Tab
 
         @ViewBuilder func profilesTab() -> some View {
-            if let active = state.activeProfilePreset {
-                Section(
-                    header: Text("Active Profile", comment: "Adjustments: section header for active profile preset")
-                ) {
-                    HStack {
-                        Image(systemName: active.icon)
-                            .foregroundColor(.accentColor)
-                            .font(.title3)
-                        VStack(alignment: .leading) {
-                            Text(active.name)
-                                .font(.headline)
-                            Text("Currently active", comment: "Adjustments: active profile status")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.accentColor)
-                    }
-                }
+            if state.activeProfilePreset != nil {
+                currentActiveAdjustment
             }
 
             if state.profilePresets.isEmpty {
@@ -369,22 +395,45 @@ extension Adjustments {
                     )
                 ) {
                     ForEach(state.profilePresets) { preset in
+                        profilePresetView(for: preset)
+                    }
+                }
+                .listRowBackground(Color.chart)
+            }
+        }
+
+        @ViewBuilder private func profilePresetView(for preset: ProfilePreset) -> some View {
+            let isSelected = preset.id == selectedProfilePresetID
+
+            ZStack(alignment: .trailing) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: preset.icon)
                                 .foregroundColor(.accentColor)
                                 .font(.title3)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(preset.name)
-                                    .font(.subheadline)
-                                adjustmentPresetPills(preset)
-                            }
+                            Text(preset.name)
+                                .font(.subheadline)
                             Spacer()
-                            if preset.id == state.activeProfilePreset?.id {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.accentColor)
-                            }
                         }
+                        adjustmentPresetPills(preset)
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        guard preset.id != state.activeProfilePreset?.id else { return }
+                        state.selectedProfilePreset = preset
+                        state.showingProfileActivateConfirmation = true
+                    }
+                }
+
+                if showProfileCheckmark, isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .imageScale(.large)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.green)
+                } else if preset.id == state.activeProfilePreset?.id {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.accentColor)
                 }
             }
         }
@@ -414,6 +463,31 @@ extension Adjustments {
                 .background(color.opacity(0.15))
                 .foregroundColor(color)
                 .clipShape(Capsule())
+        }
+
+        var stickyDeactivateProfileButton: some View {
+            ZStack {
+                Rectangle()
+                    .frame(width: UIScreen.main.bounds.width, height: 65)
+                    .foregroundStyle(colorScheme == .dark ? Color.bgDarkerDarkBlue : Color.white)
+                    .background(.thinMaterial)
+                    .opacity(0.8)
+                    .clipShape(Rectangle())
+
+                Button(action: {
+                    showDeactivateProfileConfirmDialog = true
+                }, label: {
+                    Text("Deactivate Profile", comment: "Adjustments: deactivate profile button")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(10)
+                })
+                    .frame(width: UIScreen.main.bounds.width * 0.9, height: 40, alignment: .center)
+                    .disabled(state.activeProfilePreset == nil)
+                    .background(state.activeProfilePreset == nil ? Color(.systemGray4) : Color(.systemRed))
+                    .tint(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .padding(5)
+            }
         }
     }
 }
