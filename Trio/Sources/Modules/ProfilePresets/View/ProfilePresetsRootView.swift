@@ -157,6 +157,34 @@ extension ProfilePresets {
                     )
                 }
             }
+            .alert(
+                Text(
+                    "Cannot Save Preset",
+                    comment: "ProfilePresets: alert title when saving fails due to incomplete settings"
+                ),
+                isPresented: $state.showingSaveError
+            ) {
+                Button(String(localized: "OK", comment: "ProfilePresets: dismiss button")) {}
+            } message: {
+                Text(
+                    "Your current therapy settings are incomplete. Please ensure Basal Rates, ISF, CR, and Glucose Targets are all configured before saving a preset.",
+                    comment: "ProfilePresets: error message when settings are incomplete"
+                )
+            }
+            .alert(
+                Text(
+                    "Cannot Activate Preset",
+                    comment: "ProfilePresets: alert title when activating fails due to invalid preset"
+                ),
+                isPresented: $state.showingActivateError
+            ) {
+                Button(String(localized: "OK", comment: "ProfilePresets: dismiss button")) {}
+            } message: {
+                Text(
+                    "This preset contains incomplete therapy settings and cannot be activated.",
+                    comment: "ProfilePresets: error message when preset is invalid"
+                )
+            }
         }
 
         @ViewBuilder private func presetRow(_ preset: ProfilePreset) -> some View {
@@ -202,9 +230,8 @@ extension ProfilePresets {
 
                 HStack(spacing: 16) {
                     Label {
-                        let isfCount = preset.insulinSensitivities.sensitivities.count
                         Text(
-                            "ISF: \(isfCount) \(isfCount == 1 ? "entry" : "entries")",
+                            "ISF: \(preset.insulinSensitivities.sensitivities.count) entries",
                             comment: "ProfilePresets: number of ISF schedule entries"
                         )
                     } icon: {
@@ -214,9 +241,8 @@ extension ProfilePresets {
                     .font(.caption)
 
                     Label {
-                        let crCount = preset.carbRatios.schedule.count
                         Text(
-                            "CR: \(crCount) \(crCount == 1 ? "entry" : "entries")",
+                            "CR: \(preset.carbRatios.schedule.count) entries",
                             comment: "ProfilePresets: number of CR schedule entries"
                         )
                     } icon: {
