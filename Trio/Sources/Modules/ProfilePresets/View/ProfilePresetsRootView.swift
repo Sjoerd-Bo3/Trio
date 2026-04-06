@@ -1094,7 +1094,7 @@ extension ProfilePresets {
         // MARK: - Helpers
 
         @ViewBuilder private var comparePresetsRow: some View {
-            let allOptions = state.presets + (state.currentProfile.map { [$0] } ?? [])
+            let comparisonOptions = state.presets + (state.currentProfile.map { [$0] } ?? [])
 
             Picker(
                 String(localized: "First", comment: "ProfilePresets: first preset picker label"),
@@ -1103,7 +1103,7 @@ extension ProfilePresets {
                     set: { state.comparisonPresetA = $0 }
                 )
             ) {
-                ForEach(allOptions) { preset in
+                ForEach(comparisonOptions) { preset in
                     Text(preset.name).tag(Optional(preset))
                 }
             }
@@ -1116,7 +1116,7 @@ extension ProfilePresets {
                     set: { state.comparisonPresetB = $0 }
                 )
             ) {
-                ForEach(allOptions) { preset in
+                ForEach(comparisonOptions) { preset in
                     Text(preset.name).tag(Optional(preset))
                 }
             }
