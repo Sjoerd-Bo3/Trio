@@ -703,7 +703,7 @@ extension ProfilePresets {
                 Picker(
                     String(localized: "First", comment: "ProfilePresets: first preset picker label"),
                     selection: Binding(
-                        get: { state.comparisonPresetA ?? state.presets.first },
+                        get: { state.defaultComparisonPresetA },
                         set: { state.comparisonPresetA = $0 }
                     )
                 ) {
@@ -717,7 +717,7 @@ extension ProfilePresets {
                 Picker(
                     String(localized: "Second", comment: "ProfilePresets: second preset picker label"),
                     selection: Binding(
-                        get: { state.comparisonPresetB ?? (state.presets.count > 1 ? state.presets[1] : state.presets.first) },
+                        get: { state.defaultComparisonPresetB },
                         set: { state.comparisonPresetB = $0 }
                     )
                 ) {
@@ -732,8 +732,8 @@ extension ProfilePresets {
                 .font(.subheadline)
             }
 
-            if let presetA = state.comparisonPresetA ?? state.presets.first,
-               let presetB = state.comparisonPresetB ?? (state.presets.count > 1 ? state.presets[1] : nil)
+            if let presetA = state.defaultComparisonPresetA,
+               let presetB = state.defaultComparisonPresetB
             {
                 NavigationLink {
                     ComparisonView(

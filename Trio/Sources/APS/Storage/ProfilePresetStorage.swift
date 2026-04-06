@@ -27,7 +27,16 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         storage.save(presets, as: OpenAPS.Trio.profilePresets)
     }
 
-    func currentProfile() -> ProfilePreset? {
+    // MARK: - Private Helpers
+
+    private struct CurrentTherapySettings {
+        let basalProfile: [BasalProfileEntry]
+        let insulinSensitivities: InsulinSensitivities
+        let carbRatios: CarbRatios
+        let bgTargets: BGTargets
+    }
+
+    private func loadCurrentTherapySettings() -> CurrentTherapySettings? {
         let basalProfile = storage.retrieve(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
             ?? [BasalProfileEntry](from: OpenAPS.defaults(for: OpenAPS.Settings.basalProfile))
             ?? []
@@ -52,8 +61,17 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             return nil
         }
 
+        return CurrentTherapySettings(
+            basalProfile: basalProfile,
+            insulinSensitivities: insulinSensitivities,
+            carbRatios: carbRatios,
+            bgTargets: bgTargets
+        )
+    }
+
+    private func currentSMBSettings() -> SMBPresetSettings {
         let prefs = settingsManager.preferences
-        let smbSettings = SMBPresetSettings(
+        return SMBPresetSettings(
             enableSMBAlways: prefs.enableSMBAlways,
             enableSMBWithCOB: prefs.enableSMBWithCOB,
             enableSMBWithTemptarget: prefs.enableSMBWithTemptarget,
@@ -66,8 +84,11 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             enableUAM: prefs.enableUAM,
             maxDeltaBGthreshold: prefs.maxDeltaBGthreshold
         )
+    }
 
-        let dynamicSettings = DynamicPresetSettings(
+    private func currentDynamicSettings() -> DynamicPresetSettings {
+        let prefs = settingsManager.preferences
+        return DynamicPresetSettings(
             useNewFormula: prefs.useNewFormula,
             sigmoid: prefs.sigmoid,
             adjustmentFactor: prefs.adjustmentFactor,
@@ -75,82 +96,35 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             weightPercentage: prefs.weightPercentage,
             tddAdjBasal: prefs.tddAdjBasal
         )
+    }
+
+    // MARK: - Public API
+
+    func currentProfile() -> ProfilePreset? {
+        guard let therapy = loadCurrentTherapySettings() else { return nil }
 
         return ProfilePreset(
             name: String(localized: "Current Profile", comment: "ProfilePresets: name for the current active profile"),
-            basalProfile: basalProfile,
-            insulinSensitivities: insulinSensitivities,
-            carbRatios: carbRatios,
-            bgTargets: bgTargets,
-            smbSettings: smbSettings,
-            dynamicSettings: dynamicSettings
+            basalProfile: therapy.basalProfile,
+            insulinSensitivities: therapy.insulinSensitivities,
+            carbRatios: therapy.carbRatios,
+            bgTargets: therapy.bgTargets,
+            smbSettings: currentSMBSettings(),
+            dynamicSettings: currentDynamicSettings()
         )
     }
 
     func saveCurrentProfileAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {
-        let basalProfile = storage.retrieve(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
-            ?? [BasalProfileEntry](from: OpenAPS.defaults(for: OpenAPS.Settings.basalProfile))
-            ?? []
-
-        let insulinSensitivities = storage.retrieve(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
-            ?? InsulinSensitivities(from: OpenAPS.defaults(for: OpenAPS.Settings.insulinSensitivities))
-            ?? InsulinSensitivities(units: .mgdL, userPreferredUnits: .mgdL, sensitivities: [])
-
-        let carbRatios = storage.retrieve(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
-            ?? CarbRatios(from: OpenAPS.defaults(for: OpenAPS.Settings.carbRatios))
-            ?? CarbRatios(units: .grams, schedule: [])
-
-        let bgTargets = storage.retrieve(OpenAPS.Settings.bgTargets, as: BGTargets.self)
-            ?? BGTargets(from: OpenAPS.defaults(for: OpenAPS.Settings.bgTargets))
-            ?? BGTargets(units: .mgdL, userPreferredUnits: .mgdL, targets: [])
-
-        guard !basalProfile.isEmpty,
-              !insulinSensitivities.sensitivities.isEmpty,
-              !carbRatios.schedule.isEmpty,
-              !bgTargets.targets.isEmpty
-        else {
-            return nil
-        }
-
-        var smbSettings: SMBPresetSettings?
-        if includeSMB {
-            let prefs = settingsManager.preferences
-            smbSettings = SMBPresetSettings(
-                enableSMBAlways: prefs.enableSMBAlways,
-                enableSMBWithCOB: prefs.enableSMBWithCOB,
-                enableSMBWithTemptarget: prefs.enableSMBWithTemptarget,
-                enableSMBAfterCarbs: prefs.enableSMBAfterCarbs,
-                allowSMBWithHighTemptarget: prefs.allowSMBWithHighTemptarget,
-                enableSMBHighBG: prefs.enableSMB_high_bg,
-                enableSMBHighBGTarget: prefs.enableSMB_high_bg_target,
-                maxSMBBasalMinutes: prefs.maxSMBBasalMinutes,
-                maxUAMSMBBasalMinutes: prefs.maxUAMSMBBasalMinutes,
-                enableUAM: prefs.enableUAM,
-                maxDeltaBGthreshold: prefs.maxDeltaBGthreshold
-            )
-        }
-
-        var dynamicSettings: DynamicPresetSettings?
-        if includeDynamic {
-            let prefs = settingsManager.preferences
-            dynamicSettings = DynamicPresetSettings(
-                useNewFormula: prefs.useNewFormula,
-                sigmoid: prefs.sigmoid,
-                adjustmentFactor: prefs.adjustmentFactor,
-                adjustmentFactorSigmoid: prefs.adjustmentFactorSigmoid,
-                weightPercentage: prefs.weightPercentage,
-                tddAdjBasal: prefs.tddAdjBasal
-            )
-        }
+        guard let therapy = loadCurrentTherapySettings() else { return nil }
 
         let preset = ProfilePreset(
             name: name,
-            basalProfile: basalProfile,
-            insulinSensitivities: insulinSensitivities,
-            carbRatios: carbRatios,
-            bgTargets: bgTargets,
-            smbSettings: smbSettings,
-            dynamicSettings: dynamicSettings
+            basalProfile: therapy.basalProfile,
+            insulinSensitivities: therapy.insulinSensitivities,
+            carbRatios: therapy.carbRatios,
+            bgTargets: therapy.bgTargets,
+            smbSettings: includeSMB ? currentSMBSettings() : nil,
+            dynamicSettings: includeDynamic ? currentDynamicSettings() : nil
         )
 
         var existingPresets = presets()

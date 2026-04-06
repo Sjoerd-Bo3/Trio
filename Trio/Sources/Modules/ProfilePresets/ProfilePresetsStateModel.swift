@@ -108,6 +108,14 @@ extension ProfilePresets {
 
         // MARK: - Comparison
 
+        var defaultComparisonPresetA: ProfilePreset? {
+            comparisonPresetA ?? presets.first
+        }
+
+        var defaultComparisonPresetB: ProfilePreset? {
+            comparisonPresetB ?? (presets.count > 1 ? presets[1] : nil)
+        }
+
         func beginComparison(presetA: ProfilePreset, presetB: ProfilePreset?) {
             comparisonPresetA = presetA
             comparisonPresetB = presetB ?? currentProfile
