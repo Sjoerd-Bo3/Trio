@@ -156,7 +156,7 @@ extension Home {
 
         deinit {
             if let observer = profilePresetObserver {
-                NotificationCenter.default.removeObserver(observer)
+                Foundation.NotificationCenter.default.removeObserver(observer)
             }
         }
 
@@ -175,7 +175,7 @@ extension Home {
 
             activeProfilePreset = profilePresetStorage.activePreset()
 
-            profilePresetObserver = NotificationCenter.default.addObserver(
+            profilePresetObserver = Foundation.NotificationCenter.default.addObserver(
                 forName: BaseProfilePresetStorage.profilePresetActivatedNotification,
                 object: nil,
                 queue: .main

@@ -192,7 +192,7 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
 
         storage.save(preset.id, as: OpenAPS.Trio.activeProfilePresetId)
 
-        NotificationCenter.default.post(name: BaseProfilePresetStorage.profilePresetActivatedNotification, object: preset)
+        Foundation.NotificationCenter.default.post(name: BaseProfilePresetStorage.profilePresetActivatedNotification, object: preset)
 
         return true
     }
