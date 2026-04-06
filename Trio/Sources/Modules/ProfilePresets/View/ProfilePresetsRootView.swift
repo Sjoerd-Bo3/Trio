@@ -237,6 +237,8 @@ extension ProfilePresets {
         // MARK: - Preset Row
 
         @ViewBuilder private func presetRow(_ preset: ProfilePreset) -> some View {
+            let isActive = preset.id == state.activePreset?.id
+
             NavigationLink {
                 PresetDetailView(
                     preset: preset,
@@ -251,10 +253,23 @@ extension ProfilePresets {
                             .font(.headline)
                         Text(preset.name)
                             .font(.headline)
+                        if isActive, state.isProfileDiverged {
+                            Text(
+                                "modified",
+                                comment: "ProfilePresets: label indicating active preset has been modified"
+                            )
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                        }
                         Spacer()
-                        if preset.id == state.activePreset?.id {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.accentColor)
+                        if isActive {
+                            if state.isProfileDiverged {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                            } else {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.accentColor)
+                            }
                         }
                     }
 

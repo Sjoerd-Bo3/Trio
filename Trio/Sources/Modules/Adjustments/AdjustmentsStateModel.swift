@@ -78,6 +78,7 @@ extension Adjustments {
         @ObservationIgnored @Injected() var profilePresetStorage: ProfilePresetStorage!
         var profilePresets: [ProfilePreset] = []
         var activeProfilePreset: ProfilePreset?
+        var isProfileDiverged: Bool = false
         var showingProfileActivateConfirmation: Bool = false
         var selectedProfilePreset: ProfilePreset?
 
@@ -104,6 +105,7 @@ extension Adjustments {
 
             profilePresets = profilePresetStorage.presets()
             activeProfilePreset = profilePresetStorage.activePreset()
+            refreshProfileDivergence()
         }
 
         // MARK: - Profile Presets
@@ -111,12 +113,16 @@ extension Adjustments {
         func activateProfilePreset(_ preset: ProfilePreset) {
             if profilePresetStorage.activatePreset(preset) {
                 activeProfilePreset = preset
+                isProfileDiverged = false
             }
         }
 
-        func deactivateProfilePreset() {
-            profilePresetStorage.deactivatePreset()
-            activeProfilePreset = nil
+        func refreshProfileDivergence() {
+            guard let preset = activeProfilePreset else {
+                isProfileDiverged = false
+                return
+            }
+            isProfileDiverged = !profilePresetStorage.settingsMatchPreset(preset)
         }
 
         /// Retrieves the current glucose target based on the time of day.

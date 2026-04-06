@@ -43,5 +43,9 @@ extension ProfilePresets {
         func loadActivePreset() -> ProfilePreset? {
             profilePresetStorage.activePreset()
         }
+
+        func settingsMatchPreset(_ preset: ProfilePreset) -> Bool {
+            profilePresetStorage.settingsMatchPreset(preset)
+        }
     }
 }

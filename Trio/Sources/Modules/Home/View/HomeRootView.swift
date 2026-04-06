@@ -490,17 +490,29 @@ extension Home {
         @ViewBuilder var activeProfileIndicator: some View {
             if let activePreset = state.activeProfilePreset {
                 HStack(spacing: 6) {
-                    Image(systemName: activePreset.icon)
+                    Image(systemName: state.isProfileDiverged ? "exclamationmark.triangle.fill" : activePreset.icon)
                         .font(.caption)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(state.isProfileDiverged ? .orange : .accentColor)
                     Text(activePreset.name)
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(state.isProfileDiverged ? .orange : .accentColor)
+                    if state.isProfileDiverged {
+                        Text(
+                            "modified",
+                            comment: "Home: label indicating active preset settings have been modified"
+                        )
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                    }
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .background(Color.accentColor.opacity(0.1))
+                .background(
+                    state.isProfileDiverged
+                        ? Color.orange.opacity(0.1)
+                        : Color.accentColor.opacity(0.1)
+                )
                 .clipShape(Capsule())
                 .onTapGesture {
                     selectedTab = 2

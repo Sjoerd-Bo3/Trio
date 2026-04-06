@@ -13,4 +13,5 @@ protocol ProfilePresetsProvider: Provider {
     func deletePreset(id: String)
     func renamePreset(id: String, newName: String)
     func loadActivePreset() -> ProfilePreset?
+    func settingsMatchPreset(_ preset: ProfilePreset) -> Bool
 }

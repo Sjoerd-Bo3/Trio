@@ -120,6 +120,7 @@ extension Home {
         var minCount: Int = 12 // count of Forecasts drawn in 5 min distances, i.e. 12 means a min of 1 hour
         var forecastDisplayType: ForecastDisplayType = .cone
         var activeProfilePreset: ProfilePreset?
+        var isProfileDiverged: Bool = false
 
         var minYAxisValue: Decimal = 39
         var maxYAxisValue: Decimal = 200
@@ -174,6 +175,7 @@ extension Home {
             setupHomeViewConcurrently()
 
             activeProfilePreset = profilePresetStorage.activePreset()
+            refreshProfileDivergence()
 
             profilePresetObserver = Foundation.NotificationCenter.default.addObserver(
                 forName: BaseProfilePresetStorage.profilePresetActivatedNotification,
@@ -182,10 +184,20 @@ extension Home {
             ) { [weak self] notification in
                 if let preset = notification.object as? ProfilePreset {
                     self?.activeProfilePreset = preset
+                    self?.isProfileDiverged = false
                 } else {
                     self?.activeProfilePreset = self?.profilePresetStorage.activePreset()
+                    self?.refreshProfileDivergence()
                 }
             }
+        }
+
+        func refreshProfileDivergence() {
+            guard let preset = activeProfilePreset else {
+                isProfileDiverged = false
+                return
+            }
+            isProfileDiverged = !profilePresetStorage.settingsMatchPreset(preset)
         }
 
         private func setupHomeViewConcurrently() {

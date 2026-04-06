@@ -7,11 +7,11 @@ protocol ProfilePresetStorage {
     func saveCurrentProfileAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
     func currentProfile() -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
-    func deactivatePreset()
     func deletePreset(id: String)
     func renamePreset(id: String, newName: String)
     func activePresetId() -> String?
     func activePreset() -> ProfilePreset?
+    func settingsMatchPreset(_ preset: ProfilePreset) -> Bool
 }
 
 final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
@@ -208,9 +208,23 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         return presets().first { $0.id == id }
     }
 
-    func deactivatePreset() {
-        storage.remove(OpenAPS.Trio.activeProfilePresetId)
-        Foundation.NotificationCenter.default.post(name: BaseProfilePresetStorage.profilePresetActivatedNotification, object: nil)
+    func settingsMatchPreset(_ preset: ProfilePreset) -> Bool {
+        guard let therapy = loadCurrentTherapySettings() else { return false }
+
+        guard preset.basalProfile == therapy.basalProfile else { return false }
+        guard preset.insulinSensitivities.sensitivities == therapy.insulinSensitivities.sensitivities else { return false }
+        guard preset.carbRatios.schedule == therapy.carbRatios.schedule else { return false }
+        guard preset.bgTargets.targets == therapy.bgTargets.targets else { return false }
+
+        if let smbSettings = preset.smbSettings {
+            guard smbSettings == currentSMBSettings() else { return false }
+        }
+
+        if let dynamicSettings = preset.dynamicSettings {
+            guard dynamicSettings == currentDynamicSettings() else { return false }
+        }
+
+        return true
     }
 
     func deletePreset(id: String) {

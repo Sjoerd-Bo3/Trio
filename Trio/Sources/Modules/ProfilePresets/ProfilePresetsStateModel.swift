@@ -14,6 +14,7 @@ extension ProfilePresets {
         var selectedPreset: ProfilePreset?
         var units: GlucoseUnits = .mgdL
         var activePreset: ProfilePreset?
+        var isProfileDiverged: Bool = false
 
         // Save options
         var includeSMBSettings: Bool = false
@@ -47,10 +48,19 @@ extension ProfilePresets {
             presets = provider.loadPresets()
             currentProfile = provider.loadCurrentProfile()
             activePreset = provider.loadActivePreset()
+            refreshProfileDivergence()
         }
 
         func refreshCurrentProfile() {
             currentProfile = provider.loadCurrentProfile()
+        }
+
+        func refreshProfileDivergence() {
+            guard let preset = activePreset else {
+                isProfileDiverged = false
+                return
+            }
+            isProfileDiverged = !provider.settingsMatchPreset(preset)
         }
 
         func saveCurrentProfileAsPreset() {
@@ -77,6 +87,7 @@ extension ProfilePresets {
                 showingActivateError = true
             } else {
                 activePreset = preset
+                isProfileDiverged = false
             }
         }
 

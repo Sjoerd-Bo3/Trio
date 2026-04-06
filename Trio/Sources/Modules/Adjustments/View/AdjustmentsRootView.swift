@@ -25,7 +25,6 @@ extension Adjustments {
         @State var showCancelTempTargetConfirmDialog = false
         @State var showProfileCheckmark: Bool = false
         @State var selectedProfilePresetID: String?
-        @State var showDeactivateProfileConfirmDialog = false
 
         private var shouldDisplayStickyOverrideStopButton: Bool {
             state.isOverrideEnabled && state.activeOverrideName.isNotEmpty
@@ -33,10 +32,6 @@ extension Adjustments {
 
         private var shouldDisplayStickyTempTargetStopButton: Bool {
             state.isTempTargetEnabled && state.activeTempTargetName.isNotEmpty
-        }
-
-        private var shouldDisplayStickyProfileDeactivateButton: Bool {
-            state.activeProfilePreset != nil
         }
 
         @Environment(\.colorScheme) var colorScheme
@@ -77,14 +72,12 @@ extension Adjustments {
                 .listSectionSpacing(10)
                 .safeAreaInset(
                     edge: .bottom,
-                    spacing: shouldDisplayStickyOverrideStopButton || shouldDisplayStickyTempTargetStopButton || shouldDisplayStickyProfileDeactivateButton ? 30 : 0
+                    spacing: shouldDisplayStickyOverrideStopButton || shouldDisplayStickyTempTargetStopButton ? 30 : 0
                 ) {
                     if shouldDisplayStickyOverrideStopButton, state.selectedTab == .overrides {
                         stickyStopOverrideButton
                     } else if shouldDisplayStickyTempTargetStopButton, state.selectedTab == .tempTargets {
                         stickyStopTempTargetButton
-                    } else if shouldDisplayStickyProfileDeactivateButton, state.selectedTab == .profiles {
-                        stickyDeactivateProfileButton
                     } else {
                         EmptyView()
                     }
@@ -210,23 +203,6 @@ extension Adjustments {
                         )
                     }
                 }
-                .confirmationDialog(
-                    "Deactivate Profile",
-                    isPresented: $showDeactivateProfileConfirmDialog
-                ) {
-                    Button(
-                        String(localized: "Deactivate", comment: "Adjustments: deactivate profile button"),
-                        role: .destructive
-                    ) {
-                        state.deactivateProfilePreset()
-                    }
-                    Button(String(localized: "Cancel", comment: "Adjustments: cancel button"), role: .cancel) {}
-                } message: {
-                    Text(
-                        "This will clear the active profile indicator. Your current therapy settings will remain unchanged.",
-                        comment: "Adjustments: deactivate profile confirmation message"
-                    )
-                }
             }).background(appState.trioBackgroundColor(for: colorScheme))
         }
 
@@ -315,14 +291,29 @@ extension Adjustments {
                         HStack {
                             Image(systemName: active.icon)
                                 .foregroundStyle(Color.primary)
-                            Text(
-                                "'\(active.name)' is active",
-                                comment: "Adjustments: active profile preset indicator"
-                            )
+                            if state.isProfileDiverged {
+                                Text(
+                                    "'\(active.name)' (modified)",
+                                    comment: "Adjustments: active profile preset diverged indicator"
+                                )
+                            } else {
+                                Text(
+                                    "'\(active.name)' is active",
+                                    comment: "Adjustments: active profile preset indicator"
+                                )
+                            }
                             Spacer()
+                            if state.isProfileDiverged {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(Color.orange)
+                            }
                         }
                     }
-                    .listRowBackground(Color.accentColor.opacity(0.8))
+                    .listRowBackground(
+                        state.isProfileDiverged
+                            ? Color.orange.opacity(0.6)
+                            : Color.accentColor.opacity(0.8)
+                    )
                 }
             }
         }
@@ -399,11 +390,15 @@ extension Adjustments {
                     }
                 }
                 .listRowBackground(Color.chart)
+                .onAppear {
+                    state.refreshProfileDivergence()
+                }
             }
         }
 
         @ViewBuilder private func profilePresetView(for preset: ProfilePreset) -> some View {
             let isSelected = preset.id == selectedProfilePresetID
+            let isActive = preset.id == state.activeProfilePreset?.id
 
             ZStack(alignment: .trailing) {
                 HStack {
@@ -414,13 +409,21 @@ extension Adjustments {
                                 .font(.title3)
                             Text(preset.name)
                                 .font(.subheadline)
+                            if isActive, state.isProfileDiverged {
+                                Text(
+                                    "modified",
+                                    comment: "Adjustments: label indicating active preset has been modified"
+                                )
+                                .font(.caption2)
+                                .foregroundColor(.orange)
+                            }
                             Spacer()
                         }
                         adjustmentPresetPills(preset)
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        guard preset.id != state.activeProfilePreset?.id else { return }
+                        guard !isActive else { return }
                         state.selectedProfilePreset = preset
                         state.showingProfileActivateConfirmation = true
                     }
@@ -431,9 +434,14 @@ extension Adjustments {
                         .imageScale(.large)
                         .fontWeight(.bold)
                         .foregroundStyle(Color.green)
-                } else if preset.id == state.activeProfilePreset?.id {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.accentColor)
+                } else if isActive {
+                    if state.isProfileDiverged {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.accentColor)
+                    }
                 }
             }
         }
@@ -463,31 +471,6 @@ extension Adjustments {
                 .background(color.opacity(0.15))
                 .foregroundColor(color)
                 .clipShape(Capsule())
-        }
-
-        var stickyDeactivateProfileButton: some View {
-            ZStack {
-                Rectangle()
-                    .frame(width: UIScreen.main.bounds.width, height: 65)
-                    .foregroundStyle(colorScheme == .dark ? Color.bgDarkerDarkBlue : Color.white)
-                    .background(.thinMaterial)
-                    .opacity(0.8)
-                    .clipShape(Rectangle())
-
-                Button(action: {
-                    showDeactivateProfileConfirmDialog = true
-                }, label: {
-                    Text("Deactivate Profile", comment: "Adjustments: deactivate profile button")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(10)
-                })
-                    .frame(width: UIScreen.main.bounds.width * 0.9, height: 40, alignment: .center)
-                    .disabled(state.activeProfilePreset == nil)
-                    .background(state.activeProfilePreset == nil ? Color(.systemGray4) : Color(.systemRed))
-                    .tint(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .padding(5)
-            }
         }
     }
 }
