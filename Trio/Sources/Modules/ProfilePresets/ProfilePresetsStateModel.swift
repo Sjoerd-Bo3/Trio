@@ -119,6 +119,17 @@ extension ProfilePresets {
             renameNewName = ""
         }
 
+        func updatePresetToCurrentSettings(_ preset: ProfilePreset) {
+            guard let updated = provider.updatePresetToCurrentSettings(id: preset.id) else { return }
+            if let index = presets.firstIndex(where: { $0.id == preset.id }) {
+                presets[index] = updated
+            }
+            if activePreset?.id == preset.id {
+                activePreset = updated
+                isProfileDiverged = false
+            }
+        }
+
         func formattedBasalTotal(_ preset: ProfilePreset) -> String {
             String(format: "%.2f", NSDecimalNumber(decimal: preset.totalDailyBasal).doubleValue)
         }

@@ -9,6 +9,7 @@ protocol ProfilePresetStorage {
     func activatePreset(_ preset: ProfilePreset) -> Bool
     func deletePreset(id: String)
     func renamePreset(id: String, newName: String)
+    func updatePresetToCurrentSettings(id: String) -> ProfilePreset?
     func activePresetId() -> String?
     func activePreset() -> ProfilePreset?
     func settingsMatchPreset(_ preset: ProfilePreset) -> Bool
@@ -239,5 +240,26 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             existingPresets[index].name = newName
             savePresets(existingPresets)
         }
+    }
+
+    func updatePresetToCurrentSettings(id: String) -> ProfilePreset? {
+        guard let therapy = loadCurrentTherapySettings() else { return nil }
+        var existingPresets = presets()
+        guard let index = existingPresets.firstIndex(where: { $0.id == id }) else { return nil }
+
+        let existing = existingPresets[index]
+        existingPresets[index] = ProfilePreset(
+            id: existing.id,
+            name: existing.name,
+            icon: existing.icon,
+            basalProfile: therapy.basalProfile,
+            insulinSensitivities: therapy.insulinSensitivities,
+            carbRatios: therapy.carbRatios,
+            bgTargets: therapy.bgTargets,
+            smbSettings: existing.smbSettings != nil ? currentSMBSettings() : nil,
+            dynamicSettings: existing.dynamicSettings != nil ? currentDynamicSettings() : nil
+        )
+        savePresets(existingPresets)
+        return existingPresets[index]
     }
 }

@@ -47,5 +47,9 @@ extension ProfilePresets {
         func settingsMatchPreset(_ preset: ProfilePreset) -> Bool {
             profilePresetStorage.settingsMatchPreset(preset)
         }
+
+        func updatePresetToCurrentSettings(id: String) -> ProfilePreset? {
+            profilePresetStorage.updatePresetToCurrentSettings(id: id)
+        }
     }
 }

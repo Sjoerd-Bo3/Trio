@@ -732,6 +732,7 @@ extension Home.StateModel:
         } else {
             shouldRunDeleteOnSettingsChange = true
         }
+        refreshProfileDivergence()
     }
 
     func preferencesDidChange(_: Preferences) {
@@ -741,6 +742,7 @@ extension Home.StateModel:
         isExerciseModeActive = settingsManager.preferences.exerciseMode
         lowTTlowersSens = settingsManager.preferences.lowTemptargetLowersSensitivity
         maxIOB = settingsManager.preferences.maxIOB
+        refreshProfileDivergence()
     }
 
     func pumpSettingsDidChange(_: PumpSettings) {
@@ -754,12 +756,14 @@ extension Home.StateModel:
         Task {
             await setupBasalProfile()
         }
+        refreshProfileDivergence()
     }
 
     func bgTargetsDidChange(_: BGTargets) {
         Task {
             await setupGlucoseTargets()
         }
+        refreshProfileDivergence()
     }
 
     func pumpReservoirDidChange(_: Decimal) {

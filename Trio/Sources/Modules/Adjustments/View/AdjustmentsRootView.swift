@@ -388,6 +388,7 @@ extension Adjustments {
                     ForEach(state.profilePresets) { preset in
                         profilePresetView(for: preset)
                     }
+                    .onMove(perform: state.reorderProfilePresets)
                 }
                 .listRowBackground(Color.chart)
                 .onAppear {
@@ -441,6 +442,21 @@ extension Adjustments {
                     } else {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.accentColor)
+                    }
+                }
+            }
+            .contextMenu {
+                if isActive, state.isProfileDiverged {
+                    Button {
+                        state.updateProfilePresetToCurrentSettings(preset)
+                    } label: {
+                        Label(
+                            String(
+                                localized: "Update to Current Settings",
+                                comment: "Adjustments: context menu option to update preset with current therapy settings"
+                            ),
+                            systemImage: "arrow.triangle.2.circlepath"
+                        )
                     }
                 }
             }

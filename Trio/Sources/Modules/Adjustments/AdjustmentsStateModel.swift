@@ -125,6 +125,22 @@ extension Adjustments {
             isProfileDiverged = !profilePresetStorage.settingsMatchPreset(preset)
         }
 
+        func reorderProfilePresets(from source: IndexSet, to destination: Int) {
+            profilePresets.move(fromOffsets: source, toOffset: destination)
+            profilePresetStorage.savePresets(profilePresets)
+        }
+
+        func updateProfilePresetToCurrentSettings(_ preset: ProfilePreset) {
+            guard let updated = profilePresetStorage.updatePresetToCurrentSettings(id: preset.id) else { return }
+            if let index = profilePresets.firstIndex(where: { $0.id == preset.id }) {
+                profilePresets[index] = updated
+            }
+            if activeProfilePreset?.id == preset.id {
+                activeProfilePreset = updated
+                isProfileDiverged = false
+            }
+        }
+
         /// Retrieves the current glucose target based on the time of day.
         func getCurrentGlucoseTarget() async {
             let now = Date()

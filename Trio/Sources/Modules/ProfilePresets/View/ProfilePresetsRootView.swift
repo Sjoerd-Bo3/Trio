@@ -331,6 +331,20 @@ extension ProfilePresets {
                     )
                 }
 
+                if preset.id == state.activePreset?.id, state.isProfileDiverged {
+                    Button {
+                        state.updatePresetToCurrentSettings(preset)
+                    } label: {
+                        Label(
+                            String(
+                                localized: "Update to Current Settings",
+                                comment: "ProfilePresets: context menu option to update preset with current therapy settings"
+                            ),
+                            systemImage: "arrow.triangle.2.circlepath"
+                        )
+                    }
+                }
+
                 Divider()
 
                 Button(role: .destructive) {
