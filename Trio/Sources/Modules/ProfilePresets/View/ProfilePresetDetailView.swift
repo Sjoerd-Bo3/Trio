@@ -36,9 +36,13 @@ extension ProfilePresets {
 
         @State private var selectedTab: DetailTab = .basal
 
+        private var hasSMBOrDynamic: Bool {
+            preset.smbSettings != nil || preset.dynamicSettings != nil
+        }
+
         private var availableTabs: [DetailTab] {
             var tabs: [DetailTab] = [.basal, .isf, .cr, .targets]
-            if preset.smbSettings != nil || preset.dynamicSettings != nil {
+            if hasSMBOrDynamic {
                 tabs.append(.smbDyn)
             }
             return tabs
@@ -52,7 +56,7 @@ extension ProfilePresets {
                     isfTab.tag(DetailTab.isf)
                     crTab.tag(DetailTab.cr)
                     targetsTab.tag(DetailTab.targets)
-                    if preset.smbSettings != nil || preset.dynamicSettings != nil {
+                    if hasSMBOrDynamic {
                         smbDynTab.tag(DetailTab.smbDyn)
                     }
                 }

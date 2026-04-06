@@ -203,7 +203,7 @@ extension ProfilePresets {
                     state.confirmRename()
                 }
                 Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button"), role: .cancel) {
-                    state.renamePreset_ = nil
+                    state.presetToRename = nil
                     state.renameNewName = ""
                 }
             } message: {

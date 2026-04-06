@@ -39,7 +39,7 @@ extension ProfilePresets {
 
         // Rename
         var showingRenameDialog: Bool = false
-        var renamePreset_: ProfilePreset?
+        var presetToRename: ProfilePreset?
         var renameNewName: String = ""
 
         override func subscribe() {
@@ -86,13 +86,13 @@ extension ProfilePresets {
         }
 
         func beginRename(for preset: ProfilePreset) {
-            renamePreset_ = preset
+            presetToRename = preset
             renameNewName = preset.name
             showingRenameDialog = true
         }
 
         func confirmRename() {
-            guard let preset = renamePreset_ else { return }
+            guard let preset = presetToRename else { return }
             let trimmed = renameNewName.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { return }
 
@@ -100,10 +100,11 @@ extension ProfilePresets {
             if let index = presets.firstIndex(where: { $0.id == preset.id }) {
                 presets[index].name = trimmed
             }
+            // activePreset is a separate copy, update it independently
             if activePreset?.id == preset.id {
                 activePreset?.name = trimmed
             }
-            renamePreset_ = nil
+            presetToRename = nil
             renameNewName = ""
         }
 
