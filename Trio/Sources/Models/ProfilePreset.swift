@@ -3,6 +3,7 @@ import Foundation
 struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
     let id: String
     var name: String
+    var icon: String
     var basalProfile: [BasalProfileEntry]
     var insulinSensitivities: InsulinSensitivities
     var carbRatios: CarbRatios
@@ -10,9 +11,51 @@ struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
     var smbSettings: SMBPresetSettings?
     var dynamicSettings: DynamicPresetSettings?
 
+    /// SF Symbol names suitable for profile preset icons
+    static let availableIcons: [String] = [
+        "person.crop.circle",
+        "figure.run",
+        "figure.walk",
+        "bed.double.fill",
+        "briefcase.fill",
+        "heart.fill",
+        "cross.case.fill",
+        "fork.knife",
+        "cup.and.saucer.fill",
+        "moon.fill",
+        "sun.max.fill",
+        "cloud.rain.fill",
+        "snowflake",
+        "flame.fill",
+        "bolt.fill",
+        "leaf.fill",
+        "bicycle",
+        "sportscourt.fill",
+        "graduationcap.fill",
+        "airplane",
+        "car.fill",
+        "house.fill",
+        "building.2.fill",
+        "star.fill",
+        "flag.fill",
+    ]
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case icon
+        case basalProfile = "basal_profile"
+        case insulinSensitivities = "insulin_sensitivities"
+        case carbRatios = "carb_ratios"
+        case bgTargets = "bg_targets"
+        case smbSettings = "smb_settings"
+        case dynamicSettings = "dynamic_settings"
+    }
+
     init(
         id: String = UUID().uuidString,
         name: String,
+        icon: String = "person.crop.circle",
         basalProfile: [BasalProfileEntry],
         insulinSensitivities: InsulinSensitivities,
         carbRatios: CarbRatios,
@@ -22,6 +65,7 @@ struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
     ) {
         self.id = id
         self.name = name
+        self.icon = icon
         self.basalProfile = basalProfile
         self.insulinSensitivities = insulinSensitivities
         self.carbRatios = carbRatios
@@ -36,6 +80,19 @@ struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        icon = try container.decodeIfPresent(String.self, forKey: .icon) ?? "person.crop.circle"
+        basalProfile = try container.decode([BasalProfileEntry].self, forKey: .basalProfile)
+        insulinSensitivities = try container.decode(InsulinSensitivities.self, forKey: .insulinSensitivities)
+        carbRatios = try container.decode(CarbRatios.self, forKey: .carbRatios)
+        bgTargets = try container.decode(BGTargets.self, forKey: .bgTargets)
+        smbSettings = try container.decodeIfPresent(SMBPresetSettings.self, forKey: .smbSettings)
+        dynamicSettings = try container.decodeIfPresent(DynamicPresetSettings.self, forKey: .dynamicSettings)
     }
 }
 
@@ -89,20 +146,9 @@ struct DynamicPresetSettings: JSON, Equatable {
     }
 }
 
-// MARK: - Coding Keys & Computed Properties
+// MARK: - Computed Properties
 
 extension ProfilePreset {
-    private enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case basalProfile = "basal_profile"
-        case insulinSensitivities = "insulin_sensitivities"
-        case carbRatios = "carb_ratios"
-        case bgTargets = "bg_targets"
-        case smbSettings = "smb_settings"
-        case dynamicSettings = "dynamic_settings"
-    }
-
     var totalDailyBasal: Decimal {
         basalProfile.enumerated().reduce(Decimal.zero) { result, entry in
             let current = entry.element
@@ -163,6 +209,7 @@ extension ProfilePreset {
 
         return ProfilePreset(
             name: name,
+            icon: icon,
             basalProfile: scaledBasal,
             insulinSensitivities: scaledISF,
             carbRatios: scaledCR,

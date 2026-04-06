@@ -4,10 +4,12 @@ import Swinject
 protocol ProfilePresetStorage {
     func presets() -> [ProfilePreset]
     func savePresets(_ presets: [ProfilePreset])
-    func saveCurrentProfileAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
+    func saveCurrentProfileAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
     func currentProfile() -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
     func deletePreset(id: String)
+    func activePresetId() -> String?
+    func activePreset() -> ProfilePreset?
 }
 
 final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
@@ -114,11 +116,12 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         )
     }
 
-    func saveCurrentProfileAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {
+    func saveCurrentProfileAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {
         guard let therapy = loadCurrentTherapySettings() else { return nil }
 
         let preset = ProfilePreset(
             name: name,
+            icon: icon,
             basalProfile: therapy.basalProfile,
             insulinSensitivities: therapy.insulinSensitivities,
             carbRatios: therapy.carbRatios,
@@ -185,7 +188,18 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             $0.bgTargetsDidChange(preset.bgTargets)
         }
 
+        storage.save(preset.id, as: OpenAPS.Trio.activeProfilePresetId)
+
         return true
+    }
+
+    func activePresetId() -> String? {
+        storage.retrieve(OpenAPS.Trio.activeProfilePresetId, as: String.self)
+    }
+
+    func activePreset() -> ProfilePreset? {
+        guard let id = activePresetId() else { return nil }
+        return presets().first { $0.id == id }
     }
 
     func deletePreset(id: String) {

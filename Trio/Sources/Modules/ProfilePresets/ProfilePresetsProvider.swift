@@ -13,8 +13,13 @@ extension ProfilePresets {
             profilePresetStorage.currentProfile()
         }
 
-        func saveCurrentAsPreset(name: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {
-            profilePresetStorage.saveCurrentProfileAsPreset(name: name, includeSMB: includeSMB, includeDynamic: includeDynamic)
+        func saveCurrentAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset? {
+            profilePresetStorage.saveCurrentProfileAsPreset(
+                name: name,
+                icon: icon,
+                includeSMB: includeSMB,
+                includeDynamic: includeDynamic
+            )
         }
 
         func savePreset(_ preset: ProfilePreset) {
@@ -29,6 +34,10 @@ extension ProfilePresets {
 
         func deletePreset(id: String) {
             profilePresetStorage.deletePreset(id: id)
+        }
+
+        func loadActivePreset() -> ProfilePreset? {
+            profilePresetStorage.activePreset()
         }
     }
 }

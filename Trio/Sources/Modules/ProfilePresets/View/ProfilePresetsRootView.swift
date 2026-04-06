@@ -199,6 +199,9 @@ extension ProfilePresets {
         @ViewBuilder private func presetRow(_ preset: ProfilePreset) -> some View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
+                    Image(systemName: preset.icon)
+                        .foregroundColor(.accentColor)
+                        .font(.headline)
                     Text(preset.name)
                         .font(.headline)
                     Spacer()
@@ -480,8 +483,8 @@ extension ProfilePresets {
                             localized: "ISF (first entry)",
                             comment: "ProfilePresets: ISF first entry label in preview"
                         ),
-                        original: formatDecimal(firstISFOriginal.sensitivity),
-                        adjusted: formatDecimal(firstISFAdjusted.sensitivity)
+                        original: "\(state.formatGlucose(firstISFOriginal.sensitivity)) \(state.units.rawValue)",
+                        adjusted: "\(state.formatGlucose(firstISFAdjusted.sensitivity)) \(state.units.rawValue)"
                     )
                 }
 
@@ -535,6 +538,42 @@ extension ProfilePresets {
                             ),
                             text: $state.newPresetName
                         )
+                    }
+
+                    Section(
+                        header: Text(
+                            "Preset Icon",
+                            comment: "ProfilePresets: section header for preset icon selection"
+                        )
+                    ) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
+                            ForEach(ProfilePreset.availableIcons, id: \.self) { iconName in
+                                Button {
+                                    state.newPresetIcon = iconName
+                                } label: {
+                                    Image(systemName: iconName)
+                                        .font(.title2)
+                                        .frame(width: 44, height: 44)
+                                        .background(
+                                            state.newPresetIcon == iconName
+                                                ? Color.accentColor.opacity(0.2)
+                                                : Color.clear
+                                        )
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(
+                                                    state.newPresetIcon == iconName
+                                                        ? Color.accentColor
+                                                        : Color.clear,
+                                                    lineWidth: 2
+                                                )
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.vertical, 4)
                     }
 
                     saveOptionsSection
@@ -645,6 +684,7 @@ extension ProfilePresets {
                     ToolbarItem(placement: .cancellationAction) {
                         Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button")) {
                             state.newPresetName = ""
+                            state.newPresetIcon = "person.crop.circle"
                             state.includeSMBSettings = false
                             state.includeDynamicSettings = false
                             state.showingSaveDialog = false

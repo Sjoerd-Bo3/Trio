@@ -6,12 +6,14 @@ extension ProfilePresets {
     @Observable final class StateModel: BaseStateModel<Provider> {
         var presets: [ProfilePreset] = []
         var newPresetName: String = ""
+        var newPresetIcon: String = "person.crop.circle"
         var showingSaveDialog: Bool = false
         var showingActivateConfirmation: Bool = false
         var showingSaveError: Bool = false
         var showingActivateError: Bool = false
         var selectedPreset: ProfilePreset?
         var units: GlucoseUnits = .mgdL
+        var activePreset: ProfilePreset?
 
         // Save options
         var includeSMBSettings: Bool = false
@@ -39,6 +41,7 @@ extension ProfilePresets {
             units = settingsManager.settings.units
             presets = provider.loadPresets()
             currentProfile = provider.loadCurrentProfile()
+            activePreset = provider.loadActivePreset()
         }
 
         func refreshCurrentProfile() {
@@ -49,6 +52,7 @@ extension ProfilePresets {
             guard !newPresetName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
             if let preset = provider.saveCurrentAsPreset(
                 name: newPresetName.trimmingCharacters(in: .whitespaces),
+                icon: newPresetIcon,
                 includeSMB: includeSMBSettings,
                 includeDynamic: includeDynamicSettings
             ) {
@@ -57,6 +61,7 @@ extension ProfilePresets {
                 showingSaveError = true
             }
             newPresetName = ""
+            newPresetIcon = "person.crop.circle"
             includeSMBSettings = false
             includeDynamicSettings = false
             savePreviewProfile = nil
@@ -65,6 +70,8 @@ extension ProfilePresets {
         func activatePreset(_ preset: ProfilePreset) {
             if !provider.activatePreset(preset) {
                 showingActivateError = true
+            } else {
+                activePreset = preset
             }
         }
 
