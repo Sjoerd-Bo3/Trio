@@ -17,6 +17,8 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     @Injected() private var broadcaster: Broadcaster!
     @Injected() private var settingsManager: SettingsManager!
 
+    static let profilePresetActivatedNotification = Notification.Name("ProfilePresetActivated")
+
     init(resolver: Resolver) {
         injectServices(resolver)
     }
@@ -189,6 +191,8 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         }
 
         storage.save(preset.id, as: OpenAPS.Trio.activeProfilePresetId)
+
+        NotificationCenter.default.post(name: BaseProfilePresetStorage.profilePresetActivatedNotification, object: preset)
 
         return true
     }

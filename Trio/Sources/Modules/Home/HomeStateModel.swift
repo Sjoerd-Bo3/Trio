@@ -167,6 +167,18 @@ extension Home {
             setupHomeViewConcurrently()
 
             activeProfilePreset = profilePresetStorage.activePreset()
+
+            NotificationCenter.default.addObserver(
+                forName: BaseProfilePresetStorage.profilePresetActivatedNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                if let preset = notification.object as? ProfilePreset {
+                    self?.activeProfilePreset = preset
+                } else {
+                    self?.activeProfilePreset = self?.profilePresetStorage.activePreset()
+                }
+            }
         }
 
         private func setupHomeViewConcurrently() {

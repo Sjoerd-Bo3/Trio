@@ -47,7 +47,6 @@ extension ProfilePresets {
                         ForEach(state.presets) { preset in
                             presetRow(preset)
                         }
-                        .onDelete(perform: deletePresets)
                     }
                     .listRowBackground(Color.chart)
                 }
@@ -192,188 +191,168 @@ extension ProfilePresets {
             .sheet(isPresented: $state.showingAdjustmentSheet) {
                 adjustmentSheet
             }
+            .sheet(isPresented: $state.showingComparisonSheet) {
+                if let presetA = state.comparisonPresetA,
+                   let presetB = state.comparisonPresetB
+                {
+                    NavigationView {
+                        ComparisonView(
+                            presetA: presetA,
+                            presetB: presetB,
+                            units: state.units
+                        )
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button(String(localized: "Done", comment: "ProfilePresets: dismiss comparison")) {
+                                    state.showingComparisonSheet = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // MARK: - Preset Row
 
         @ViewBuilder private func presetRow(_ preset: ProfilePreset) -> some View {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Image(systemName: preset.icon)
-                        .foregroundColor(.accentColor)
-                        .font(.headline)
-                    Text(preset.name)
-                        .font(.headline)
-                    Spacer()
-                    Button {
-                        state.selectedPreset = preset
-                        state.showingActivateConfirmation = true
-                    } label: {
-                        Text("Activate", comment: "ProfilePresets: button to activate a preset")
-                            .font(.subheadline.bold())
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+            NavigationLink {
+                PresetDetailView(
+                    preset: preset,
+                    units: state.units,
+                    formattedBasalTotal: state.formattedBasalTotal(preset)
+                )
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: preset.icon)
+                            .foregroundColor(.accentColor)
+                            .font(.headline)
+                        Text(preset.name)
+                            .font(.headline)
+                        Spacer()
+                        if preset.id == state.activePreset?.id {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.accentColor)
+                        }
                     }
-                    .buttonStyle(.plain)
+
+                    presetSummaryPills(preset)
+                }
+                .padding(.vertical, 4)
+            }
+            .contextMenu {
+                if state.currentProfile != nil {
+                    Button {
+                        state.beginComparison(presetA: preset, presetB: state.currentProfile)
+                    } label: {
+                        Label(
+                            String(
+                                localized: "Compare with Current",
+                                comment: "ProfilePresets: context menu option to compare preset with current profile"
+                            ),
+                            systemImage: "arrow.left.arrow.right"
+                        )
+                    }
                 }
 
-                presetDetails(preset)
+                Button {
+                    state.beginAdjustment(for: preset)
+                } label: {
+                    Label(
+                        String(
+                            localized: "Create Adjusted Copy",
+                            comment: "ProfilePresets: context menu option to create a percentage-adjusted copy"
+                        ),
+                        systemImage: "plusminus"
+                    )
+                }
 
-                HStack(spacing: 12) {
-                    // Detail button
-                    NavigationLink {
-                        PresetDetailView(
-                            preset: preset,
-                            units: state.units,
-                            formattedBasalTotal: state.formattedBasalTotal(preset)
-                        )
-                    } label: {
-                        Label {
-                            Text(
-                                "View Details",
-                                comment: "ProfilePresets: button to view full preset details"
-                            )
-                        } icon: {
-                            Image(systemName: "list.bullet")
-                        }
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
-                    }
-                    .buttonStyle(.plain)
+                Divider()
 
-                    // Compare with current
-                    if let currentProfile = state.currentProfile {
-                        NavigationLink {
-                            ComparisonView(
-                                presetA: preset,
-                                presetB: currentProfile,
-                                units: state.units
-                            )
-                        } label: {
-                            Label {
-                                Text(
-                                    "Compare with Current",
-                                    comment: "ProfilePresets: button to compare preset with current profile"
-                                )
-                            } icon: {
-                                Image(systemName: "arrow.left.arrow.right")
-                            }
-                            .font(.caption)
-                            .foregroundColor(.accentColor)
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    // Adjust button
-                    Button {
-                        state.beginAdjustment(for: preset)
-                    } label: {
-                        Label {
-                            Text(
-                                "Create Adjusted Copy",
-                                comment: "ProfilePresets: button to create a percentage-adjusted copy of a preset"
-                            )
-                        } icon: {
-                            Image(systemName: "plusminus")
-                        }
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
-                    }
-                    .buttonStyle(.plain)
+                Button(role: .destructive) {
+                    state.deletePreset(preset)
+                } label: {
+                    Label(
+                        String(
+                            localized: "Delete",
+                            comment: "ProfilePresets: context menu option to delete preset"
+                        ),
+                        systemImage: "trash"
+                    )
                 }
             }
-            .padding(.vertical, 4)
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button(role: .destructive) {
+                    state.deletePreset(preset)
+                } label: {
+                    Label(
+                        String(
+                            localized: "Delete",
+                            comment: "ProfilePresets: swipe action to delete preset"
+                        ),
+                        systemImage: "trash"
+                    )
+                }
+            }
         }
 
-        // MARK: - Preset Details
+        // MARK: - Preset Summary Pills
 
-        @ViewBuilder private func presetDetails(_ preset: ProfilePreset) -> some View {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 16) {
-                    Label {
-                        Text(
-                            "Basal: \(state.formattedBasalTotal(preset)) U/day",
-                            comment: "ProfilePresets: total daily basal for a preset"
-                        )
-                    } icon: {
-                        Image(systemName: "drop.fill")
-                            .foregroundColor(.insulin)
-                    }
-                    .font(.caption)
+        @ViewBuilder private func presetSummaryPills(_ preset: ProfilePreset) -> some View {
+            HStack(spacing: 6) {
+                summaryPill(
+                    text: "\(state.formattedBasalTotal(preset)) U",
+                    icon: "drop.fill",
+                    color: .insulin
+                )
+
+                if let first = preset.insulinSensitivities.sensitivities.first {
+                    summaryPill(
+                        text: "ISF \(state.formatGlucose(first.sensitivity))",
+                        icon: "arrow.up.arrow.down",
+                        color: .loopYellow
+                    )
                 }
 
-                HStack(spacing: 16) {
-                    Label {
-                        if let first = preset.insulinSensitivities.sensitivities.first {
-                            Text(
-                                "ISF: \(state.formatGlucose(first.sensitivity)) \(state.units.rawValue)"
-                            )
-                        } else {
-                            Text(
-                                "ISF: –",
-                                comment: "ProfilePresets: ISF placeholder when no entries"
-                            )
-                        }
-                    } icon: {
-                        Image(systemName: "arrow.up.arrow.down")
-                            .foregroundColor(.loopYellow)
-                    }
-                    .font(.caption)
-
-                    Label {
-                        if let first = preset.carbRatios.schedule.first {
-                            Text("CR: \(formatDecimal(first.ratio)) g/U")
-                        } else {
-                            Text(
-                                "CR: –",
-                                comment: "ProfilePresets: CR placeholder when no entries"
-                            )
-                        }
-                    } icon: {
-                        Image(systemName: "fork.knife")
-                            .foregroundColor(.loopGreen)
-                    }
-                    .font(.caption)
+                if let first = preset.carbRatios.schedule.first {
+                    summaryPill(
+                        text: "CR \(formatDecimal(first.ratio))",
+                        icon: "fork.knife",
+                        color: .loopGreen
+                    )
                 }
 
-                // Extra settings badges
-                HStack(spacing: 8) {
-                    if preset.smbSettings != nil {
-                        Label {
-                            Text("SMB", comment: "ProfilePresets: badge indicating SMB settings are included")
-                        } icon: {
-                            Image(systemName: "bolt.fill")
-                        }
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.2))
-                        .foregroundColor(.orange)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
+                if preset.smbSettings != nil {
+                    summaryPill(
+                        text: String(localized: "SMB", comment: "ProfilePresets: SMB pill label"),
+                        icon: "bolt.fill",
+                        color: .orange
+                    )
+                }
 
-                    if preset.dynamicSettings != nil {
-                        Label {
-                            Text(
-                                "Dynamic ISF",
-                                comment: "ProfilePresets: badge indicating Dynamic ISF settings are included"
-                            )
-                        } icon: {
-                            Image(systemName: "waveform.path")
-                        }
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.purple.opacity(0.2))
-                        .foregroundColor(.purple)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
+                if preset.dynamicSettings != nil {
+                    summaryPill(
+                        text: String(localized: "Dynamic", comment: "ProfilePresets: Dynamic ISF pill label"),
+                        icon: "waveform.path",
+                        color: .purple
+                    )
                 }
             }
-            .foregroundColor(.secondary)
+        }
+
+        private func summaryPill(text: String, icon: String, color: Color) -> some View {
+            HStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 8))
+                Text(text)
+                    .font(.caption2)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(color.opacity(0.15))
+            .foregroundColor(color)
+            .clipShape(Capsule())
         }
 
         // MARK: - Adjustment Sheet
@@ -1089,13 +1068,6 @@ extension ProfilePresets {
                     .font(.subheadline)
                     .foregroundColor(.accentColor)
                 }
-            }
-        }
-
-        private func deletePresets(at offsets: IndexSet) {
-            for index in offsets {
-                let preset = state.presets[index]
-                state.deletePreset(preset)
             }
         }
 
