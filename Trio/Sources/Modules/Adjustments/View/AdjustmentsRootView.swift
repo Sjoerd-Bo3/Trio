@@ -373,33 +373,47 @@ extension Adjustments {
                             Image(systemName: preset.icon)
                                 .foregroundColor(.accentColor)
                                 .font(.title3)
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(preset.name)
                                     .font(.subheadline)
+                                adjustmentPresetPills(preset)
                             }
                             Spacer()
                             if preset.id == state.activeProfilePreset?.id {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.accentColor)
-                            } else {
-                                Button {
-                                    state.selectedProfilePreset = preset
-                                    state.showingProfileActivateConfirmation = true
-                                } label: {
-                                    Text("Activate", comment: "Adjustments: activate profile button")
-                                        .font(.caption.bold())
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(Color.accentColor)
-                                        .foregroundColor(.white)
-                                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                                }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
                 }
             }
+        }
+
+        @ViewBuilder private func adjustmentPresetPills(_ preset: ProfilePreset) -> some View {
+            HStack(spacing: 4) {
+                if preset.smbSettings != nil {
+                    adjustmentPill(
+                        text: String(localized: "SMB", comment: "Adjustments: SMB pill"),
+                        color: .orange
+                    )
+                }
+                if preset.dynamicSettings != nil {
+                    adjustmentPill(
+                        text: String(localized: "Dynamic", comment: "Adjustments: Dynamic ISF pill"),
+                        color: .purple
+                    )
+                }
+            }
+        }
+
+        private func adjustmentPill(text: String, color: Color) -> some View {
+            Text(text)
+                .font(.system(size: 9))
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(color.opacity(0.15))
+                .foregroundColor(color)
+                .clipShape(Capsule())
         }
     }
 }
