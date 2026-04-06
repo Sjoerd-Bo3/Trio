@@ -143,6 +143,7 @@ final class BaseOverrideStorage: @preconcurrency OverrideStorage, Injectable {
             newOverride.cr = override.cr
             newOverride.enabled = override.enabled
             newOverride.smbIsOff = override.smbIsOff
+            newOverride.disableDynamicISF = override.disableDynamicISF
             if override.overrideTarget {
                 newOverride.target = override.target as NSDecimalNumber
             } else {
@@ -195,6 +196,7 @@ final class BaseOverrideStorage: @preconcurrency OverrideStorage, Injectable {
         newOverride.end = override.end
         newOverride.smbMinutes = override.smbMinutes
         newOverride.uamMinutes = override.uamMinutes
+        newOverride.disableDynamicISF = override.disableDynamicISF
         newOverride.isUploadedToNS = true // set to true to avoid getting duplicate entries on NS
 
         await viewContext.perform {

@@ -21,4 +21,5 @@ struct Override {
     let end: Decimal
     let smbMinutes: Decimal
     let uamMinutes: Decimal
+    let disableDynamicISF: Bool
 }

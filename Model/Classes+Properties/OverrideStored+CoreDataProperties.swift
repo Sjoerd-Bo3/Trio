@@ -9,6 +9,7 @@ public extension OverrideStored {
     @NSManaged var advancedSettings: Bool
     @NSManaged var cr: Bool
     @NSManaged var date: Date?
+    @NSManaged var disableDynamicISF: Bool
     @NSManaged var duration: NSDecimalNumber?
     @NSManaged var enabled: Bool
     @NSManaged var end: NSDecimalNumber?

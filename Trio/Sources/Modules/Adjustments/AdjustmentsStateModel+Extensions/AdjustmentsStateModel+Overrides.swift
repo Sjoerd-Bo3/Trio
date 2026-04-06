@@ -107,7 +107,8 @@ extension Adjustments.StateModel {
                 start: start,
                 end: end,
                 smbMinutes: smbMinutes,
-                uamMinutes: uamMinutes
+                uamMinutes: uamMinutes,
+                disableDynamicISF: disableDynamicISF
             )
 
             // First disable all Overrides
@@ -154,7 +155,8 @@ extension Adjustments.StateModel {
                 start: start,
                 end: end,
                 smbMinutes: smbMinutes,
-                uamMinutes: uamMinutes
+                uamMinutes: uamMinutes,
+                disableDynamicISF: disableDynamicISF
             )
 
             async let storeOverride: () = overrideStorage.storeOverride(override: preset)
@@ -324,6 +326,7 @@ extension Adjustments.StateModel {
         smbMinutes = defaultSmbMinutes
         uamMinutes = defaultUamMinutes
         target = currentGlucoseTarget
+        disableDynamicISF = false
     }
 
     /// Rounds a target value to the nearest step.

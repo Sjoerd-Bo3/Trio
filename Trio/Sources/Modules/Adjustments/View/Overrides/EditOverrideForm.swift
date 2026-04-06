@@ -23,6 +23,7 @@ struct EditOverrideForm: View {
     @State private var cr: Bool
     @State private var smbMinutes: Decimal?
     @State private var uamMinutes: Decimal?
+    @State private var disableDynamicISF: Bool
     @State private var selectedIsfCrOption: IsfAndOrCrOptions
     @State private var selectedDisableSmbOption: DisableSmbOptions
     @State private var hasChanges = false
@@ -63,6 +64,7 @@ struct EditOverrideForm: View {
         )
         _smbMinutes = State(initialValue: overrideToEdit.smbMinutes?.decimalValue)
         _uamMinutes = State(initialValue: overrideToEdit.uamMinutes?.decimalValue)
+        _disableDynamicISF = State(initialValue: overrideToEdit.disableDynamicISF)
     }
 
     private var percentageSelection: Binding<Double> {
@@ -172,7 +174,7 @@ struct EditOverrideForm: View {
                             label: Text("")
                         ) {
                             ForEach(
-                                Array(stride(from: 40.0, through: 150.0, by: Double(percentageStep))),
+                                Array(stride(from: 10.0, through: 200.0, by: Double(percentageStep))),
                                 id: \.self
                             ) { percent in
                                 Text("\(Int(percent)) %").tag(percent)
@@ -433,6 +435,14 @@ struct EditOverrideForm: View {
             }
 
             Section {
+                Toggle(isOn: $disableDynamicISF) {
+                    Text("Disable Dynamic ISF")
+                }
+                .onChange(of: disableDynamicISF) { hasChanges = true }
+            }
+            .listRowBackground(Color.chart)
+
+            Section {
                 Toggle(isOn: $indefinite) { Text("Enable Indefinitely") }
                     .onChange(of: indefinite) { hasChanges = true }
 
@@ -554,7 +564,7 @@ struct EditOverrideForm: View {
         let noDurationSpecified = !indefinite && duration == 0
         let targetZeroWithOverride = target_override && (target ?? 0 < 72 || target ?? 0 > 270)
         let allSettingsDefault = percentage == 100 && !target_override && !advancedSettings &&
-            !smbIsOff && !smbIsScheduledOff
+            !smbIsOff && !smbIsScheduledOff && !disableDynamicISF
 
         if noDurationSpecified {
             return (true, String(localized: "Enable indefinitely or set a duration."))
@@ -595,6 +605,7 @@ struct EditOverrideForm: View {
         override.cr = cr
         override.smbMinutes = smbMinutes.map { NSDecimalNumber(decimal: $0) }
         override.uamMinutes = uamMinutes.map { NSDecimalNumber(decimal: $0) }
+        override.disableDynamicISF = disableDynamicISF
         override.isUploadedToNS = false
     }
 
@@ -614,6 +625,7 @@ struct EditOverrideForm: View {
         cr = override.cr
         smbMinutes = override.smbMinutes?.decimalValue ?? state.defaultSmbMinutes
         uamMinutes = override.uamMinutes?.decimalValue ?? state.defaultUamMinutes
+        disableDynamicISF = override.disableDynamicISF
     }
 
     private func toggleScrollWheel(_ toggle: Bool) -> Bool {

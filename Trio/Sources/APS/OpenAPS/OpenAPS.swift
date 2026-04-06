@@ -413,6 +413,7 @@ final class OpenAPS {
             let isOverrideIndefinite = activeOverrides.first?.indefinite ?? true
             let disableSMBs = activeOverrides.first?.smbIsOff ?? false
             let overrideTargetBG = activeOverrides.first?.target?.decimalValue ?? 0
+            let disableDynamicISF = activeOverrides.first?.disableDynamicISF ?? false
 
             // Calculate averages for Total Daily Dose (TDD)
             let totalTDD = historicalTDDData.compactMap { ($0["total"] as? NSDecimalNumber)?.decimalValue }.reduce(0, +)
@@ -452,7 +453,8 @@ final class OpenAPS {
                 start: (activeOverrides.first?.start ?? 0) as Decimal,
                 end: (activeOverrides.first?.end ?? 0) as Decimal,
                 smbMinutes: activeOverrides.first?.smbMinutes?.decimalValue ?? maxSMBBasalMinutes,
-                uamMinutes: activeOverrides.first?.uamMinutes?.decimalValue ?? maxUAMBasalMinutes
+                uamMinutes: activeOverrides.first?.uamMinutes?.decimalValue ?? maxUAMBasalMinutes,
+                disableDynamicISF: disableDynamicISF
             )
 
             // Save and return contents of Trio's custom oref variables

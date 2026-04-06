@@ -110,7 +110,7 @@ struct AddOverrideForm: View {
                                 set: { state.overridePercentage = Double($0) }
                             ), label: Text("")
                         ) {
-                            ForEach(Array(stride(from: 40, through: 150, by: percentageStep)), id: \.self) { percent in
+                            ForEach(Array(stride(from: 10, through: 200, by: percentageStep)), id: \.self) { percent in
                                 Text("\(percent) %").tag(percent)
                             }
                         }
@@ -335,6 +335,13 @@ struct AddOverrideForm: View {
             }
 
             Section {
+                Toggle(isOn: $state.disableDynamicISF) {
+                    Text("Disable Dynamic ISF")
+                }
+            }
+            .listRowBackground(Color.chart)
+
+            Section {
                 Toggle(isOn: $state.indefinite) {
                     Text("Enable Indefinitely")
                 }
@@ -445,7 +452,8 @@ struct AddOverrideForm: View {
         let noDurationSpecified = !state.indefinite && state.overrideDuration == 0
         let targetZeroWithOverride = state.shouldOverrideTarget && state.target == 0
         let allSettingsDefault = state.overridePercentage == 100 && !state.shouldOverrideTarget &&
-            !state.advancedSettings && !state.smbIsOff && !state.smbIsScheduledOff
+            !state.advancedSettings && !state.smbIsOff && !state.smbIsScheduledOff &&
+            !state.disableDynamicISF
 
         if noDurationSpecified {
             return (true, String(localized: "Enable indefinitely or set a duration."))

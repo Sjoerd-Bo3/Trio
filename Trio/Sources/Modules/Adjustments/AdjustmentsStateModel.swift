@@ -36,6 +36,7 @@ extension Adjustments {
         var end: Decimal = 0
         var smbMinutes: Decimal = 0
         var uamMinutes: Decimal = 0
+        var disableDynamicISF: Bool = false
         var defaultSmbMinutes: Decimal = 0
         var defaultUamMinutes: Decimal = 0
         var selectedTab: Tab = .overrides
