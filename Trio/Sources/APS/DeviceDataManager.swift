@@ -64,6 +64,7 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
     @Injected() private var glucoseStorage: GlucoseStorage!
     @Injected() private var settingsManager: SettingsManager!
     @Injected() private var bluetoothProvider: BluetoothStateManager!
+    @Injected() private var concentrationService: ConcentrationService!
 
     @Persisted(key: "BaseDeviceDataManager.lastEventDate") var lastEventDate: Date? = nil
     @SyncAccess(lock: accessLock) @Persisted(key: "BaseDeviceDataManager.lastHeartBeatTime") var lastHeartBeatTime: Date =
@@ -614,14 +615,16 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
         >) -> Void
     ) {
         dispatchPrecondition(condition: .onQueue(processQueue))
-        debug(.deviceManager, "Reservoir Value \(units), at: \(date)")
-        storage.save(Decimal(units), as: OpenAPS.Monitor.reservoir)
+        // Convert pump-reported reservoir volume to real insulin units
+        let realUnits = concentrationService.toRealUnits(pumpUnits: units)
+        debug(.deviceManager, "Reservoir Value \(realUnits) real units (\(units) pump units), at: \(date)")
+        storage.save(Decimal(realUnits), as: OpenAPS.Monitor.reservoir)
         broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
-            $0.pumpReservoirDidChange(Decimal(units))
+            $0.pumpReservoirDidChange(Decimal(realUnits))
         }
 
         completion(.success((
-            newValue: Reservoir(startDate: Date(), unitVolume: units),
+            newValue: Reservoir(startDate: Date(), unitVolume: realUnits),
             lastValue: nil,
             areStoredValuesContinuous: true
         )))

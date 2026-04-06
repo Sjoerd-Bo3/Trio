@@ -29,5 +29,6 @@ final class ServiceAssembly: Assembly {
             }
         }
         container.register(IOBService.self) { r in BaseIOBService(resolver: r) }
+        container.register(ConcentrationService.self) { r in BaseConcentrationService(resolver: r) }
     }
 }

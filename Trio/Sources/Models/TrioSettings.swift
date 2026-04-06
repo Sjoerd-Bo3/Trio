@@ -54,7 +54,7 @@ struct TrioSettings: JSON, Equatable, Encodable {
     var yGridLines: Bool = true
     var hideInsulinBadge: Bool = false
     var allowDilution: Bool = false
-    var insulinConcentration: Decimal = 1
+    var insulinConcentration: InsulinConcentration = .u100
     var showCobIobChart: Bool = true
     var rulerMarks: Bool = true
     var bolusDisplayThreshold: BolusDisplayThreshold = .allUnits
@@ -294,8 +294,12 @@ extension TrioSettings: Decodable {
             settings.allowDilution = allowDilution
         }
 
-        if let insulinConcentration = try? container.decode(Decimal.self, forKey: .insulinConcentration) {
+        if let insulinConcentration = try? container.decode(InsulinConcentration.self, forKey: .insulinConcentration) {
             settings.insulinConcentration = insulinConcentration
+        } else if let legacyFactor = try? container.decode(Decimal.self, forKey: .insulinConcentration) {
+            // Backward compatibility: convert legacy Decimal factor to InsulinConcentration enum
+            let rawValue = Int(truncating: (legacyFactor * 100) as NSDecimalNumber)
+            settings.insulinConcentration = InsulinConcentration(rawValue: rawValue) ?? .u100
         }
 
         if let rulerMarks = try? container.decode(Bool.self, forKey: .rulerMarks) {
