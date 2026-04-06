@@ -9,11 +9,11 @@ extension ProfilePresets {
             profilePresetStorage.presets()
         }
 
-        func saveCurrentAsPreset(name: String) -> ProfilePreset {
+        func saveCurrentAsPreset(name: String) -> ProfilePreset? {
             profilePresetStorage.saveCurrentProfileAsPreset(name: name)
         }
 
-        func activatePreset(_ preset: ProfilePreset) {
+        func activatePreset(_ preset: ProfilePreset) -> Bool {
             profilePresetStorage.activatePreset(preset)
         }
 
