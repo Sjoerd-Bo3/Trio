@@ -226,7 +226,7 @@ extension Adjustments {
             }
         }
 
-        var currentActiveAdjustment: some View {
+        @ViewBuilder var currentActiveAdjustment: some View {
             switch state.selectedTab {
             case .overrides:
                 Section {
@@ -283,7 +283,7 @@ extension Adjustments {
             }
         }
 
-        var cancelAdjustmentButton: some View {
+        @ViewBuilder var cancelAdjustmentButton: some View {
             switch state.selectedTab {
             case .overrides:
                 Button(action: {
