@@ -2544,6 +2544,7 @@ A9B2E76F4C8D13A5E07F42B1 /* ProfileComparisonView.swift */ = {isa = PBXFileRefer
 				BDC2EA442C3043B000E5BBD0 /* OverrideStorage.swift */,
 				5864E8582C42CFAE00294306 /* DeterminationStorage.swift */,
 				BD4D73A12D15A4220052227B /* TDDStorage.swift */,
+				1483D2092478350967C2F187 /* ProfilePresetStorage.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
