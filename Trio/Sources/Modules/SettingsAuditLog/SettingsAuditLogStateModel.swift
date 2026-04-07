@@ -235,10 +235,20 @@ extension SettingsAuditLog {
     }
 
     @Observable final class StateModel: BaseStateModel<Provider> {
-        var searchText: String = ""
+        var searchText: String = "" {
+            didSet { recomputeDerivedState() }
+        }
+
         var selectedCategory: String? = nil
-        var entries: [ChangeEntry] = []
         var units: GlucoseUnits = .mgdL
+
+        /// Pre-computed stored properties — never iterate `entries` during body rendering.
+        var allCategories: [String] = ["All"]
+        var filteredEntries: [ChangeEntry] = []
+        var groupedEvents: [(String, [ChangeEvent])] = []
+
+        /// Raw entries — private to prevent direct access during rendering.
+        private var entries: [ChangeEntry] = []
 
         private static let groupingCalendar: Calendar = .current
 
@@ -248,15 +258,6 @@ extension SettingsAuditLog {
             df.timeStyle = .none
             return df
         }()
-
-        /// Distinct categories from loaded entries.
-        var allCategories: [String] {
-            var cats = Set<String>()
-            for entry in entries {
-                if !entry.category.isEmpty { cats.insert(entry.category) }
-            }
-            return ["All"] + cats.sorted()
-        }
 
         override func subscribe() {
             units = settingsManager.settings.units
@@ -269,6 +270,7 @@ extension SettingsAuditLog {
                 since: nil,
                 limit: 500
             )
+            recomputeDerivedState()
         }
 
         func updateNote(forGroup groupId: UUID, note: String) {
@@ -292,26 +294,38 @@ extension SettingsAuditLog {
                     groupId: entry.groupId
                 )
             }
+            recomputeDerivedState()
         }
 
-        var filteredEntries: [ChangeEntry] {
-            guard !searchText.isEmpty else { return entries }
-            let lower = searchText.lowercased()
-            return entries.filter {
-                $0.settingName.lowercased().contains(lower) ||
-                    $0.category.lowercased().contains(lower) ||
-                    $0.oldValue.lowercased().contains(lower) ||
-                    $0.newValue.lowercased().contains(lower) ||
-                    $0.note.lowercased().contains(lower)
+        /// Recompute all derived state from the current `entries` snapshot.
+        /// This avoids iterating `entries` in computed properties during SwiftUI body rendering,
+        /// which can crash if the @Observable registrar triggers a re-render mid-read.
+        private func recomputeDerivedState() {
+            // 1. Categories
+            var cats = Set<String>()
+            for entry in entries {
+                if !entry.category.isEmpty { cats.insert(entry.category) }
             }
-        }
+            allCategories = ["All"] + cats.sorted()
 
-        /// Groups filtered entries by `groupId` into `ChangeEvent`s, then groups those by day.
-        var groupedEvents: [(String, [ChangeEvent])] {
+            // 2. Filtered entries
+            if searchText.isEmpty {
+                filteredEntries = entries
+            } else {
+                let lower = searchText.lowercased()
+                filteredEntries = entries.filter {
+                    $0.settingName.lowercased().contains(lower) ||
+                        $0.category.lowercased().contains(lower) ||
+                        $0.oldValue.lowercased().contains(lower) ||
+                        $0.newValue.lowercased().contains(lower) ||
+                        $0.note.lowercased().contains(lower)
+                }
+            }
+
+            // 3. Grouped events
             let cal = Self.groupingCalendar
             let df = Self.groupingFormatter
 
-            // Build ChangeEvents from groupId
             let byGroup = Dictionary(grouping: filteredEntries, by: \.groupId)
             let events: [ChangeEvent] = byGroup.map { groupId, groupEntries in
                 let sorted = groupEntries.sorted { $0.date > $1.date }
@@ -320,11 +334,10 @@ extension SettingsAuditLog {
                 return ChangeEvent(id: groupId, date: date, entries: sorted, note: note)
             }
 
-            // Group events by day
             let byDay = Dictionary(grouping: events) { event -> DateComponents in
                 cal.dateComponents([.year, .month, .day], from: event.date)
             }
-            return byDay
+            groupedEvents = byDay
                 .sorted { a, b in
                     let aDate = cal.date(from: a.key) ?? .distantPast
                     let bDate = cal.date(from: b.key) ?? .distantPast
