@@ -136,6 +136,11 @@ extension ProfilePresets {
             .onAppear(perform: configureView)
             .navigationTitle(Text("Profile Presets", comment: "ProfilePresets: navigation title"))
             .navigationBarTitleDisplayMode(.automatic)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    EditButton()
+                }
+            }
             .sheet(isPresented: $state.showingSaveDialog) {
                 savePresetSheet
             }

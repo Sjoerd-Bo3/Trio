@@ -121,7 +121,7 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         guard let therapy = loadCurrentTherapySettings() else { return nil }
 
         return ProfilePreset(
-            name: String(localized: "Current Profile", comment: "ProfilePresets: name for the current active profile"),
+            name: String(localized: "Current", comment: "ProfilePresets: short name for the current active profile"),
             basalProfile: therapy.basalProfile,
             insulinSensitivities: therapy.insulinSensitivities,
             carbRatios: therapy.carbRatios,

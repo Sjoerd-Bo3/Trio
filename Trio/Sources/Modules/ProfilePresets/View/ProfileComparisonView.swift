@@ -37,7 +37,7 @@ extension ProfilePresets {
                     dynamicComparisonSection
                 }
             }
-            .navigationTitle(Text("Compare Profiles", comment: "ProfileComparison: navigation title"))
+            .navigationTitle(Text("\(presetA.name) | \(presetB.name)"))
             .navigationBarTitleDisplayMode(.inline)
         }
 
@@ -123,7 +123,7 @@ extension ProfilePresets {
                             if !showDifferencesOnly || isDifferent {
                                 let time = entryA?.start ?? entryB?.start ?? ""
                                 HStack {
-                                    Text(time)
+                                    Text(formatTime(time))
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                         .frame(width: 55, alignment: .leading)
@@ -172,7 +172,7 @@ extension ProfilePresets {
                             if !showDifferencesOnly || isDifferent {
                                 let time = entryA?.start ?? entryB?.start ?? ""
                                 HStack {
-                                    Text(time)
+                                    Text(formatTime(time))
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                         .frame(width: 55, alignment: .leading)
@@ -218,7 +218,7 @@ extension ProfilePresets {
                             if !showDifferencesOnly || isDifferent {
                                 let time = entryA?.start ?? entryB?.start ?? ""
                                 HStack {
-                                    Text(time)
+                                    Text(formatTime(time))
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                         .frame(width: 55, alignment: .leading)
@@ -266,7 +266,7 @@ extension ProfilePresets {
                             if !showDifferencesOnly || isDifferent {
                                 let time = entryA?.start ?? entryB?.start ?? ""
                                 HStack {
-                                    Text(time)
+                                    Text(formatTime(time))
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                         .frame(width: 55, alignment: .leading)
@@ -543,6 +543,15 @@ extension ProfilePresets {
         }
 
         // MARK: - Formatting Helpers
+
+        /// Strips seconds from "HH:mm:ss" time strings to display as "HH:mm".
+        private func formatTime(_ time: String) -> String {
+            let components = time.split(separator: ":")
+            if components.count >= 2 {
+                return "\(components[0]):\(components[1])"
+            }
+            return time
+        }
 
         private func formattedBasalTotal(_ preset: ProfilePreset) -> String {
             String(format: "%.2f", NSDecimalNumber(decimal: preset.totalDailyBasal).doubleValue)
