@@ -246,7 +246,7 @@ extension SettingsAuditLog {
             loadEntries()
         }
 
-        @MainActor func loadEntries() {
+        func loadEntries() {
             let stored = provider.auditStorage.fetchHistory(
                 category: selectedCategory,
                 since: nil,
@@ -256,7 +256,7 @@ extension SettingsAuditLog {
             entries = stored.map { ChangeEntry(from: $0) }
         }
 
-        @MainActor func updateNote(forGroup groupId: UUID, note: String) {
+        func updateNote(forGroup groupId: UUID, note: String) {
             provider.auditStorage.updateNote(forGroup: groupId, note: note)
             // Update in-memory entries immediately without refetching from Core Data
             // to avoid race conditions with the background context save
