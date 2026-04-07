@@ -73,6 +73,8 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
 
     init(resolver: Resolver) {
         injectServices(resolver)
+        viewContext.automaticallyMergesChangesFromParent = true
+        viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
     }
 
     /// Returns the group ID to use for a new entry. If the most recent group is still within

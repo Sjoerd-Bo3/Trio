@@ -11,6 +11,7 @@ extension SettingsAuditLog {
 
         @State private var selectedEvent: ChangeEvent?
         @State private var noteText = ""
+        @State private var debounceTask: Task<Void, Never>?
 
         var body: some View {
             List {
@@ -48,10 +49,16 @@ extension SettingsAuditLog {
             .onAppear(perform: configureView)
             .sheet(item: $selectedEvent) { event in
                 NavigationView {
-                    EventDetailView(event: event, units: state.units, noteText: $noteText) {
-                        state.updateNote(forGroup: event.id, note: noteText)
-                        selectedEvent = nil
-                    }
+                    EventDetailView(event: event, units: state.units, noteText: $noteText)
+                }
+            }
+            .onChange(of: noteText) { _, newValue in
+                guard let event = selectedEvent else { return }
+                debounceTask?.cancel()
+                debounceTask = Task {
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s debounce
+                    guard !Task.isCancelled else { return }
+                    state.updateNote(forGroup: event.id, note: newValue)
                 }
             }
         }
@@ -126,29 +133,59 @@ private struct EventRow: View {
             }
 
             ForEach(event.entries) { entry in
-                HStack(spacing: 4) {
-                    Text(entry.settingName)
-                        .font(.caption2)
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                    Spacer()
-                    Text(entry.displayValue(entry.oldValue, units: units))
-                        .font(.caption2)
-                        .foregroundColor(.red)
-                        .lineLimit(1)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 8))
-                        .foregroundColor(.secondary)
-                    Text(entry.displayValue(entry.newValue, units: units))
-                        .font(.caption2)
-                        .foregroundColor(.green)
-                        .lineLimit(1)
-                    if let displayUnit = entry.displayUnit(units: units) {
-                        Text(displayUnit)
-                            .font(.system(size: 9))
+                VStack(spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(entry.settingName)
+                            .font(.caption2)
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        Spacer()
+                        Text(entry.displayValue(entry.oldValue, units: units))
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                            .lineLimit(1)
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 8))
                             .foregroundColor(.secondary)
+                        Text(entry.displayValue(entry.newValue, units: units))
+                            .font(.caption2)
+                            .foregroundColor(.green)
+                            .lineLimit(1)
+                        if let displayUnit = entry.displayUnit(units: units) {
+                            Text(displayUnit)
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    if let oldTotal = entry.dailyBasalTotal(from: entry.oldValue),
+                       let newTotal = entry.dailyBasalTotal(from: entry.newValue)
+                    {
+                        HStack(spacing: 4) {
+                            Spacer()
+                            Text("Daily total:")
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                            Text(oldTotal)
+                                .font(.system(size: 9))
+                                .foregroundColor(.red)
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 7))
+                                .foregroundColor(.secondary)
+                            Text(newTotal)
+                                .font(.system(size: 9))
+                                .foregroundColor(.green)
+                        }
                     }
                 }
+            }
+
+            // Show note text on overview when present
+            if !event.note.isEmpty {
+                Text(event.note)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                    .padding(.top, 2)
             }
         }
         .padding(.vertical, 2)
@@ -161,7 +198,6 @@ private struct EventDetailView: View {
     let event: SettingsAuditLog.ChangeEvent
     let units: GlucoseUnits
     @Binding var noteText: String
-    let onSave: () -> Void
 
     @Environment(\.dismiss) var dismiss
 
@@ -207,6 +243,24 @@ private struct EventDetailView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
+                        if let oldTotal = entry.dailyBasalTotal(from: entry.oldValue),
+                           let newTotal = entry.dailyBasalTotal(from: entry.newValue)
+                        {
+                            HStack(spacing: 4) {
+                                Text("Daily total:")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text(oldTotal)
+                                    .font(.caption2)
+                                    .foregroundColor(.red)
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 8))
+                                    .foregroundColor(.secondary)
+                                Text(newTotal)
+                                    .font(.caption2)
+                                    .foregroundColor(.green)
+                            }
+                        }
                         if !entry.subcategory.isEmpty {
                             Text(entry.subcategory)
                                 .font(.caption2)
@@ -219,16 +273,18 @@ private struct EventDetailView: View {
             Section("Note") {
                 TextEditor(text: $noteText)
                     .frame(minHeight: 80)
+                if !noteText.isEmpty {
+                    Text("Notes are saved automatically")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
         }
         .navigationTitle("Change Event")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { onSave() }
-            }
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button("Done") { dismiss() }
             }
         }
     }

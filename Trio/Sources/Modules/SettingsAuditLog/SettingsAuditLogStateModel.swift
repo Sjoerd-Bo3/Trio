@@ -19,6 +19,34 @@ extension SettingsAuditLog {
         let source: String
         let groupId: UUID
 
+        init(
+            id: UUID,
+            date: Date,
+            category: String,
+            subcategory: String,
+            settingName: String,
+            settingKey: String,
+            oldValue: String,
+            newValue: String,
+            unit: String?,
+            note: String,
+            source: String,
+            groupId: UUID
+        ) {
+            self.id = id
+            self.date = date
+            self.category = category
+            self.subcategory = subcategory
+            self.settingName = settingName
+            self.settingKey = settingKey
+            self.oldValue = oldValue
+            self.newValue = newValue
+            self.unit = unit
+            self.note = note
+            self.source = source
+            self.groupId = groupId
+        }
+
         init(from stored: SettingsChangeStored) {
             id = stored.id ?? UUID()
             date = stored.date ?? .distantPast
@@ -38,6 +66,65 @@ extension SettingsAuditLog {
         func displayValue(_ raw: String, units: GlucoseUnits) -> String {
             guard units == .mmolL, let u = unit, Self.glucoseConvertibleUnits.contains(u) else { return raw }
             return Self.convertGlucoseString(raw, to: units)
+        }
+
+        /// Returns the daily basal total string (e.g. "18.4 U") for basal profile entries,
+        /// or nil if the entry is not a basal profile change.
+        func dailyBasalTotal(from raw: String) -> String? {
+            guard settingKey == "therapy.basalProfile" || (unit == "U/hr" && raw.contains(":")) else { return nil }
+            guard let total = Self.calculateDailyBasalTotal(from: raw) else { return nil }
+            let nf = NumberFormatter()
+            nf.minimumFractionDigits = 1
+            nf.maximumFractionDigits = 2
+            return (nf.string(from: total as NSDecimalNumber) ?? "\(total)") + " U"
+        }
+
+        /// Parses a basal profile string like "0:00: 0.8 U/hr, 06:00: 1.0 U/hr" and
+        /// calculates the 24h total insulin delivery.
+        private static func calculateDailyBasalTotal(from raw: String) -> Decimal? {
+            let segments = raw.components(separatedBy: ", ")
+            var entries: [(minuteStart: Int, rate: Decimal)] = []
+
+            for segment in segments {
+                let trimmed = segment.trimmingCharacters(in: .whitespaces)
+                // Expected format: "HH:mm: X.X U/hr" or "HH:mm: X.X"
+                guard let colonSpaceRange = trimmed.range(of: ": ") else { continue }
+                let timeStr = String(trimmed[trimmed.startIndex ..< colonSpaceRange.lowerBound])
+                var valueStr = String(trimmed[colonSpaceRange.upperBound...])
+                    .replacingOccurrences(of: " U/hr", with: "")
+                    .trimmingCharacters(in: .whitespaces)
+
+                // Parse time "HH:mm" → minutes since midnight
+                let timeParts = timeStr.components(separatedBy: ":")
+                guard timeParts.count == 2,
+                      let hours = Int(timeParts[0].trimmingCharacters(in: .whitespaces)),
+                      let mins = Int(timeParts[1].trimmingCharacters(in: .whitespaces))
+                else { continue }
+
+                guard let rate = Decimal(string: valueStr) else { continue }
+                entries.append((minuteStart: hours * 60 + mins, rate: rate))
+            }
+
+            guard !entries.isEmpty else { return nil }
+
+            // Sort by start time
+            entries.sort { $0.minuteStart < $1.minuteStart }
+
+            var total: Decimal = 0
+            for (index, entry) in entries.enumerated() {
+                let nextStart: Int
+                if index + 1 < entries.count {
+                    nextStart = entries[index + 1].minuteStart
+                } else {
+                    nextStart = 24 * 60 // end of day
+                }
+                let durationMinutes = nextStart - entry.minuteStart
+                guard durationMinutes > 0 else { continue }
+                let durationHours = Decimal(durationMinutes) / Decimal(60)
+                total += entry.rate * durationHours
+            }
+
+            return total
         }
 
         /// The display unit label, adjusted for the user's preferred glucose unit.
@@ -171,7 +258,25 @@ extension SettingsAuditLog {
 
         func updateNote(forGroup groupId: UUID, note: String) {
             provider.auditStorage.updateNote(forGroup: groupId, note: note)
-            loadEntries()
+            // Update in-memory entries immediately without refetching from Core Data
+            // to avoid race conditions with the background context save
+            entries = entries.map { entry in
+                guard entry.groupId == groupId else { return entry }
+                return ChangeEntry(
+                    id: entry.id,
+                    date: entry.date,
+                    category: entry.category,
+                    subcategory: entry.subcategory,
+                    settingName: entry.settingName,
+                    settingKey: entry.settingKey,
+                    oldValue: entry.oldValue,
+                    newValue: entry.newValue,
+                    unit: entry.unit,
+                    note: note,
+                    source: entry.source,
+                    groupId: entry.groupId
+                )
+            }
         }
 
         var filteredEntries: [ChangeEntry] {
