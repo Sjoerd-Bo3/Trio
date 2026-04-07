@@ -701,7 +701,7 @@ extension ProfilePresets {
                     ToolbarItem(placement: .cancellationAction) {
                         Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button")) {
                             state.newPresetName = ""
-                            state.newPresetIcon = "person.crop.circle"
+                            state.newPresetIcon = ProfilePreset.defaultIcon
                             state.includeSMBSettings = false
                             state.includeDynamicSettings = false
                             state.showingSaveDialog = false

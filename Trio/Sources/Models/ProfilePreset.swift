@@ -11,6 +11,9 @@ struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
     var smbSettings: SMBPresetSettings?
     var dynamicSettings: DynamicPresetSettings?
 
+    /// The default SF Symbol used for new presets.
+    static let defaultIcon = "person.crop.circle"
+
     /// SF Symbol names suitable for profile preset icons
     static let availableIcons: [String] = [
         "person.crop.circle",
@@ -55,7 +58,7 @@ struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
     init(
         id: String = UUID().uuidString,
         name: String,
-        icon: String = "person.crop.circle",
+        icon: String = ProfilePreset.defaultIcon,
         basalProfile: [BasalProfileEntry],
         insulinSensitivities: InsulinSensitivities,
         carbRatios: CarbRatios,
@@ -86,7 +89,7 @@ struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
-        icon = try container.decodeIfPresent(String.self, forKey: .icon) ?? "person.crop.circle"
+        icon = try container.decodeIfPresent(String.self, forKey: .icon) ?? ProfilePreset.defaultIcon
         basalProfile = try container.decode([BasalProfileEntry].self, forKey: .basalProfile)
         insulinSensitivities = try container.decode(InsulinSensitivities.self, forKey: .insulinSensitivities)
         carbRatios = try container.decode(CarbRatios.self, forKey: .carbRatios)

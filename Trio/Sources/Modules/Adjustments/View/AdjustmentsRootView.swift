@@ -228,7 +228,7 @@ extension Adjustments {
                     )) {
                         let trimmed = newPresetName.trimmingCharacters(in: .whitespaces)
                         guard !trimmed.isEmpty else { return }
-                        state.saveCurrentAsNewPreset(name: trimmed, icon: "person.crop.circle")
+                        state.saveCurrentAsNewPreset(name: trimmed, icon: ProfilePreset.defaultIcon)
                         newPresetName = ""
                     }
                     Button(String(

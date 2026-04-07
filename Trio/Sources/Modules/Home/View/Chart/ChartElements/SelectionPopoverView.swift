@@ -24,7 +24,7 @@ struct SelectionPopoverView: ChartContent {
         return profilePresetRunStored.first { run in
             let start = run.startDate ?? .distantPast
             let end = run.endDate ?? Date()
-            return glucoseDate >= start && glucoseDate <= end
+            return glucoseDate >= start && glucoseDate < end
         }
     }
 
@@ -121,7 +121,7 @@ struct SelectionPopoverView: ChartContent {
                 let name = presetRun.name ?? String(localized: "Profile")
                 let isDiverted = presetRun.isDiverted
                 HStack {
-                    Image(systemName: presetRun.icon ?? "person.crop.circle").frame(width: 15)
+                    Image(systemName: presetRun.icon ?? ProfilePreset.defaultIcon).frame(width: 15)
                     Text(name).bold()
                     if isDiverted {
                         Text(String(

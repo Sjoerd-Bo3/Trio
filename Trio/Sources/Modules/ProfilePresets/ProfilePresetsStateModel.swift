@@ -6,7 +6,7 @@ extension ProfilePresets {
     @Observable final class StateModel: BaseStateModel<Provider> {
         var presets: [ProfilePreset] = []
         var newPresetName: String = ""
-        var newPresetIcon: String = "person.crop.circle"
+        var newPresetIcon: String = ProfilePreset.defaultIcon
         var showingSaveDialog: Bool = false
         var showingActivateConfirmation: Bool = false
         var showingSaveError: Bool = false
@@ -78,7 +78,7 @@ extension ProfilePresets {
                 showingSaveError = true
             }
             newPresetName = ""
-            newPresetIcon = "person.crop.circle"
+            newPresetIcon = ProfilePreset.defaultIcon
             includeSMBSettings = false
             includeDynamicSettings = false
             savePreviewProfile = nil
