@@ -47,6 +47,10 @@ extension SettingsAuditLog {
             .navigationBarTitleDisplayMode(.automatic)
             .searchable(text: $state.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
             .onAppear(perform: configureView)
+            .onDisappear {
+                debounceTask?.cancel()
+                debounceTask = nil
+            }
             .sheet(item: $selectedEvent) { event in
                 NavigationView {
                     EventDetailView(event: event, units: state.units, noteText: $noteText)
