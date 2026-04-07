@@ -37,7 +37,7 @@ extension ProfilePresets {
                         .linearGradient(
                             colors: [
                                 Color.purple.opacity(0.6),
-                                Color.purple.opacity(0.1),
+                                Color.purple.opacity(0.1)
                             ],
                             startPoint: .bottom,
                             endPoint: .top
@@ -109,7 +109,7 @@ extension ProfilePresets {
                         .linearGradient(
                             colors: [
                                 Color.cyan.opacity(0.6),
-                                Color.cyan.opacity(0.1),
+                                Color.cyan.opacity(0.1)
                             ],
                             startPoint: .bottom,
                             endPoint: .top
@@ -178,7 +178,7 @@ extension ProfilePresets {
                         .linearGradient(
                             colors: [
                                 Color.orange.opacity(0.6),
-                                Color.orange.opacity(0.1),
+                                Color.orange.opacity(0.1)
                             ],
                             startPoint: .bottom,
                             endPoint: .top

@@ -128,7 +128,7 @@ struct SelectionPopoverView: ChartContent {
                             localized: "(modified)",
                             comment: "SelectionPopover: profile preset diverted indicator"
                         ))
-                        .foregroundStyle(Color.orange)
+                            .foregroundStyle(Color.orange)
                     }
                 }
                 .foregroundStyle(isDiverted ? Color.orange : Color.teal).font(.body)

@@ -40,7 +40,7 @@ struct ProfilePreset: JSON, Identifiable, Equatable, Hashable {
         "house.fill",
         "building.2.fill",
         "star.fill",
-        "flag.fill",
+        "flag.fill"
     ]
 
     private enum CodingKeys: String, CodingKey {

@@ -477,8 +477,8 @@ extension ProfilePresets {
                             }
 
                             Text(adjustmentDescription)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
                         }
 
                         Section(

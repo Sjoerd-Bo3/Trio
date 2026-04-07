@@ -218,7 +218,10 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         // Create a new non-diverged run entry for this activation
         createRun(for: preset, isDiverted: false)
 
-        Foundation.NotificationCenter.default.post(name: BaseProfilePresetStorage.profilePresetActivatedNotification, object: preset)
+        Foundation.NotificationCenter.default.post(
+            name: BaseProfilePresetStorage.profilePresetActivatedNotification,
+            object: preset
+        )
 
         return true
     }
