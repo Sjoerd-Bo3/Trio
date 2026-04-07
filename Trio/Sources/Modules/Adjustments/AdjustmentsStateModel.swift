@@ -81,6 +81,8 @@ extension Adjustments {
         var isProfileDiverged: Bool = false
         var showingProfileActivateConfirmation: Bool = false
         var selectedProfilePreset: ProfilePreset?
+        var showingDivergenceSavePrompt: Bool = false
+        var pendingPresetSwitch: ProfilePreset?
 
         // Combine
         private var cancellables = Set<AnyCancellable>()
@@ -110,11 +112,48 @@ extension Adjustments {
 
         // MARK: - Profile Presets
 
+        /// Initiates a profile preset switch. If the current active preset is diverged,
+        /// shows the divergence save prompt first; otherwise shows the normal activation confirmation.
+        func requestProfilePresetSwitch(_ preset: ProfilePreset) {
+            if isProfileDiverged, activeProfilePreset != nil {
+                pendingPresetSwitch = preset
+                showingDivergenceSavePrompt = true
+            } else {
+                selectedProfilePreset = preset
+                showingProfileActivateConfirmation = true
+            }
+        }
+
         func activateProfilePreset(_ preset: ProfilePreset) {
             if profilePresetStorage.activatePreset(preset) {
                 activeProfilePreset = preset
                 isProfileDiverged = false
             }
+        }
+
+        /// Updates the current active preset with diverged settings, then switches to the pending preset.
+        func updateCurrentPresetAndSwitch() {
+            guard let active = activeProfilePreset, let pending = pendingPresetSwitch else { return }
+            updateProfilePresetToCurrentSettings(active)
+            proceedWithPendingSwitch(pending)
+        }
+
+        /// Discards the diverged changes and switches directly to the pending preset.
+        func discardChangesAndSwitch() {
+            guard let pending = pendingPresetSwitch else { return }
+            proceedWithPendingSwitch(pending)
+        }
+
+        /// Cancels the pending preset switch entirely.
+        func cancelPendingSwitch() {
+            pendingPresetSwitch = nil
+        }
+
+        /// Activates the pending preset via the normal confirmation flow.
+        private func proceedWithPendingSwitch(_ preset: ProfilePreset) {
+            pendingPresetSwitch = nil
+            selectedProfilePreset = preset
+            showingProfileActivateConfirmation = true
         }
 
         func refreshProfileDivergence() {
