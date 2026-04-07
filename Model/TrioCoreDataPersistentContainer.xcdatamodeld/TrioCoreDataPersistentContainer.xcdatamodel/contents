@@ -259,6 +259,7 @@
         <attribute name="unit" optional="YES" attributeType="String"/>
         <attribute name="note" optional="YES" attributeType="String"/>
         <attribute name="source" optional="YES" attributeType="String"/>
+        <attribute name="groupId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <fetchIndex name="byDate">
             <fetchIndexElement property="date" type="Binary" order="descending"/>
         </fetchIndex>
@@ -267,6 +268,9 @@
         </fetchIndex>
         <fetchIndex name="byCategory">
             <fetchIndexElement property="category" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byGroupId">
+            <fetchIndexElement property="groupId" type="Binary" order="descending"/>
         </fetchIndex>
     </entity>
     <entity name="TempTargetStored" representedClassName="TempTargetStored" syncable="YES">

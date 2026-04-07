@@ -4,6 +4,28 @@ import Observation
 import SwiftUI
 
 extension SettingsAuditLog {
+    /// A single change event that groups all individual setting changes sharing the same `groupId`.
+    struct ChangeEvent: Identifiable {
+        let id: UUID // groupId
+        let date: Date
+        let entries: [SettingsChangeStored]
+        let note: String
+
+        /// Summary label, e.g. "3 settings changed" or the single setting name.
+        var summaryLabel: String {
+            if entries.count == 1 {
+                return entries.first?.settingName ?? "1 setting changed"
+            }
+            return "\(entries.count) settings changed"
+        }
+
+        /// Distinct categories across all entries.
+        var categories: [String] {
+            let cats = Set(entries.compactMap(\.category))
+            return cats.sorted()
+        }
+    }
+
     @Observable final class StateModel: BaseStateModel<Provider> {
         var searchText: String = ""
         var selectedCategory: String? = nil
@@ -39,9 +61,8 @@ extension SettingsAuditLog {
             )
         }
 
-        func updateNote(for entry: SettingsChangeStored, note: String) {
-            guard let id = entry.id else { return }
-            provider.auditStorage.updateNote(for: id, note: note)
+        func updateNote(forGroup groupId: UUID, note: String) {
+            provider.auditStorage.updateNote(forGroup: groupId, note: note)
             loadEntries()
         }
 
@@ -57,29 +78,41 @@ extension SettingsAuditLog {
             }
         }
 
-        var groupedEntries: [(String, [SettingsChangeStored])] {
+        /// Groups filtered entries by `groupId` into `ChangeEvent`s, then groups those by day.
+        var groupedEvents: [(String, [ChangeEvent])] {
             let cal = Self.groupingCalendar
             let df = Self.groupingFormatter
-            // Group by (year, month, day) components to avoid parsing formatted strings for sorting
-            let grouped = Dictionary(grouping: filteredEntries) { entry -> DateComponents in
-                guard let date = entry.date else { return DateComponents() }
-                return cal.dateComponents([.year, .month, .day], from: date)
+
+            // Build ChangeEvents from groupId
+            let byGroup = Dictionary(grouping: filteredEntries) { entry -> UUID in
+                entry.groupId ?? (entry.id ?? UUID())
             }
-            return grouped
+            let events: [ChangeEvent] = byGroup.map { groupId, groupEntries in
+                let sorted = groupEntries.sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+                let date = sorted.first?.date ?? .distantPast
+                let note = sorted.first?.note ?? ""
+                return ChangeEvent(id: groupId, date: date, entries: sorted, note: note)
+            }
+
+            // Group events by day
+            let byDay = Dictionary(grouping: events) { event -> DateComponents in
+                cal.dateComponents([.year, .month, .day], from: event.date)
+            }
+            return byDay
                 .sorted { a, b in
-                    // Sort descending by date components
                     let aDate = cal.date(from: a.key) ?? .distantPast
                     let bDate = cal.date(from: b.key) ?? .distantPast
                     return aDate > bDate
                 }
-                .map { components, dayEntries in
+                .map { components, dayEvents in
                     let label: String
                     if let date = cal.date(from: components) {
                         label = df.string(from: date)
                     } else {
                         label = "Unknown"
                     }
-                    return (label, dayEntries)
+                    let sorted = dayEvents.sorted { $0.date > $1.date }
+                    return (label, sorted)
                 }
         }
     }

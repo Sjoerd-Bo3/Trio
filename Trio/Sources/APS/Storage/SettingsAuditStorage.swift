@@ -16,7 +16,7 @@ protocol SettingsAuditStorage: AnyObject {
     )
     func fetchHistory(for settingKey: String?, limit: Int, offset: Int) -> [SettingsChangeStored]
     func fetchHistory(category: String?, since: Date?, limit: Int) -> [SettingsChangeStored]
-    func updateNote(for entryId: UUID, note: String)
+    func updateNote(forGroup groupId: UUID, note: String)
     func deleteOldEntries(olderThan date: Date)
 
     /// Convenience for logging therapy profile changes (Basal, ISF, CR, BG Targets).
@@ -61,8 +61,26 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
     private let viewContext = CoreDataStack.shared.persistentContainer.viewContext
     private let backgroundContext = CoreDataStack.shared.newTaskContext()
 
+    /// 10-minute grouping window in seconds.
+    private static let groupingWindow: TimeInterval = 10 * 60
+
+    /// Tracks the current group: (groupId, groupStartDate).
+    /// Changes logged within `groupingWindow` of `groupStartDate` share the same `groupId`.
+    private var currentGroup: (id: UUID, start: Date)?
+
     init(resolver: Resolver) {
         injectServices(resolver)
+    }
+
+    /// Returns the group ID to use for a new entry. If the most recent group is still within
+    /// the 10-minute window, reuses that group; otherwise creates a new one.
+    private func resolveGroupId(now: Date = Date()) -> UUID {
+        if let group = currentGroup, now.timeIntervalSince(group.start) < Self.groupingWindow {
+            return group.id
+        }
+        let newId = UUID()
+        currentGroup = (id: newId, start: now)
+        return newId
     }
 
     func logChange(
@@ -78,6 +96,8 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
     ) {
         guard oldValue != newValue else { return }
 
+        let groupId = resolveGroupId()
+
         backgroundContext.perform { [weak self] in
             guard let self else { return }
             let entry = SettingsChangeStored(context: self.backgroundContext)
@@ -92,6 +112,7 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
             entry.unit = unit
             entry.note = note
             entry.source = source
+            entry.groupId = groupId
 
             do {
                 try self.backgroundContext.save()
@@ -138,14 +159,15 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
         return result
     }
 
-    func updateNote(for entryId: UUID, note: String) {
+    func updateNote(forGroup groupId: UUID, note: String) {
         backgroundContext.perform { [weak self] in
             guard let self else { return }
             let request = SettingsChangeStored.fetchRequest()
-            request.predicate = NSPredicate(format: "id == %@", entryId as CVarArg)
-            request.fetchLimit = 1
-            if let entry = (try? self.backgroundContext.fetch(request))?.first {
-                entry.note = note
+            request.predicate = NSPredicate(format: "groupId == %@", groupId as CVarArg)
+            if let entries = try? self.backgroundContext.fetch(request) {
+                for entry in entries {
+                    entry.note = note
+                }
                 try? self.backgroundContext.save()
             }
         }

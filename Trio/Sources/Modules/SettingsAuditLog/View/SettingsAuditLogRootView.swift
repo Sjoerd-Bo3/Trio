@@ -10,7 +10,7 @@ extension SettingsAuditLog {
         @Environment(\.colorScheme) var colorScheme
         @Environment(AppState.self) var appState
 
-        @State private var selectedEntry: SettingsChangeStored?
+        @State private var selectedEvent: ChangeEvent?
         @State private var showNoteEditor = false
         @State private var noteText = ""
 
@@ -18,7 +18,7 @@ extension SettingsAuditLog {
             List {
                 categoryPicker
 
-                if state.groupedEntries.isEmpty {
+                if state.groupedEvents.isEmpty {
                     Section {
                         Text("No settings changes recorded yet.")
                             .foregroundColor(.secondary)
@@ -28,21 +28,20 @@ extension SettingsAuditLog {
                     .listRowBackground(Color.chart)
                 }
 
-                ForEach(state.groupedEntries, id: \.0) { day, dayEntries in
+                ForEach(state.groupedEvents, id: \.0) { day, dayEvents in
                     Section(header: Text(day)) {
-                        ForEach(dayEntries, id: \.objectID) { entry in
-                            EntryRow(entry: entry)
+                        ForEach(dayEvents) { event in
+                            EventRow(event: event)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    selectedEntry = entry
-                                    noteText = entry.note ?? ""
+                                    selectedEvent = event
+                                    noteText = event.note
                                     showNoteEditor = true
                                 }
                         }
                     }
                     .listRowBackground(Color.chart)
                 }
-
             }
             .scrollContentBackground(.hidden)
             .background(appState.trioBackgroundColor(for: colorScheme))
@@ -84,10 +83,10 @@ extension SettingsAuditLog {
 
         @ViewBuilder
         private var noteEditorSheet: some View {
-            if let entry = selectedEntry {
+            if let event = selectedEvent {
                 NavigationView {
-                    EntryDetailView(entry: entry, noteText: $noteText) {
-                        state.updateNote(for: entry, note: noteText)
+                    EventDetailView(event: event, noteText: $noteText) {
+                        state.updateNote(forGroup: event.id, note: noteText)
                         showNoteEditor = false
                     }
                 }
@@ -96,10 +95,10 @@ extension SettingsAuditLog {
     }
 }
 
-// MARK: - EntryRow
+// MARK: - EventRow
 
-private struct EntryRow: View {
-    let entry: SettingsChangeStored
+private struct EventRow: View {
+    let event: SettingsAuditLog.ChangeEvent
 
     private static let timeFormatter: DateFormatter = {
         let df = DateFormatter()
@@ -108,18 +107,17 @@ private struct EntryRow: View {
     }()
 
     private var timeString: String {
-        guard let date = entry.date else { return "" }
-        return Self.timeFormatter.string(from: date)
+        Self.timeFormatter.string(from: event.date)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.settingName ?? "Unknown Setting")
+                    Text(event.summaryLabel)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    Text(entry.subcategory ?? entry.category ?? "")
+                    Text(event.categories.joined(separator: ", "))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -128,29 +126,37 @@ private struct EntryRow: View {
                     Text(timeString)
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    if entry.note?.isEmpty == false {
+                    if !event.note.isEmpty {
                         Image(systemName: "note.text")
                             .font(.caption)
                             .foregroundColor(.accentColor)
                     }
                 }
             }
-            HStack(spacing: 4) {
-                Text(entry.oldValue ?? "—")
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .lineLimit(1)
-                Image(systemName: "arrow.right")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                Text(entry.newValue ?? "—")
-                    .font(.caption)
-                    .foregroundColor(.green)
-                    .lineLimit(1)
-                if let unit = entry.unit, !unit.isEmpty {
-                    Text(unit)
+
+            ForEach(event.entries, id: \.objectID) { entry in
+                HStack(spacing: 4) {
+                    Text(entry.settingName ?? "—")
                         .font(.caption2)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    Spacer()
+                    Text(entry.oldValue ?? "—")
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                        .lineLimit(1)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 8))
                         .foregroundColor(.secondary)
+                    Text(entry.newValue ?? "—")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                        .lineLimit(1)
+                    if let unit = entry.unit, !unit.isEmpty {
+                        Text(unit)
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }
@@ -158,10 +164,10 @@ private struct EntryRow: View {
     }
 }
 
-// MARK: - EntryDetailView
+// MARK: - EventDetailView
 
-private struct EntryDetailView: View {
-    let entry: SettingsChangeStored
+private struct EventDetailView: View {
+    let event: SettingsAuditLog.ChangeEvent
     @Binding var noteText: String
     let onSave: () -> Void
 
@@ -175,29 +181,55 @@ private struct EntryDetailView: View {
     }()
 
     private var formattedDate: String {
-        guard let date = entry.date else { return "—" }
-        return Self.detailFormatter.string(from: date)
+        Self.detailFormatter.string(from: event.date)
     }
 
     var body: some View {
         Form {
-            Section("Setting") {
-                LabeledContent("Name", value: entry.settingName ?? "—")
-                LabeledContent("Category", value: entry.category ?? "—")
-                LabeledContent("Subcategory", value: entry.subcategory ?? "—")
+            Section("Event") {
                 LabeledContent("Date", value: formattedDate)
-                LabeledContent("Source", value: entry.source ?? "—")
+                LabeledContent("Changes", value: "\(event.entries.count)")
+                LabeledContent("Categories", value: event.categories.joined(separator: ", "))
             }
-            Section("Change") {
-                LabeledContent("Old Value", value: "\(entry.oldValue ?? "—")\(entry.unit.map { " \($0)" } ?? "")")
-                LabeledContent("New Value", value: "\(entry.newValue ?? "—")\(entry.unit.map { " \($0)" } ?? "")")
+            Section("Changes") {
+                ForEach(event.entries, id: \.objectID) { entry in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.settingName ?? "—")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        HStack(spacing: 4) {
+                            Text(entry.oldValue ?? "—")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .lineLimit(1)
+                            Image(systemName: "arrow.right")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            Text(entry.newValue ?? "—")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                                .lineLimit(1)
+                            if let unit = entry.unit, !unit.isEmpty {
+                                Text(unit)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        if let subcategory = entry.subcategory {
+                            Text(subcategory)
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
             }
             Section("Note") {
                 TextEditor(text: $noteText)
                     .frame(minHeight: 80)
             }
         }
-        .navigationTitle("Change Details")
+        .navigationTitle("Change Event")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

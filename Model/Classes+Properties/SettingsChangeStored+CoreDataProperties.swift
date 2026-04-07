@@ -17,6 +17,7 @@ public extension SettingsChangeStored {
     @NSManaged var unit: String?
     @NSManaged var note: String?
     @NSManaged var source: String?
+    @NSManaged var groupId: UUID?
 }
 
 extension SettingsChangeStored: Identifiable {}

@@ -32,6 +32,7 @@ enum SettingsMetadataRegistry {
         .init(key: "debugOptions", name: "Debug Options", category: "Features", subcategory: "Developer", unit: nil),
         // CGM
         .init(key: "cgm", name: "CGM Type", category: "Devices", subcategory: "CGM", unit: nil),
+        .init(key: "cgmPluginIdentifier", name: "CGM Plugin", category: "Devices", subcategory: "CGM", unit: nil),
         .init(key: "smoothGlucose", name: "Smooth Glucose", category: "Devices", subcategory: "CGM", unit: nil),
         .init(key: "uploadGlucose", name: "Upload Glucose", category: "Services", subcategory: "Nightscout", unit: nil),
         // Nightscout
