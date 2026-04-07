@@ -974,9 +974,6 @@ extension Home {
                     }
                 }
 
-                activeProfileIndicator
-                    .padding(.top, 4)
-
                 mealPanel(geo).padding(.top, UIDevice.adjustPadding(min: nil, max: 30))
                     .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 20))
 
@@ -1004,6 +1001,9 @@ extension Home {
                         action: { state.isLegendPresented.toggle() }
                     )
                 }.padding([.horizontal, .bottom])
+
+                activeProfileIndicator
+                    .padding(.bottom)
 
                 if let progress = state.bolusProgress {
                     bolusView(geo: geo, progress)
