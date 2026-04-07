@@ -315,7 +315,7 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     func closeStaleRuns() {
         viewContext.performAndWait {
             let fetchRequest: NSFetchRequest<ProfilePresetRunStored> = ProfilePresetRunStored.fetchRequest()
-            fetchRequest.predicate = NSPredicate.activeProfilePresetRun // endDate == nil
+            fetchRequest.predicate = NSPredicate.activeProfilePresetRun
 
             do {
                 let openRuns = try self.viewContext.fetch(fetchRequest)
@@ -328,7 +328,7 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
                 try self.viewContext.save()
             } catch let error as NSError {
                 debugPrint(
-                    "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to close stale ProfilePresetRunStored entries: \(error.userInfo)"
+                    "\(DebuggingIdentifiers.failed) \(#file) \(#function) Cold-start recovery: failed to close stale ProfilePresetRunStored entries: \(error.userInfo)"
                 )
             }
         }
