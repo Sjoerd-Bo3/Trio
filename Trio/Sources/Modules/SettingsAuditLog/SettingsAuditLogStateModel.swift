@@ -71,15 +71,15 @@ extension SettingsAuditLog {
             let df = DateFormatter()
             df.dateStyle = .medium
             df.timeStyle = .none
+
             let grouped = Dictionary(grouping: filteredEntries) { entry -> String in
                 guard let date = entry.date else { return "Unknown" }
                 return df.string(from: date)
             }
+
             return grouped.sorted { a, b in
-                let dfParse = DateFormatter()
-                dfParse.dateStyle = .medium
-                let dateA = dfParse.date(from: a.key) ?? .distantPast
-                let dateB = dfParse.date(from: b.key) ?? .distantPast
+                let dateA = df.date(from: a.key) ?? .distantPast
+                let dateB = df.date(from: b.key) ?? .distantPast
                 return dateA > dateB
             }
         }
