@@ -68,6 +68,9 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
     /// Changes logged within `groupingWindow` of `groupStartDate` share the same `groupId`.
     private var currentGroup: (id: UUID, start: Date)?
 
+    /// Serial queue protecting `currentGroup` from concurrent access.
+    private let groupLock = NSLock()
+
     init(resolver: Resolver) {
         injectServices(resolver)
     }
@@ -75,6 +78,8 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
     /// Returns the group ID to use for a new entry. If the most recent group is still within
     /// the 10-minute window, reuses that group; otherwise creates a new one.
     private func resolveGroupId(now: Date = Date()) -> UUID {
+        groupLock.lock()
+        defer { groupLock.unlock() }
         if let group = currentGroup, now.timeIntervalSince(group.start) < Self.groupingWindow {
             return group.id
         }

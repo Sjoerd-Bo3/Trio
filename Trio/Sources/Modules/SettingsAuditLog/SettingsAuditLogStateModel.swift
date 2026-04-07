@@ -85,7 +85,7 @@ extension SettingsAuditLog {
 
             // Build ChangeEvents from groupId
             let byGroup = Dictionary(grouping: filteredEntries) { entry -> UUID in
-                entry.groupId ?? (entry.id ?? UUID())
+                entry.groupId ?? entry.id ?? UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
             }
             let events: [ChangeEvent] = byGroup.map { groupId, groupEntries in
                 let sorted = groupEntries.sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
