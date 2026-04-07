@@ -179,7 +179,7 @@ extension ProfilePresets {
             let trimmedName = adjustmentPresetName.trimmingCharacters(in: .whitespaces)
             guard !trimmedName.isEmpty else { return }
 
-            let adjusted = source.scaled(by: adjustmentPercentage, name: trimmedName)
+            guard let adjusted = source.scaled(by: adjustmentPercentage, name: trimmedName) else { return }
             provider.savePreset(adjusted)
             presets.append(adjusted)
 

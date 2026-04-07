@@ -556,39 +556,39 @@ extension ProfilePresets {
         }
 
         @ViewBuilder private func adjustmentPreview(source: ProfilePreset) -> some View {
-            let adjusted = source.scaled(by: state.adjustmentPercentage, name: "")
-
-            VStack(alignment: .leading, spacing: 6) {
-                previewRow(
-                    label: String(localized: "Basal Total", comment: "ProfilePresets: basal total label in preview"),
-                    original: "\(state.formattedBasalTotal(source)) U/day",
-                    adjusted: "\(state.formattedBasalTotal(adjusted)) U/day"
-                )
-
-                if let firstISFOriginal = source.insulinSensitivities.sensitivities.first,
-                   let firstISFAdjusted = adjusted.insulinSensitivities.sensitivities.first
-                {
+            if let adjusted = source.scaled(by: state.adjustmentPercentage, name: "") {
+                VStack(alignment: .leading, spacing: 6) {
                     previewRow(
-                        label: String(
-                            localized: "ISF (first entry)",
-                            comment: "ProfilePresets: ISF first entry label in preview"
-                        ),
-                        original: "\(state.formatGlucose(firstISFOriginal.sensitivity)) \(state.units.rawValue)",
-                        adjusted: "\(state.formatGlucose(firstISFAdjusted.sensitivity)) \(state.units.rawValue)"
+                        label: String(localized: "Basal Total", comment: "ProfilePresets: basal total label in preview"),
+                        original: "\(state.formattedBasalTotal(source)) U/day",
+                        adjusted: "\(state.formattedBasalTotal(adjusted)) U/day"
                     )
-                }
 
-                if let firstCROriginal = source.carbRatios.schedule.first,
-                   let firstCRAdjusted = adjusted.carbRatios.schedule.first
-                {
-                    previewRow(
-                        label: String(
-                            localized: "CR (first entry)",
-                            comment: "ProfilePresets: CR first entry label in preview"
-                        ),
-                        original: formatDecimal(firstCROriginal.ratio),
-                        adjusted: formatDecimal(firstCRAdjusted.ratio)
-                    )
+                    if let firstISFOriginal = source.insulinSensitivities.sensitivities.first,
+                       let firstISFAdjusted = adjusted.insulinSensitivities.sensitivities.first
+                    {
+                        previewRow(
+                            label: String(
+                                localized: "ISF (first entry)",
+                                comment: "ProfilePresets: ISF first entry label in preview"
+                            ),
+                            original: "\(state.formatGlucose(firstISFOriginal.sensitivity)) \(state.units.rawValue)",
+                            adjusted: "\(state.formatGlucose(firstISFAdjusted.sensitivity)) \(state.units.rawValue)"
+                        )
+                    }
+
+                    if let firstCROriginal = source.carbRatios.schedule.first,
+                       let firstCRAdjusted = adjusted.carbRatios.schedule.first
+                    {
+                        previewRow(
+                            label: String(
+                                localized: "CR (first entry)",
+                                comment: "ProfilePresets: CR first entry label in preview"
+                            ),
+                            original: formatDecimal(firstCROriginal.ratio),
+                            adjusted: formatDecimal(firstCRAdjusted.ratio)
+                        )
+                    }
                 }
             }
         }

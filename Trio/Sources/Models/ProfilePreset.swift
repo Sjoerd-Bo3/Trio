@@ -177,7 +177,8 @@ extension ProfilePreset {
     /// - ISF values are divided by (percentage / 100) — lower ISF = more aggressive
     /// - CR values are divided by (percentage / 100) — lower CR = more aggressive
     /// - BG targets, SMB settings, and dynamic settings remain unchanged
-    func scaled(by percentage: Int, name: String) -> ProfilePreset {
+    func scaled(by percentage: Int, name: String) -> ProfilePreset? {
+        guard percentage > 0 else { return nil }
         let factor = Decimal(percentage) / 100
 
         let scaledBasal = basalProfile.map { entry in

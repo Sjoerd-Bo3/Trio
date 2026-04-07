@@ -178,8 +178,20 @@ extension Home {
             // Parallelize Setup functions
             setupHomeViewConcurrently()
 
+            // Cold-start recovery: close any stale open runs left from a previous session,
+            // then re-open a fresh run for the persisted active preset (if any).
+            profilePresetStorage.closeStaleRuns()
             activeProfilePreset = profilePresetStorage.activePreset()
-            refreshProfileDivergence()
+            if let preset = activeProfilePreset {
+                let isDiverged = !profilePresetStorage.settingsMatchPreset(preset)
+                wasDivergedBeforeRefresh = isDiverged
+                isProfileDiverged = isDiverged
+                if isDiverged {
+                    profilePresetStorage.openDivertedRun(for: preset)
+                } else {
+                    profilePresetStorage.closeDivertedRun(for: preset)
+                }
+            }
 
             profilePresetObserver = Foundation.NotificationCenter.default.addObserver(
                 forName: BaseProfilePresetStorage.profilePresetActivatedNotification,

@@ -13,6 +13,10 @@ extension NSPredicate {
 
     static var profilePresetRunsNotYetUploadedToNS: NSPredicate {
         let date = Date.oneDayAgo
-        return NSPredicate(format: "startDate >= %@ AND isUploadedToNS == %@", date as NSDate, false as NSNumber)
+        return NSPredicate(
+            format: "startDate >= %@ AND isUploadedToNS == %@ AND endDate != nil",
+            date as NSDate,
+            false as NSNumber
+        )
     }
 }

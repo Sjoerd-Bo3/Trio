@@ -18,6 +18,7 @@ protocol ProfilePresetStorage {
     func settingsMatchPreset(_ preset: ProfilePreset) -> Bool
     func openDivertedRun(for preset: ProfilePreset)
     func closeDivertedRun(for preset: ProfilePreset)
+    func closeStaleRuns()
     func getProfilePresetRunsNotYetUploadedToNightscout() async throws -> [NightscoutTreatment]
 }
 
@@ -158,6 +159,11 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
               !preset.bgTargets.targets.isEmpty
         else {
             return false
+        }
+
+        // Skip re-activation if this preset is already the active one and settings match (gap 17.10)
+        if activePresetId() == preset.id, settingsMatchPreset(preset) {
+            return true
         }
 
         // Close any existing open profile preset run before activating a new one
@@ -303,6 +309,30 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         )
     }
 
+    /// Closes all open runs (endDate == nil) that were left behind from a previous app session.
+    /// Called at cold-start so that stale runs don't accumulate or get uploaded with incorrect durations.
+    func closeStaleRuns() {
+        viewContext.perform {
+            let fetchRequest: NSFetchRequest<ProfilePresetRunStored> = ProfilePresetRunStored.fetchRequest()
+            fetchRequest.predicate = NSPredicate.activeProfilePresetRun // endDate == nil
+
+            do {
+                let openRuns = try self.viewContext.fetch(fetchRequest)
+                guard !openRuns.isEmpty else { return }
+                for run in openRuns {
+                    run.endDate = Date()
+                    run.isUploadedToNS = false
+                }
+                guard self.viewContext.hasChanges else { return }
+                try self.viewContext.save()
+            } catch let error as NSError {
+                debugPrint(
+                    "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to close stale ProfilePresetRunStored entries: \(error.userInfo)"
+                )
+            }
+        }
+    }
+
     // MARK: - Nightscout upload support
 
     func getProfilePresetRunsNotYetUploadedToNightscout() async throws -> [NightscoutTreatment] {
@@ -397,6 +427,15 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         if let index = existingPresets.firstIndex(where: { $0.id == id }) {
             existingPresets[index].name = newName
             savePresets(existingPresets)
+
+            // If the renamed preset is the active one, post a notification so HomeStateModel
+            // updates the displayed name (gap 17.7)
+            if activePresetId() == id {
+                Foundation.NotificationCenter.default.post(
+                    name: BaseProfilePresetStorage.profilePresetActivatedNotification,
+                    object: existingPresets[index]
+                )
+            }
         }
     }
 
@@ -418,6 +457,13 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             dynamicSettings: existing.dynamicSettings != nil ? currentDynamicSettings() : nil
         )
         savePresets(existingPresets)
+
+        // If this is the active preset, close the diverged run and open a matching one (gap 17.8)
+        if activePresetId() == id {
+            closeActiveRun()
+            createRun(for: existingPresets[index], isDiverted: false)
+        }
+
         return existingPresets[index]
     }
 }
