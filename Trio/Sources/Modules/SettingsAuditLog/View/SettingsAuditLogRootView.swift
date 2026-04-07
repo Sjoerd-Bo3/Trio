@@ -48,8 +48,12 @@ extension SettingsAuditLog {
             .searchable(text: $state.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
             .onAppear(perform: configureView)
             .onDisappear {
-                debounceTask?.cancel()
-                debounceTask = nil
+                // Flush any pending note save immediately before teardown
+                if let task = debounceTask, let event = selectedEvent {
+                    task.cancel()
+                    debounceTask = nil
+                    state.updateNote(forGroup: event.id, note: noteText)
+                }
             }
             .sheet(item: $selectedEvent) { event in
                 NavigationView {
@@ -59,7 +63,7 @@ extension SettingsAuditLog {
             .onChange(of: noteText) { _, newValue in
                 guard let event = selectedEvent else { return }
                 debounceTask?.cancel()
-                debounceTask = Task {
+                debounceTask = Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s debounce
                     guard !Task.isCancelled else { return }
                     state.updateNote(forGroup: event.id, note: newValue)

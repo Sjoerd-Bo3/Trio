@@ -5,7 +5,7 @@ import SwiftUI
 extension SettingsAuditLog {
     /// Plain-value snapshot of a single `SettingsChangeStored` managed object.
     /// Capturing values eagerly avoids Core Data threading / faulting crashes.
-    struct ChangeEntry: Identifiable {
+    struct ChangeEntry: Identifiable, Sendable {
         let id: UUID
         let date: Date
         let category: String
@@ -247,13 +247,11 @@ extension SettingsAuditLog {
         }
 
         func loadEntries() {
-            let stored = provider.auditStorage.fetchHistory(
+            entries = provider.auditStorage.fetchChangeEntries(
                 category: selectedCategory,
                 since: nil,
                 limit: 500
             )
-            // Convert managed objects → value types immediately while they are still valid
-            entries = stored.map { ChangeEntry(from: $0) }
         }
 
         func updateNote(forGroup groupId: UUID, note: String) {

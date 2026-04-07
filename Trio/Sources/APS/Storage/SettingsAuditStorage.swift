@@ -16,6 +16,9 @@ protocol SettingsAuditStorage: AnyObject {
     )
     func fetchHistory(for settingKey: String?, limit: Int, offset: Int) -> [SettingsChangeStored]
     func fetchHistory(category: String?, since: Date?, limit: Int) -> [SettingsChangeStored]
+    /// Fetches history and converts managed objects to value types atomically inside performAndWait,
+    /// preventing use-after-free when Core Data merges background changes.
+    func fetchChangeEntries(category: String?, since: Date?, limit: Int) -> [SettingsAuditLog.ChangeEntry]
     func updateNote(forGroup groupId: UUID, note: String)
     func deleteOldEntries(olderThan date: Date)
 
@@ -162,6 +165,35 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
             }
             request.fetchLimit = limit
             result = (try? viewContext.fetch(request)) ?? []
+        }
+        return result
+    }
+
+    func fetchChangeEntries(
+        category: String?,
+        since: Date?,
+        limit: Int = 200
+    ) -> [SettingsAuditLog.ChangeEntry] {
+        var result: [SettingsAuditLog.ChangeEntry] = []
+        viewContext.performAndWait {
+            let request = SettingsChangeStored.fetchRequest()
+            request.sortDescriptors = [NSSortDescriptor(keyPath: \SettingsChangeStored.date, ascending: false)]
+
+            var predicates: [NSPredicate] = []
+            if let cat = category {
+                predicates.append(NSPredicate(format: "category == %@", cat))
+            }
+            if let since = since {
+                predicates.append(NSPredicate(format: "date >= %@", since as NSDate))
+            }
+            if !predicates.isEmpty {
+                request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+            }
+            request.fetchLimit = limit
+            let stored = (try? viewContext.fetch(request)) ?? []
+            // Convert managed objects → value types inside performAndWait so the
+            // managed objects cannot be faulted/invalidated between fetch and access
+            result = stored.map { SettingsAuditLog.ChangeEntry(from: $0) }
         }
         return result
     }
