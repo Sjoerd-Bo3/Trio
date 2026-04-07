@@ -130,6 +130,8 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
     ) {
         guard oldValue != newValue else { return }
 
+        // currentSource takes precedence when set (during preset activations)
+        // so all changes logged in that window inherit the preset source
         let effectiveSource = currentSource ?? source
         let groupId = resolveGroupId()
 

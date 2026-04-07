@@ -100,6 +100,11 @@ final class BaseSettingsManager: SettingsManager, Injectable {
 
     // MARK: - Change capture helpers
 
+    /// Uses Mirror reflection to diff old/new property values and log each change.
+    /// The `source` parameter is passed as `"manual"`, but during preset activations
+    /// `auditStorage.currentSource` is temporarily set to `"preset:<name>"`, which takes
+    /// precedence in `logChange()`. This ensures SMB/Dynamic preference changes
+    /// automatically inherit the preset source without conditional logic here.
     private func logMirrorChanges<T>(
         old: T,
         new: T,
