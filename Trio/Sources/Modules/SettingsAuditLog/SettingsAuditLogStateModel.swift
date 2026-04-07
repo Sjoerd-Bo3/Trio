@@ -90,7 +90,7 @@ extension SettingsAuditLog {
                 since: nil,
                 limit: 500
             )
-            // Convert managed objects → value types immediately, inside the fetch context
+            // Convert managed objects → value types immediately while they are still valid
             entries = stored.map { ChangeEntry(from: $0) }
         }
 
