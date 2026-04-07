@@ -22,6 +22,7 @@ This document captures the full architecture of the **Profile Presets** feature:
 14. [User Journey — Managing Presets](#14-user-journey--managing-presets)
 15. [Data Flow Overview](#15-data-flow-overview)
 16. [Component Map](#16-component-map)
+17. [Gap Analysis — Missing States, Edge Cases & Unhandled Scenarios](#17-gap-analysis--missing-states-edge-cases--unhandled-scenarios)
 
 ---
 
@@ -614,4 +615,290 @@ User edits therapy setting
         │
         └──▶ HomeStateModel.preferencesDidChange()
                   └──▶ refreshProfileDivergence()
+```
+
+---
+
+## 17. Gap Analysis — Missing States, Edge Cases & Unhandled Scenarios
+
+The diagrams above capture the **designed happy paths**. A thorough code review reveals the following gaps — states, transitions, and use cases that are either not diagrammed or potentially unhandled in the implementation.
+
+---
+
+### 17.1 App Restart / Cold Start with Active Preset
+
+**What happens:** On cold start, `HomeStateModel.subscribe()` calls `activeProfilePreset = profilePresetStorage.activePreset()` followed by `refreshProfileDivergence()`. If the user changed settings outside the app (e.g., via Nightscout, or the loop algorithm itself modified something), the preset may already be diverged at launch.
+
+**Gap in diagrams:** No state machine or sequence diagram shows the cold-start path. The existing Divergence Detection state machine assumes a clean `[*] → NoActivePreset` entry, but on restart the system can land directly in `Matching` or `Diverged`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> CheckActivePresetId : App Launch / HomeStateModel.subscribe()
+
+    CheckActivePresetId --> NoActivePreset : activePresetId == nil
+    CheckActivePresetId --> LookupPreset : activePresetId exists
+
+    LookupPreset --> OrphanedId : preset not found in presets array
+    LookupPreset --> SettingsCheck : preset found
+
+    OrphanedId --> NoActivePreset : activeProfilePreset = nil (stale ID in file)
+
+    SettingsCheck --> Matching : settingsMatchPreset() == true
+    SettingsCheck --> DiveredAtBoot : settingsMatchPreset() == false
+
+    DiveredAtBoot --> Diverged : isProfileDiverged = true, openDivertedRun()
+    
+    Note right of OrphanedId: ⚠️ GAP - stale ID is NOT cleaned up.\nactive_profile_preset_id.json still exists\nbut points to a deleted preset.
+```
+
+**Potential issue:** If a preset was deleted while the app was not running (e.g. settings file edited, iCloud sync), `activePresetId()` returns a stale ID, but `activePreset()` returns `nil`. The stale ID file is never cleaned up. `refreshProfileDivergence()` short-circuits because `activeProfilePreset` is nil, so no crash — but `active_profile_preset_id.json` remains with an orphaned ID.
+
+---
+
+### 17.2 Concurrent Activation Race Condition
+
+**What happens:** Both `AdjustmentsStateModel` and `ProfilePresetsStateModel` independently call `activatePreset()`. If the user has both views in the navigation stack, rapid switching could theoretically call `activatePreset()` twice in quick succession.
+
+**Gap:** The `activatePreset()` method is not synchronized. `closeActiveRun()` uses `viewContext.perform {}` (async on the main queue), while the rest of `activatePreset()` runs synchronously. A second call before the first `viewContext.perform` block executes could lead to **two open CoreData runs** — the first `closeActiveRun()` hasn't finished before the second call creates its run.
+
+```mermaid
+sequenceDiagram
+    participant View1 as AdjustmentsView
+    participant View2 as ProfilePresetsView
+    participant Storage as ProfilePresetStorage
+    participant CoreData as CoreData (viewContext)
+
+    View1->>Storage: activatePreset(A)
+    Storage->>CoreData: closeActiveRun() [queued on viewContext.perform]
+    Note right of CoreData: Not yet executed
+
+    View2->>Storage: activatePreset(B)
+    Storage->>CoreData: closeActiveRun() [queued again]
+    Storage->>CoreData: createRun(B, isDiverted: false)
+
+    Note over CoreData: First closeActiveRun() now runs — closes B's run!
+    Note over CoreData: Second closeActiveRun() now runs — no-op (already closed)
+
+    Note right of Storage: ⚠️ Run for preset B was prematurely closed
+```
+
+---
+
+### 17.3 "Save as New Preset" During Switch — Timing Gap
+
+**What happens:** In the `PresetSwitchCoordinator`, when the user picks "Save as New Preset", the coordinator calls `onSaveAsNewPreset?()` (which opens the save sheet) and **immediately** calls `proceedWithPendingSwitch()` (which shows the activate confirmation). The user hasn't finished saving yet.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Coord as PresetSwitchCoordinator
+    participant State as StateModel
+    participant View as UI
+
+    User->>Coord: saveAsNewPresetAndSwitch()
+    Coord->>State: onSaveAsNewPreset() → showingSaveDialog = true
+    Coord->>State: onProceedWithSwitch(pending)
+    Note over State: showingActivateConfirmation = true
+
+    Note over View: ⚠️ Two sheets/dialogs compete!\nSave sheet AND activate confirmation\nare both triggered simultaneously.
+
+    User->>View: Fills in name and taps Save
+    Note over View: But activate confirmation may have\nalready dismissed or blocked the save sheet
+```
+
+**Gap:** The coordinator does not wait for the save sheet to complete. The "Save as New" + "Switch" are fire-and-forget — the new preset may not exist yet when the switch is confirmed.
+
+---
+
+### 17.4 Override + Profile Preset Interaction
+
+**What happens:** Overrides (percentage-based basal/ISF/CR adjustments) are a separate system. An active override modifies the effective therapy settings. However, profile presets compare against the **stored** therapy files, not the override-adjusted values.
+
+**Gap:** No diagram documents how overrides and profile presets coexist. While the code is correct (presets compare against base files, overrides layer on top), the user experience is undocumented:
+
+```mermaid
+flowchart TD
+    A[Profile Preset Active: 'Weekday'] --> B{Override also active?}
+    B -->|No| C[Loop uses preset's settings directly]
+    B -->|Yes| D[Loop uses preset's settings × override multiplier]
+    
+    D --> E{User edits base basal rate}
+    E --> F[Divergence detected against PRESET\nnot against override-adjusted values]
+    F --> G["⚠️ User sees 'modified' but the EFFECTIVE\nsettings may still match expectations"]
+    
+    B -->|No| H{User edits basal}
+    H --> I[Divergence detected normally]
+```
+
+**Missing user journey:** A user activating an override while a profile preset is active sees no interaction in the UI. The profile indicator remains teal (matching) because overrides don't change the base files. However, if the user then navigates to Settings and sees the override-adjusted values, they might be confused about what "matches" means.
+
+---
+
+### 17.5 Nightscout Upload — Open Run Edge Case
+
+**What happens:** `getProfilePresetRunsNotYetUploadedToNightscout()` fetches runs with `isUploadedToNS == false`. However, runs where `endDate == nil` (still open/active) are included in the predicate. The duration calculation uses `run.endDate?.timeIntervalSince(run.startDate ?? Date()) ?? 1`, which defaults to 1 second for open runs.
+
+```mermaid
+sequenceDiagram
+    participant NS as NightscoutManager
+    participant Storage as ProfilePresetStorage
+    participant CoreData as CoreData
+
+    NS->>Storage: getProfilePresetRunsNotYetUploadedToNightscout()
+    Storage->>CoreData: fetch where isUploadedToNS == false
+
+    Note over CoreData: Returns runs including OPEN ones (endDate == nil)
+
+    CoreData-->>Storage: [closedRun1, closedRun2, openActiveRun]
+
+    Storage->>Storage: Map to NightscoutTreatment
+    Note over Storage: openActiveRun: duration = (nil - startDate) ?? 1 second / 60 = <1 min → clamped to 1 min
+
+    Storage-->>NS: [treatment1, treatment2, treatment3(1 min)]
+    NS->>NS: Upload all + mark isUploadedToNS = true
+
+    Note over NS: ⚠️ Active run is uploaded with 1-minute duration\nand marked as uploaded. When it actually closes\nlater, it won't be re-uploaded with correct duration.
+```
+
+**Gap:** Open runs should be excluded from the upload query, or re-uploaded when they close. The current `NSPredicate.profilePresetRunsNotYetUploadedToNS` may not filter out `endDate == nil`.
+
+---
+
+### 17.6 Percentage Scaling — Validation Gaps
+
+**What happens:** `ProfilePreset.scaled(by:name:)` creates a new preset with rates multiplied/divided by the percentage. The user enters any integer percentage.
+
+**Missing states:**
+
+| Scenario | What happens | Gap |
+|----------|-------------|-----|
+| Percentage = 0 | Basal → 0, ISF → div by 0, CR → div by 0 | 💥 **Division by zero crash** — no validation |
+| Percentage = negative | Negative rates | ⚠️ No lower bound check |
+| Percentage = 1000 | Extremely high basal rates | ⚠️ No upper bound / safety check |
+
+```mermaid
+flowchart TD
+    A[User picks preset to scale] --> B["Enter percentage (Int)"]
+    B --> C{Percentage validation?}
+    C -->|"Current code: none"| D[scaled by: percentage]
+    D --> E{"factor = Decimal(pct) / 100"}
+    E --> F{factor == 0?}
+    F -->|Yes| G["ISF / 0 = 💥 NaN / crash"]
+    F -->|No| H{factor < 0?}
+    H -->|Yes| I["Negative basal rates created"]
+    H -->|No| J[Normal scaled preset created]
+    
+    style G fill:#ff6666
+    style I fill:#ffaa66
+```
+
+---
+
+### 17.7 Rename Active Preset — Notification Gap
+
+**What happens:** `renamePreset()` updates the name in the JSON file. However, `HomeStateModel.activeProfilePreset` holds a **separate copy** of the preset object. No notification is posted when a preset is renamed.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant PSM as ProfilePresetsStateModel
+    participant Storage as ProfilePresetStorage
+    participant HomeState as HomeStateModel
+
+    User->>PSM: beginRename("Weekday" → "Work Day")
+    PSM->>Storage: renamePreset(id: "abc", newName: "Work Day")
+    Storage->>Storage: Update in-memory array + save JSON
+
+    PSM->>PSM: presets[index].name = "Work Day"
+    PSM->>PSM: activePreset?.name = "Work Day" (local copy)
+
+    Note over HomeState: ⚠️ activeProfilePreset.name is STILL "Weekday"\nHome screen indicator shows stale name\nuntil next activation or app restart
+```
+
+**Gap:** The Home indicator badge shows the stale name. `ProfilePresetsStateModel.confirmRename()` does update its own `activePreset` copy, but `HomeStateModel` is unaware of the rename. A `profilePresetActivatedNotification` is not posted on rename.
+
+---
+
+### 17.8 "Update Preset to Current Settings" — Run Tracking Gap
+
+**What happens:** `updatePresetToCurrentSettings()` replaces the preset's therapy data with current settings and sets `isProfileDiverged = false`. However, it does **not** call `closeDivertedRun()`.
+
+```mermaid
+sequenceDiagram
+    participant State as StateModel
+    participant Storage as ProfilePresetStorage
+    participant CoreData as CoreData
+
+    State->>Storage: updatePresetToCurrentSettings(id)
+    Storage->>Storage: Replace preset data with current settings
+    Storage->>Storage: Save to JSON
+    Storage-->>State: returns updated preset
+
+    State->>State: isProfileDiverged = false
+
+    Note over CoreData: ⚠️ The diverged run (isDiverted=true)\nis still OPEN in CoreData.\nNo closeDivertedRun() is called.\nChart continues showing orange bar.
+```
+
+**Gap:** The state model sets `isProfileDiverged = false`, which will prevent `refreshProfileDivergence()` from calling `closeDivertedRun()` on the next check (since `wasDivergedBeforeRefresh` will be `true` but `nowDiverged` will be `false` — this actually **does** trigger `closeDivertedRun()` on the next observer callback). However, there's a window between the update and the next observer fire where the CoreData run is still open and marked diverged.
+
+---
+
+### 17.9 Missing User Journeys
+
+The following user journeys are not documented:
+
+| Journey | Description | Why it matters |
+|---------|-------------|----------------|
+| **Import/Restore** | User restores a backup or syncs from iCloud. Preset files may contain presets from a different device configuration. | Active preset ID may reference a preset that doesn't exist in the restored data. |
+| **Nightscout ↔ Profile** | User views preset runs in Nightscout. What does the uploaded data look like? How to interpret it? | Users need to understand the note format: `"Profile: Name"` vs `"Profile: Name (Diverted)"`. |
+| **Delete All Presets** | User deletes all presets while one is active. | Deactivation fires for the active one, but the empty state of the Profiles tab is undocumented. |
+| **Same Preset Re-activated** | User taps the already-active preset. | The coordinator proceeds through the full activate flow — closes and reopens the run, needlessly creating CoreData churn. |
+| **App Backgrounded During Activation** | User switches to another app mid-activation flow. | `viewContext.perform` blocks may complete in the background; notification observers may fire after the view is gone. |
+
+---
+
+### 17.10 Summary of Identified Gaps
+
+| # | Gap | Severity | Type |
+|---|-----|----------|------|
+| 17.1 | Stale `active_profile_preset_id.json` after preset deletion while app not running | Low | Edge case |
+| 17.2 | Concurrent `activatePreset()` calls may create duplicate CoreData runs | Low | Race condition |
+| 17.3 | "Save as New" + switch fires both actions simultaneously without awaiting save completion | Medium | UX flow gap |
+| 17.4 | Override ↔ Profile Preset interaction is undocumented | Low | Documentation |
+| 17.5 | Open (active) runs may be uploaded to Nightscout with 1-min duration and never re-uploaded | Medium | Data correctness |
+| 17.6 | `scaled(by:)` has no validation — 0% causes division by zero | High | Crash bug |
+| 17.7 | Rename doesn't notify HomeStateModel — stale name on home indicator | Low | UI consistency |
+| 17.8 | `updatePresetToCurrentSettings` doesn't immediately close the diverged run in CoreData | Low | Timing window |
+| 17.9 | Several user journeys undocumented (import, re-activate same, delete all, background) | Low | Documentation |
+| 17.10 | Same-preset re-activation creates unnecessary CoreData run churn | Low | Optimization |
+
+---
+
+### 17.11 Recommended Additional State — Activation Validation
+
+The current `activatePreset()` guard only checks that arrays are non-empty. A more complete validation state machine:
+
+```mermaid
+stateDiagram-v2
+    [*] --> ValidatePreset : activatePreset(preset)
+
+    ValidatePreset --> Rejected : basalProfile empty
+    ValidatePreset --> Rejected : ISF sensitivities empty
+    ValidatePreset --> Rejected : CR schedule empty
+    ValidatePreset --> Rejected : BG targets empty
+    ValidatePreset --> Rejected : preset not found in presets() array
+    ValidatePreset --> Rejected : preset.id == activePresetId() (same preset)
+    ValidatePreset --> Accepted : all checks pass
+
+    Rejected --> [*] : return false
+
+    Accepted --> CloseExistingRun
+    CloseExistingRun --> WriteSettings
+    WriteSettings --> BroadcastChanges
+    BroadcastChanges --> SaveActiveId
+    SaveActiveId --> CreateNewRun
+    CreateNewRun --> PostNotification
+    PostNotification --> [*] : return true
+
+    Note right of Rejected: ⚠️ "preset not found" and "same preset"\nare not checked in current code
 ```
