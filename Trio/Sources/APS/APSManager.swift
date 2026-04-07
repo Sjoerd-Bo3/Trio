@@ -82,6 +82,7 @@ final class BaseAPSManager: APSManager, Injectable {
     @Injected() private var settingsManager: SettingsManager!
     @Injected() private var tddStorage: TDDStorage!
     @Injected() private var broadcaster: Broadcaster!
+    @Injected() private var concentrationService: ConcentrationService!
     @Persisted(key: "lastLoopStartDate") private var lastLoopStartDate: Date = .distantPast
     @Persisted(key: "lastLoopDate") var lastLoopDate: Date = .distantPast {
         didSet {
@@ -546,9 +547,12 @@ final class BaseAPSManager: APSManager, Injectable {
 
     func roundBolus(amount: Decimal) -> Decimal {
         guard let pump = pumpManager else { return amount }
-        let rounded = Decimal(pump.roundToSupportedBolusVolume(units: Double(amount)))
+        // Convert real units to pump units, round to pump's supported volumes, convert back
+        let pumpAmount = concentrationService.toPumpUnits(realUnits: Double(amount))
+        let rounded = Decimal(pump.roundToSupportedBolusVolume(units: pumpAmount))
+        let realRounded = Decimal(concentrationService.toRealUnits(pumpUnits: Double(rounded)))
         let maxBolus = Decimal(pump.roundToSupportedBolusVolume(units: Double(settingsManager.pumpSettings.maxBolus)))
-        return min(rounded, maxBolus)
+        return min(realRounded, maxBolus)
     }
 
     private var bolusReporter: DoseProgressReporter?
@@ -576,9 +580,10 @@ final class BaseAPSManager: APSManager, Injectable {
             return
         }
 
-        let roundedAmount = pump.roundToSupportedBolusVolume(units: amount)
+        let pumpAmount = concentrationService.toPumpUnits(realUnits: amount)
+        let roundedAmount = pump.roundToSupportedBolusVolume(units: pumpAmount)
 
-        debug(.apsManager, "Enact bolus \(roundedAmount), manual \(!isSMB)")
+        debug(.apsManager, "Enact bolus \(amount) real units (\(roundedAmount) pump units), manual \(!isSMB)")
 
         do {
             try await pump.enactBolus(units: roundedAmount, automatic: isSMB)
@@ -644,9 +649,10 @@ final class BaseAPSManager: APSManager, Injectable {
             return
         }
 
-        debug(.apsManager, "Enact temp basal \(rate) - \(duration)")
+        debug(.apsManager, "Enact temp basal \(rate) real U/hr - \(duration)")
 
-        let roundedAmout = pump.roundToSupportedBasalRate(unitsPerHour: rate)
+        let pumpRate = concentrationService.toPumpRate(realUnitsPerHour: rate)
+        let roundedAmout = pump.roundToSupportedBasalRate(unitsPerHour: pumpRate)
 
         do {
             try await pump.enactTempBasal(unitsPerHour: roundedAmout, for: duration)
@@ -688,7 +694,8 @@ final class BaseAPSManager: APSManager, Injectable {
         case .active:
             return TempBasal(duration: 0, rate: 0, temp: .absolute, timestamp: date)
         case let .tempBasal(dose):
-            let rate = Decimal(dose.unitsPerHour)
+            let pumpRate = Decimal(dose.unitsPerHour)
+            let rate = concentrationService.toRealRate(pumpUnitsPerHour: pumpRate)
             let durationMin = max(0, Int((dose.endDate.timeIntervalSince1970 - date.timeIntervalSince1970) / 60))
             return TempBasal(duration: durationMin, rate: rate, temp: .absolute, timestamp: date)
         default:
@@ -749,11 +756,13 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     private func performBasal(pump: PumpManager, rate: NSDecimalNumber, duration: TimeInterval) async throws {
-        try await pump.enactTempBasal(unitsPerHour: Double(truncating: rate), for: duration)
+        let pumpRate = concentrationService.toPumpRate(realUnitsPerHour: Double(truncating: rate))
+        try await pump.enactTempBasal(unitsPerHour: pumpRate, for: duration)
     }
 
     private func performBolus(pump: PumpManager, smbToDeliver: NSDecimalNumber) async throws {
-        try await pump.enactBolus(units: Double(truncating: smbToDeliver), automatic: true)
+        let pumpUnits = concentrationService.toPumpUnits(realUnits: Double(truncating: smbToDeliver))
+        try await pump.enactBolus(units: pumpUnits, automatic: true)
         bolusProgress.send(0)
     }
 

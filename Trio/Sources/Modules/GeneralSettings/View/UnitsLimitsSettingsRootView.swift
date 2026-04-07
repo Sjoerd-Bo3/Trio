@@ -209,6 +209,52 @@ extension UnitsLimitsSettings {
                         }
                     }
                 )
+
+                // MARK: - Insulin Concentration
+
+                Section(
+                    header: Text("Insulin Concentration"),
+                    footer: state.allowDilution ? Text(
+                        "Active concentration: \(state.insulinConcentration.displayName) (factor: \(NSDecimalNumber(decimal: state.insulinConcentration.factor))×). All doses, IOB, and safety limits are in real insulin units."
+                    ) : nil
+                ) {
+                    Toggle(isOn: $state.allowDilution) {
+                        VStack(alignment: .leading) {
+                            Text("Enable Concentration Adjustment")
+                            Text("Allow non-standard insulin concentrations (U-10 to U-500)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if state.allowDilution {
+                        Picker("Concentration", selection: $state.insulinConcentration) {
+                            ForEach(InsulinConcentration.allCases) { concentration in
+                                Text(concentration.displayName).tag(concentration)
+                            }
+                        }
+
+                        if !state.insulinConcentration.isStandard {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label {
+                                    Text("Safety Notice")
+                                        .font(.subheadline.bold())
+                                } icon: {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                }
+
+                                Text(
+                                    "Using \(state.insulinConcentration.displayName) insulin: each volume unit from the pump contains \(NSDecimalNumber(decimal: state.insulinConcentration.factor))× the insulin of U-100. Trio automatically translates all commands and readings. Verify your concentration matches the insulin loaded in your pump."
+                                )
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+                .listRowBackground(Color.chart)
             }
             .listSectionSpacing(sectionSpacing)
             .sheet(isPresented: $shouldDisplayHint) {

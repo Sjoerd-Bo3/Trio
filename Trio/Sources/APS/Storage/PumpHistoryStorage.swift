@@ -24,6 +24,7 @@ final class BasePumpHistoryStorage: PumpHistoryStorage, Injectable {
     @Injected() private var storage: FileStorage!
     @Injected() private var broadcaster: Broadcaster!
     @Injected() private var settings: SettingsManager!
+    @Injected() private var concentrationService: ConcentrationService!
 
     private let updateSubject = PassthroughSubject<Void, Never>()
 
@@ -62,8 +63,10 @@ final class BasePumpHistoryStorage: PumpHistoryStorage, Injectable {
                 case .bolus:
 
                     guard let dose = event.dose else { continue }
+                    // Convert pump-reported units to real insulin units
+                    let realDoseUnits = self.concentrationService.toRealUnits(pumpUnits: dose.unitsInDeliverableIncrements)
                     let amount = self.roundDose(
-                        dose.unitsInDeliverableIncrements,
+                        realDoseUnits,
                         toIncrement: Double(self.settings.preferences.bolusIncrement)
                     )
 
@@ -112,8 +115,10 @@ final class BasePumpHistoryStorage: PumpHistoryStorage, Injectable {
                         continue
                     }
 
-                    let rate = Decimal(dose.unitsPerHour)
+                    // Convert pump-reported rate to real insulin units/hr
+                    let rate = self.concentrationService.toRealRate(pumpUnitsPerHour: Decimal(dose.unitsPerHour))
                     let minutes = (dose.endDate - dose.startDate).timeInterval / 60
+                    // deliveredUnits is only checked for nil (cancel detection); value is not stored
                     let delivered = dose.deliveredUnits
                     let date = event.date
 

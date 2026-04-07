@@ -15,6 +15,8 @@ extension UnitsLimitsSettings {
         @Published var maxCOB: Decimal = 120
         @Published var hasChanged: Bool = false
         @Published var threshold_setting: Decimal = 60
+        @Published var allowDilution: Bool = false
+        @Published var insulinConcentration: InsulinConcentration = .u100
 
         var preferences: Preferences {
             settingsManager.preferences
@@ -33,6 +35,9 @@ extension UnitsLimitsSettings {
             subscribePreferencesSetting(\.maxIOB, on: $maxIOB) { maxIOB = $0 }
             subscribePreferencesSetting(\.maxCOB, on: $maxCOB) { maxCOB = $0 }
             subscribePreferencesSetting(\.threshold_setting, on: $threshold_setting) { threshold_setting = $0 }
+
+            subscribeSetting(\.allowDilution, on: $allowDilution) { allowDilution = $0 }
+            subscribeSetting(\.insulinConcentration, on: $insulinConcentration) { insulinConcentration = $0 }
 
             maxBasal = pumpSettings.maxBasal
             maxBolus = pumpSettings.maxBolus
