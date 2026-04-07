@@ -920,45 +920,45 @@ extension ProfilePresets {
                         Section(
                             header: Text("SMB Settings", comment: "ProfilePresets: SMB settings tab header")
                         ) {
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Enable SMB Always", comment: "ProfilePresets: SMB setting"),
                                 value: smb.enableSMBAlways ? "✓" : "✗"
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Enable SMB with COB", comment: "ProfilePresets: SMB setting"),
                                 value: smb.enableSMBWithCOB ? "✓" : "✗"
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Enable SMB with Temp Target", comment: "ProfilePresets: SMB setting"),
                                 value: smb.enableSMBWithTemptarget ? "✓" : "✗"
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Enable SMB After Carbs", comment: "ProfilePresets: SMB setting"),
                                 value: smb.enableSMBAfterCarbs ? "✓" : "✗"
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Enable UAM", comment: "ProfilePresets: SMB setting"),
                                 value: smb.enableUAM ? "✓" : "✗"
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Enable SMB High BG", comment: "ProfilePresets: SMB setting"),
                                 value: smb.enableSMBHighBG ? "✓" : "✗"
                             )
                             if smb.enableSMBHighBG {
-                                saveSMBSettingRow(
+                                settingRow(
                                     label: String(localized: "SMB High BG Target", comment: "ProfilePresets: SMB setting"),
                                     value: "\(state.formatGlucose(smb.enableSMBHighBGTarget)) \(state.units.rawValue)"
                                 )
                             }
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Max SMB Basal Minutes", comment: "ProfilePresets: SMB setting"),
                                 value: "\(formatDecimal(smb.maxSMBBasalMinutes, decimals: 0)) min"
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Max UAM SMB Basal Minutes", comment: "ProfilePresets: SMB setting"),
                                 value: "\(formatDecimal(smb.maxUAMSMBBasalMinutes, decimals: 0)) min"
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Max Delta BG Threshold", comment: "ProfilePresets: SMB setting"),
                                 value: formatDecimal(smb.maxDeltaBGthreshold, decimals: 2)
                             )
@@ -969,32 +969,32 @@ extension ProfilePresets {
                         Section(
                             header: Text("dynISF Settings", comment: "ProfilePresets: dynamic ISF settings tab header")
                         ) {
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(localized: "Type", comment: "ProfilePresets: Dynamic ISF type label"),
                                 value: state.dynamicISFType(for: dynamic)
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(
                                     localized: "Adjustment Factor",
                                     comment: "ProfilePresets: Dynamic ISF setting"
                                 ),
                                 value: formatDecimal(dynamic.adjustmentFactor, decimals: 2)
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(
                                     localized: "Adjustment Factor (Sigmoid)",
                                     comment: "ProfilePresets: Dynamic ISF setting"
                                 ),
                                 value: formatDecimal(dynamic.adjustmentFactorSigmoid, decimals: 2)
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(
                                     localized: "Weight Percentage",
                                     comment: "ProfilePresets: Dynamic ISF setting"
                                 ),
                                 value: formatDecimal(dynamic.weightPercentage, decimals: 2)
                             )
-                            saveSMBSettingRow(
+                            settingRow(
                                 label: String(
                                     localized: "TDD Adjusted Basal",
                                     comment: "ProfilePresets: Dynamic ISF setting"
@@ -1010,7 +1010,7 @@ extension ProfilePresets {
             }
         }
 
-        @ViewBuilder private func saveSMBSettingRow(label: String, value: String) -> some View {
+        @ViewBuilder private func settingRow(label: String, value: String) -> some View {
             HStack {
                 Text(label)
                     .font(.subheadline)
