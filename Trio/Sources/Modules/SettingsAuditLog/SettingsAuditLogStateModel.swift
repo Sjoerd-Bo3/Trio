@@ -1,14 +1,45 @@
-import CoreData
 import Foundation
 import Observation
 import SwiftUI
 
 extension SettingsAuditLog {
+    /// Plain-value snapshot of a single `SettingsChangeStored` managed object.
+    /// Capturing values eagerly avoids Core Data threading / faulting crashes.
+    struct ChangeEntry: Identifiable {
+        let id: UUID
+        let date: Date
+        let category: String
+        let subcategory: String
+        let settingName: String
+        let settingKey: String
+        let oldValue: String
+        let newValue: String
+        let unit: String?
+        let note: String
+        let source: String
+        let groupId: UUID
+
+        init(from stored: SettingsChangeStored) {
+            id = stored.id ?? UUID()
+            date = stored.date ?? .distantPast
+            category = stored.category ?? ""
+            subcategory = stored.subcategory ?? ""
+            settingName = stored.settingName ?? ""
+            settingKey = stored.settingKey ?? ""
+            oldValue = stored.oldValue ?? ""
+            newValue = stored.newValue ?? ""
+            unit = stored.unit
+            note = stored.note ?? ""
+            source = stored.source ?? "manual"
+            groupId = stored.groupId ?? stored.id ?? UUID()
+        }
+    }
+
     /// A single change event that groups all individual setting changes sharing the same `groupId`.
     struct ChangeEvent: Identifiable {
         let id: UUID // groupId
         let date: Date
-        let entries: [SettingsChangeStored]
+        let entries: [ChangeEntry]
         let note: String
 
         /// Summary label, e.g. "3 settings changed" or the single setting name.
@@ -21,7 +52,7 @@ extension SettingsAuditLog {
 
         /// Distinct categories across all entries.
         var categories: [String] {
-            let cats = Set(entries.compactMap(\.category))
+            let cats = Set(entries.map(\.category)).filter { !$0.isEmpty }
             return cats.sorted()
         }
     }
@@ -29,7 +60,7 @@ extension SettingsAuditLog {
     @Observable final class StateModel: BaseStateModel<Provider> {
         var searchText: String = ""
         var selectedCategory: String? = nil
-        var entries: [SettingsChangeStored] = []
+        var entries: [ChangeEntry] = []
 
         private static let groupingCalendar: Calendar = .current
 
@@ -40,11 +71,11 @@ extension SettingsAuditLog {
             return df
         }()
 
-        /// Distinct categories from loaded entries. Recomputed only when entries change.
+        /// Distinct categories from loaded entries.
         var allCategories: [String] {
             var cats = Set<String>()
             for entry in entries {
-                if let cat = entry.category { cats.insert(cat) }
+                if !entry.category.isEmpty { cats.insert(entry.category) }
             }
             return ["All"] + cats.sorted()
         }
@@ -54,11 +85,13 @@ extension SettingsAuditLog {
         }
 
         func loadEntries() {
-            entries = provider.auditStorage.fetchHistory(
+            let stored = provider.auditStorage.fetchHistory(
                 category: selectedCategory,
                 since: nil,
                 limit: 500
             )
+            // Convert managed objects → value types immediately, inside the fetch context
+            entries = stored.map { ChangeEntry(from: $0) }
         }
 
         func updateNote(forGroup groupId: UUID, note: String) {
@@ -66,15 +99,15 @@ extension SettingsAuditLog {
             loadEntries()
         }
 
-        var filteredEntries: [SettingsChangeStored] {
+        var filteredEntries: [ChangeEntry] {
             guard !searchText.isEmpty else { return entries }
             let lower = searchText.lowercased()
             return entries.filter {
-                ($0.settingName?.lowercased().contains(lower) ?? false) ||
-                    ($0.category?.lowercased().contains(lower) ?? false) ||
-                    ($0.oldValue?.lowercased().contains(lower) ?? false) ||
-                    ($0.newValue?.lowercased().contains(lower) ?? false) ||
-                    ($0.note?.lowercased().contains(lower) ?? false)
+                $0.settingName.lowercased().contains(lower) ||
+                    $0.category.lowercased().contains(lower) ||
+                    $0.oldValue.lowercased().contains(lower) ||
+                    $0.newValue.lowercased().contains(lower) ||
+                    $0.note.lowercased().contains(lower)
             }
         }
 
@@ -84,11 +117,9 @@ extension SettingsAuditLog {
             let df = Self.groupingFormatter
 
             // Build ChangeEvents from groupId
-            let byGroup = Dictionary(grouping: filteredEntries) { entry -> UUID in
-                entry.groupId ?? entry.id ?? UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
-            }
+            let byGroup = Dictionary(grouping: filteredEntries, by: \.groupId)
             let events: [ChangeEvent] = byGroup.map { groupId, groupEntries in
-                let sorted = groupEntries.sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+                let sorted = groupEntries.sorted { $0.date > $1.date }
                 let date = sorted.first?.date ?? .distantPast
                 let note = sorted.first?.note ?? ""
                 return ChangeEvent(id: groupId, date: date, entries: sorted, note: note)

@@ -1,4 +1,3 @@
-import CoreData
 import SwiftUI
 import Swinject
 
@@ -134,21 +133,21 @@ private struct EventRow: View {
                 }
             }
 
-            ForEach(event.entries, id: \.objectID) { entry in
+            ForEach(event.entries) { entry in
                 HStack(spacing: 4) {
-                    Text(entry.settingName ?? "—")
+                    Text(entry.settingName)
                         .font(.caption2)
                         .foregroundColor(.primary)
                         .lineLimit(1)
                     Spacer()
-                    Text(entry.oldValue ?? "—")
+                    Text(entry.oldValue)
                         .font(.caption2)
                         .foregroundColor(.red)
                         .lineLimit(1)
                     Image(systemName: "arrow.right")
                         .font(.system(size: 8))
                         .foregroundColor(.secondary)
-                    Text(entry.newValue ?? "—")
+                    Text(entry.newValue)
                         .font(.caption2)
                         .foregroundColor(.green)
                         .lineLimit(1)
@@ -192,20 +191,20 @@ private struct EventDetailView: View {
                 LabeledContent("Categories", value: event.categories.joined(separator: ", "))
             }
             Section("Changes") {
-                ForEach(event.entries, id: \.objectID) { entry in
+                ForEach(event.entries) { entry in
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(entry.settingName ?? "—")
+                        Text(entry.settingName)
                             .font(.subheadline)
                             .fontWeight(.medium)
                         HStack(spacing: 4) {
-                            Text(entry.oldValue ?? "—")
+                            Text(entry.oldValue)
                                 .font(.caption)
                                 .foregroundColor(.red)
                                 .lineLimit(1)
                             Image(systemName: "arrow.right")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
-                            Text(entry.newValue ?? "—")
+                            Text(entry.newValue)
                                 .font(.caption)
                                 .foregroundColor(.green)
                                 .lineLimit(1)
@@ -215,8 +214,8 @@ private struct EventDetailView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
-                        if let subcategory = entry.subcategory {
-                            Text(subcategory)
+                        if !entry.subcategory.isEmpty {
+                            Text(entry.subcategory)
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
