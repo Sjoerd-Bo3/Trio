@@ -15,23 +15,13 @@ extension CarbRatioEditor {
             let old = storage.retrieve(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
                 ?? CarbRatios(units: .grams, schedule: [])
             storage.save(profile, as: OpenAPS.Settings.carbRatios)
-            logCRChange(old: old, new: profile)
-        }
-
-        private func logCRChange(old: CarbRatios, new: CarbRatios) {
-            let oldStr = old.schedule.map { "\($0.start): \($0.ratio) g/U" }.joined(separator: ", ")
-            let newStr = new.schedule.map { "\($0.start): \($0.ratio) g/U" }.joined(separator: ", ")
-            guard oldStr != newStr else { return }
-            auditStorage.logChange(
-                category: "Therapy",
+            auditStorage.logTherapyProfileChange(
                 subcategory: "Carb Ratio",
                 settingName: "Carb Ratio Profile",
                 settingKey: "therapy.carbRatios",
-                oldValue: oldStr.isEmpty ? "(empty)" : oldStr,
-                newValue: newStr.isEmpty ? "(empty)" : newStr,
-                unit: "g/U",
-                note: nil,
-                source: "manual"
+                oldEntries: old.schedule.map { "\($0.start): \($0.ratio) g/U" },
+                newEntries: profile.schedule.map { "\($0.start): \($0.ratio) g/U" },
+                unit: "g/U"
             )
         }
     }

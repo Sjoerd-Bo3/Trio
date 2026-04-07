@@ -18,6 +18,43 @@ protocol SettingsAuditStorage: AnyObject {
     func fetchHistory(category: String?, since: Date?, limit: Int) -> [SettingsChangeStored]
     func updateNote(for entryId: UUID, note: String)
     func deleteOldEntries(olderThan date: Date)
+
+    /// Convenience for logging therapy profile changes (Basal, ISF, CR, BG Targets).
+    /// Formats old/new arrays into summary strings and delegates to `logChange`.
+    func logTherapyProfileChange(
+        subcategory: String,
+        settingName: String,
+        settingKey: String,
+        oldEntries: [String],
+        newEntries: [String],
+        unit: String
+    )
+}
+
+extension SettingsAuditStorage {
+    func logTherapyProfileChange(
+        subcategory: String,
+        settingName: String,
+        settingKey: String,
+        oldEntries: [String],
+        newEntries: [String],
+        unit: String
+    ) {
+        let oldStr = oldEntries.joined(separator: ", ")
+        let newStr = newEntries.joined(separator: ", ")
+        guard oldStr != newStr else { return }
+        logChange(
+            category: "Therapy",
+            subcategory: subcategory,
+            settingName: settingName,
+            settingKey: settingKey,
+            oldValue: oldStr.isEmpty ? "(empty)" : oldStr,
+            newValue: newStr.isEmpty ? "(empty)" : newStr,
+            unit: unit,
+            note: nil,
+            source: "manual"
+        )
+    }
 }
 
 final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {

@@ -35,30 +35,20 @@ extension BasalProfileEditor {
                     switch result {
                     case .success:
                         self.storage.save(profile, as: OpenAPS.Settings.basalProfile)
-                        self.logBasalChange(old: oldProfile, new: profile)
+                        self.auditStorage.logTherapyProfileChange(
+                            subcategory: "Basal Rates",
+                            settingName: "Basal Profile",
+                            settingKey: "therapy.basalProfile",
+                            oldEntries: oldProfile.map { "\($0.start): \($0.rate) U/hr" },
+                            newEntries: profile.map { "\($0.start): \($0.rate) U/hr" },
+                            unit: "U/hr"
+                        )
                         promise(.success(()))
                     case let .failure(error):
                         promise(.failure(error))
                     }
                 }
             }.eraseToAnyPublisher()
-        }
-
-        private func logBasalChange(old: [BasalProfileEntry], new: [BasalProfileEntry]) {
-            let oldStr = old.map { "\($0.start): \($0.rate) U/hr" }.joined(separator: ", ")
-            let newStr = new.map { "\($0.start): \($0.rate) U/hr" }.joined(separator: ", ")
-            guard oldStr != newStr else { return }
-            auditStorage.logChange(
-                category: "Therapy",
-                subcategory: "Basal Rates",
-                settingName: "Basal Profile",
-                settingKey: "therapy.basalProfile",
-                oldValue: oldStr.isEmpty ? "(empty)" : oldStr,
-                newValue: newStr.isEmpty ? "(empty)" : newStr,
-                unit: "U/hr",
-                note: nil,
-                source: "manual"
-            )
         }
     }
 }

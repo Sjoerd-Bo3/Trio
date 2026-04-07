@@ -38,23 +38,13 @@ extension ISFEditor {
             let old = storage.retrieve(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
                 ?? InsulinSensitivities(units: .mgdL, userPreferredUnits: .mgdL, sensitivities: [])
             storage.save(profile, as: OpenAPS.Settings.insulinSensitivities)
-            logISFChange(old: old, new: profile)
-        }
-
-        private func logISFChange(old: InsulinSensitivities, new: InsulinSensitivities) {
-            let oldStr = old.sensitivities.map { "\($0.start): \($0.sensitivity) mg/dL/U" }.joined(separator: ", ")
-            let newStr = new.sensitivities.map { "\($0.start): \($0.sensitivity) mg/dL/U" }.joined(separator: ", ")
-            guard oldStr != newStr else { return }
-            auditStorage.logChange(
-                category: "Therapy",
+            auditStorage.logTherapyProfileChange(
                 subcategory: "Insulin Sensitivity Factor",
                 settingName: "ISF Profile",
                 settingKey: "therapy.insulinSensitivities",
-                oldValue: oldStr.isEmpty ? "(empty)" : oldStr,
-                newValue: newStr.isEmpty ? "(empty)" : newStr,
-                unit: "mg/dL/U",
-                note: nil,
-                source: "manual"
+                oldEntries: old.sensitivities.map { "\($0.start): \($0.sensitivity) mg/dL/U" },
+                newEntries: profile.sensitivities.map { "\($0.start): \($0.sensitivity) mg/dL/U" },
+                unit: "mg/dL/U"
             )
         }
     }

@@ -100,7 +100,13 @@ final class BaseSettingsManager: SettingsManager, Injectable {
 
     // MARK: - Change capture helpers
 
-    private func logSettingsChanges(old: TrioSettings, new: TrioSettings) {
+    private func logMirrorChanges<T>(
+        old: T,
+        new: T,
+        registryMap: [String: SettingMetadata],
+        keyPrefix: String,
+        fallbackCategory: String
+    ) {
         let mirror = Mirror(reflecting: new)
         let oldMirror = Mirror(reflecting: old)
 
@@ -115,12 +121,12 @@ final class BaseSettingsManager: SettingsManager, Injectable {
             let oldVal = oldDict[label] ?? ""
             guard oldVal != newVal else { continue }
 
-            let meta = SettingsMetadataRegistry.trioSettingsMap[label]
+            let meta = registryMap[label]
             auditStorage.logChange(
-                category: meta?.category ?? "Settings",
+                category: meta?.category ?? fallbackCategory,
                 subcategory: meta?.subcategory ?? "General",
                 settingName: meta?.name ?? label,
-                settingKey: "settings.\(label)",
+                settingKey: "\(keyPrefix).\(label)",
                 oldValue: oldVal,
                 newValue: newVal,
                 unit: meta?.unit,
@@ -130,33 +136,23 @@ final class BaseSettingsManager: SettingsManager, Injectable {
         }
     }
 
+    private func logSettingsChanges(old: TrioSettings, new: TrioSettings) {
+        logMirrorChanges(
+            old: old,
+            new: new,
+            registryMap: SettingsMetadataRegistry.trioSettingsMap,
+            keyPrefix: "settings",
+            fallbackCategory: "Settings"
+        )
+    }
+
     private func logPreferencesChanges(old: Preferences, new: Preferences) {
-        let mirror = Mirror(reflecting: new)
-        let oldMirror = Mirror(reflecting: old)
-
-        let oldDict = Dictionary(uniqueKeysWithValues: oldMirror.children.compactMap { child -> (String, String)? in
-            guard let label = child.label else { return nil }
-            return (label, "\(child.value)")
-        })
-
-        for child in mirror.children {
-            guard let label = child.label else { continue }
-            let newVal = "\(child.value)"
-            let oldVal = oldDict[label] ?? ""
-            guard oldVal != newVal else { continue }
-
-            let meta = SettingsMetadataRegistry.preferencesMap[label]
-            auditStorage.logChange(
-                category: meta?.category ?? "Algorithm",
-                subcategory: meta?.subcategory ?? "General",
-                settingName: meta?.name ?? label,
-                settingKey: "preferences.\(label)",
-                oldValue: oldVal,
-                newValue: newVal,
-                unit: meta?.unit,
-                note: nil,
-                source: "manual"
-            )
-        }
+        logMirrorChanges(
+            old: old,
+            new: new,
+            registryMap: SettingsMetadataRegistry.preferencesMap,
+            keyPrefix: "preferences",
+            fallbackCategory: "Algorithm"
+        )
     }
 }
