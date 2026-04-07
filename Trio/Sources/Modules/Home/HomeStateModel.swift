@@ -102,6 +102,7 @@ extension Home {
         var overrideRunStored: [OverrideRunStored] = []
         var tempTargetStored: [TempTargetStored] = []
         var tempTargetRunStored: [TempTargetRunStored] = []
+        var profilePresetRunStored: [ProfilePresetRunStored] = []
         var isOverrideCancelled: Bool = false
         var preprocessedData: [(id: UUID, forecast: Forecast, forecastValue: ForecastValue)] = []
         var pumpStatusHighlightMessage: String?
@@ -121,6 +122,8 @@ extension Home {
         var forecastDisplayType: ForecastDisplayType = .cone
         var activeProfilePreset: ProfilePreset?
         var isProfileDiverged: Bool = false
+        /// Tracks the previous divergence state to detect transitions
+        private var wasDivergedBeforeRefresh: Bool = false
 
         var minYAxisValue: Decimal = 39
         var maxYAxisValue: Decimal = 200
@@ -140,6 +143,7 @@ extension Home {
         let pumpHistoryFetchContext = CoreDataStack.shared.newTaskContext()
         let overrideFetchContext = CoreDataStack.shared.newTaskContext()
         let tempTargetFetchContext = CoreDataStack.shared.newTaskContext()
+        let profilePresetFetchContext = CoreDataStack.shared.newTaskContext()
         let batteryFetchContext = CoreDataStack.shared.newTaskContext()
         let viewContext = CoreDataStack.shared.persistentContainer.viewContext
 
@@ -185,6 +189,7 @@ extension Home {
                 if let preset = notification.object as? ProfilePreset {
                     self?.activeProfilePreset = preset
                     self?.isProfileDiverged = false
+                    self?.wasDivergedBeforeRefresh = false
                 } else {
                     self?.activeProfilePreset = self?.profilePresetStorage.activePreset()
                     self?.refreshProfileDivergence()
@@ -194,10 +199,25 @@ extension Home {
 
         func refreshProfileDivergence() {
             guard let preset = activeProfilePreset else {
-                isProfileDiverged = false
+                if isProfileDiverged {
+                    isProfileDiverged = false
+                    wasDivergedBeforeRefresh = false
+                }
                 return
             }
-            isProfileDiverged = !profilePresetStorage.settingsMatchPreset(preset)
+            let nowDiverged = !profilePresetStorage.settingsMatchPreset(preset)
+
+            // Detect state transition and write CoreData run entries
+            if !wasDivergedBeforeRefresh, nowDiverged {
+                // Transition: matching → diverged
+                profilePresetStorage.openDivertedRun(for: preset)
+            } else if wasDivergedBeforeRefresh, !nowDiverged {
+                // Transition: diverged → matching again
+                profilePresetStorage.closeDivertedRun(for: preset)
+            }
+
+            wasDivergedBeforeRefresh = nowDiverged
+            isProfileDiverged = nowDiverged
         }
 
         private func setupHomeViewConcurrently() {
@@ -254,6 +274,9 @@ extension Home {
                     }
                     group.addTask {
                         self.setupTempTargetsRunStored()
+                    }
+                    group.addTask {
+                        self.setupProfilePresetRunStored()
                     }
                     group.addTask {
                         self.iobService.updateIOB()
@@ -341,6 +364,11 @@ extension Home {
             coreDataPublisher?.filteredByEntityName("TempTargetRunStored").sink { [weak self] _ in
                 guard let self = self else { return }
                 self.setupTempTargetsRunStored()
+            }.store(in: &subscriptions)
+
+            coreDataPublisher?.filteredByEntityName("ProfilePresetRunStored").sink { [weak self] _ in
+                guard let self = self else { return }
+                self.setupProfilePresetRunStored()
             }.store(in: &subscriptions)
         }
 

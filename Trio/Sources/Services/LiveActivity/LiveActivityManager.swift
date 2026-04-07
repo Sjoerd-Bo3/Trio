@@ -36,6 +36,8 @@ final class LiveActivityData: ObservableObject {
     @Published var glucoseFromPersistence: [GlucoseData]?
     /// The current override data (if any).
     @Published var override: OverrideData?
+    /// The current profile preset data (if any).
+    @Published var profilePreset: ProfilePresetData?
     /// The widget items displayed within the live activity.
     @Published var widgetItems: [LiveActivityAttributes.LiveActivityItem]?
 }
@@ -141,6 +143,10 @@ final class LiveActivityData: ObservableObject {
             Task { await self?.loadOverrides() }
         }.store(in: &subscriptions)
 
+        coreDataPublisher?.filteredByEntityName("ProfilePresetRunStored").sink { [weak self] _ in
+            Task { await self?.loadProfilePreset() }
+        }.store(in: &subscriptions)
+
         coreDataPublisher?.filteredByEntityName("GlucoseStored").sink { [weak self] _ in
             Task { await self?.loadGlucose() }
         }.store(in: &subscriptions)
@@ -179,6 +185,18 @@ final class LiveActivityData: ObservableObject {
         }
     }
 
+    /// Fetches and maps active profile preset data and updates the live activity content state.
+    private func loadProfilePreset() async {
+        do {
+            data.profilePreset = try await fetchAndMapProfilePreset()
+        } catch {
+            debug(
+                .default,
+                "[LiveActivityManager] \(DebuggingIdentifiers.failed) failed to fetch and map profile preset: \(error)"
+            )
+        }
+    }
+
     /// Handles changes to the live activity order.
     ///
     /// Loads widget items from user defaults and triggers an update to the live activity order.
@@ -203,6 +221,7 @@ final class LiveActivityData: ObservableObject {
         Task {
             await self.loadGlucose()
             await self.loadOverrides()
+            await self.loadProfilePreset()
             await self.loadDetermination()
             self.loadWidgetItems()
         }
@@ -301,6 +320,9 @@ final class LiveActivityData: ObservableObject {
                                 overrideDate: Date.now,
                                 overrideDuration: 0,
                                 overrideTarget: 0,
+                                isProfilePresetActive: false,
+                                profilePresetName: "",
+                                isProfilePresetDiverted: false,
                                 widgetItems: []
                             ),
                             isInitialState: true
@@ -399,6 +421,7 @@ final class LiveActivityData: ObservableObject {
             determination: determination,
             iob: data.iob,
             override: data.override,
+            profilePreset: data.profilePreset,
             widgetItems: data.widgetItems
         )
 

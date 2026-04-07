@@ -121,6 +121,9 @@ private extension LiveActivityAttributes.ContentState {
             overrideDate: Date().addingTimeInterval(-3600),
             overrideDuration: 120,
             overrideTarget: 150,
+            isProfilePresetActive: false,
+            profilePresetName: "",
+            isProfilePresetDiverted: false,
             widgetItems: LiveActivityAttributes.LiveActivityItem.defaultItems
         )
 

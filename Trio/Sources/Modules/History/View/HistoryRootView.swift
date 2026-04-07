@@ -61,6 +61,13 @@ extension History {
             animation: .bouncy
         ) var tempTargetRunStored: FetchedResults<TempTargetRunStored>
 
+        @FetchRequest(
+            entity: ProfilePresetRunStored.entity(),
+            sortDescriptors: [NSSortDescriptor(keyPath: \ProfilePresetRunStored.startDate, ascending: false)],
+            predicate: NSPredicate.profilePresetRunStoredFromOneDayAgo,
+            animation: .bouncy
+        ) var profilePresetRunStored: FetchedResults<ProfilePresetRunStored>
+
         private var manualGlucoseFormatter: NumberFormatter {
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
@@ -381,7 +388,22 @@ extension History {
                 )
             }
 
-            let combined = overrides + tempTargets
+            let profilePresets = profilePresetRunStored.map { run -> AdjustmentItem in
+                let presetName = run.name ?? String(localized: "Profile Preset")
+                let displayName = run.isDiverted
+                    ? String(localized: "\(presetName) (Diverted)")
+                    : presetName
+                return AdjustmentItem(
+                    id: run.objectID,
+                    name: displayName,
+                    startDate: run.startDate ?? Date(),
+                    endDate: run.endDate ?? Date(),
+                    target: nil,
+                    type: .profilePreset(icon: run.icon ?? "person.crop.circle", isDiverted: run.isDiverted)
+                )
+            }
+
+            let combined = overrides + tempTargets + profilePresets
             return combined.sorted {
                 if $0.startDate == $1.startDate {
                     return $0.endDate > $1.endDate
@@ -401,6 +423,7 @@ extension History {
         private enum AdjustmentType {
             case override
             case tempTarget
+            case profilePreset(icon: String, isDiverted: Bool)
 
             var symbolName: String {
                 switch self {
@@ -408,6 +431,8 @@ extension History {
                     return "clock.arrow.2.circlepath"
                 case .tempTarget:
                     return "target"
+                case let .profilePreset(icon, _):
+                    return icon
                 }
             }
 
@@ -417,6 +442,8 @@ extension History {
                     return .orange
                 case .tempTarget:
                     return .blue
+                case let .profilePreset(_, isDiverted):
+                    return isDiverted ? .orange : .teal
                 }
             }
         }
@@ -442,7 +469,7 @@ extension History {
                     VStack(alignment: .leading) {
                         HStack {
                             Image(systemName: item.type.symbolName)
-                                .foregroundStyle(item.type == .override ? Color.purple : Color.green)
+                                .foregroundStyle(item.type.symbolColor)
                             Text(item.name)
                                 .font(.headline)
                             Spacer()

@@ -1,3 +1,4 @@
+import CoreData
 import Foundation
 import Swinject
 
@@ -7,18 +8,25 @@ protocol ProfilePresetStorage {
     func saveCurrentProfileAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
     func currentProfile() -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
+    func deactivateCurrentRun()
     func deletePreset(id: String)
     func renamePreset(id: String, newName: String)
     func updatePresetToCurrentSettings(id: String) -> ProfilePreset?
     func activePresetId() -> String?
     func activePreset() -> ProfilePreset?
     func settingsMatchPreset(_ preset: ProfilePreset) -> Bool
+    func openDivertedRun(for preset: ProfilePreset)
+    func closeDivertedRun(for preset: ProfilePreset)
+    func getProfilePresetRunsNotYetUploadedToNightscout() async throws -> [NightscoutTreatment]
 }
 
 final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     @Injected() private var storage: FileStorage!
     @Injected() private var broadcaster: Broadcaster!
     @Injected() private var settingsManager: SettingsManager!
+
+    private let viewContext = CoreDataStack.shared.persistentContainer.viewContext
+    private let backgroundContext = CoreDataStack.shared.newTaskContext()
 
     static let profilePresetActivatedNotification = Notification.Name("ProfilePresetActivated")
 
@@ -151,6 +159,9 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             return false
         }
 
+        // Close any existing open profile preset run before activating a new one
+        closeActiveRun()
+
         storage.save(preset.basalProfile, as: OpenAPS.Settings.basalProfile)
         storage.save(preset.insulinSensitivities, as: OpenAPS.Settings.insulinSensitivities)
         storage.save(preset.carbRatios, as: OpenAPS.Settings.carbRatios)
@@ -195,9 +206,129 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
 
         storage.save(preset.id, as: OpenAPS.Trio.activeProfilePresetId)
 
+        // Create a new non-diverged run entry for this activation
+        createRun(for: preset, isDiverted: false)
+
         Foundation.NotificationCenter.default.post(name: BaseProfilePresetStorage.profilePresetActivatedNotification, object: preset)
 
         return true
+    }
+
+    // MARK: - CoreData run management
+
+    /// Closes the currently open ProfilePresetRunStored (sets endDate) if one exists.
+    private func closeActiveRun() {
+        viewContext.perform {
+            let fetchRequest: NSFetchRequest<ProfilePresetRunStored> = ProfilePresetRunStored.fetchRequest()
+            fetchRequest.predicate = NSPredicate.activeProfilePresetRun
+            fetchRequest.fetchLimit = 1
+
+            do {
+                let results = try self.viewContext.fetch(fetchRequest)
+                if let activeRun = results.first {
+                    activeRun.endDate = Date()
+                    activeRun.isUploadedToNS = false
+                    guard self.viewContext.hasChanges else { return }
+                    try self.viewContext.save()
+                }
+            } catch let error as NSError {
+                debugPrint(
+                    "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to close active ProfilePresetRunStored: \(error.userInfo)"
+                )
+            }
+        }
+    }
+
+    /// Creates a new ProfilePresetRunStored entry.
+    private func createRun(for preset: ProfilePreset, isDiverted: Bool) {
+        viewContext.perform {
+            let newRun = ProfilePresetRunStored(context: self.viewContext)
+            newRun.id = UUID()
+            newRun.presetId = preset.id
+            newRun.name = preset.name
+            newRun.icon = preset.icon
+            newRun.startDate = Date()
+            newRun.endDate = nil
+            newRun.isDiverted = isDiverted
+            newRun.isUploadedToNS = false
+
+            do {
+                guard self.viewContext.hasChanges else { return }
+                try self.viewContext.save()
+            } catch let error as NSError {
+                debugPrint(
+                    "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to save ProfilePresetRunStored: \(error.userInfo)"
+                )
+            }
+        }
+    }
+
+    /// Called when the active preset becomes diverged. Closes the non-diverged run and opens a diverged one.
+    func openDivertedRun(for preset: ProfilePreset) {
+        closeActiveRun()
+        createRun(for: preset, isDiverted: true)
+    }
+
+    /// Called when the active preset is no longer diverged (settings were updated to match). Closes the diverged run and opens a fresh non-diverged one.
+    func closeDivertedRun(for preset: ProfilePreset) {
+        closeActiveRun()
+        createRun(for: preset, isDiverted: false)
+    }
+
+    /// Closes any open run without opening a new one (e.g. on deactivation).
+    func deactivateCurrentRun() {
+        closeActiveRun()
+    }
+
+    // MARK: - Nightscout upload support
+
+    func getProfilePresetRunsNotYetUploadedToNightscout() async throws -> [NightscoutTreatment] {
+        let results = try await CoreDataStack.shared.fetchEntitiesAsync(
+            ofType: ProfilePresetRunStored.self,
+            onContext: backgroundContext,
+            predicate: NSPredicate.profilePresetRunsNotYetUploadedToNS,
+            key: "startDate",
+            ascending: false
+        )
+
+        return try await backgroundContext.perform {
+            guard let fetchedRuns = results as? [ProfilePresetRunStored] else {
+                throw CoreDataError.fetchError(function: #function, file: #file)
+            }
+
+            return fetchedRuns.map { run in
+                let presetName = run.name ?? String(localized: "Profile Preset")
+                let notesValue = run.isDiverted
+                    ? String(localized: "Profile: \(presetName) (Diverted)")
+                    : String(localized: "Profile: \(presetName)")
+                var durationInMinutes = (run.endDate?.timeIntervalSince(run.startDate ?? Date()) ?? 1) / 60
+                durationInMinutes = durationInMinutes < 1 ? 1 : durationInMinutes
+                return NightscoutTreatment(
+                    duration: Int(durationInMinutes),
+                    rawDuration: nil,
+                    rawRate: nil,
+                    absolute: nil,
+                    rate: nil,
+                    eventType: .nsNote,
+                    createdAt: run.startDate ?? Date(),
+                    enteredBy: NightscoutTreatment.local,
+                    bolus: nil,
+                    insulin: nil,
+                    notes: notesValue,
+                    carbs: nil,
+                    fat: nil,
+                    protein: nil,
+                    foodType: nil,
+                    targetTop: nil,
+                    targetBottom: nil,
+                    glucoseType: nil,
+                    glucose: nil,
+                    units: nil,
+                    id: run.id?.uuidString,
+                    fpuID: nil
+                )
+            }
+        }
     }
 
     func activePresetId() -> String? {

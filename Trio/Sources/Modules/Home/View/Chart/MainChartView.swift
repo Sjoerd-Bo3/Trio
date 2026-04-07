@@ -136,6 +136,13 @@ extension MainChartView {
                     viewContext: context
                 )
 
+                ProfilePresetView(
+                    profilePresetRunStored: state.profilePresetRunStored,
+                    units: state.units,
+                    minY: state.minYAxisValue,
+                    maxY: state.maxYAxisValue
+                )
+
                 GlucoseChartView(
                     glucoseData: state.glucoseFromPersistence,
                     units: state.units,
