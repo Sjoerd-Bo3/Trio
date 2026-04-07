@@ -20,10 +20,12 @@ protocol PreferencesObserver {
 final class BaseSettingsManager: SettingsManager, Injectable {
     @Injected() var broadcaster: Broadcaster!
     @Injected() var storage: FileStorage!
+    @Injected() var auditStorage: SettingsAuditStorage!
 
     @SyncAccess var settings: TrioSettings {
         didSet {
             if oldValue != settings {
+                logSettingsChanges(old: oldValue, new: settings)
                 saveSettings()
                 DispatchQueue.main.async {
                     self.broadcaster.notify(SettingsObserver.self, on: .main) {
@@ -37,6 +39,7 @@ final class BaseSettingsManager: SettingsManager, Injectable {
     @SyncAccess var preferences: Preferences {
         didSet {
             if oldValue != preferences {
+                logPreferencesChanges(old: oldValue, new: preferences)
                 savePreferences()
                 DispatchQueue.main.async {
                     self.broadcaster.notify(PreferencesObserver.self, on: .main) {
@@ -93,5 +96,67 @@ final class BaseSettingsManager: SettingsManager, Injectable {
 
         preferences = prefs
         savePreferences()
+    }
+
+    // MARK: - Change capture helpers
+
+    private func logSettingsChanges(old: TrioSettings, new: TrioSettings) {
+        let mirror = Mirror(reflecting: new)
+        let oldMirror = Mirror(reflecting: old)
+
+        let oldDict = Dictionary(uniqueKeysWithValues: oldMirror.children.compactMap { child -> (String, String)? in
+            guard let label = child.label else { return nil }
+            return (label, "\(child.value)")
+        })
+
+        for child in mirror.children {
+            guard let label = child.label else { continue }
+            let newVal = "\(child.value)"
+            let oldVal = oldDict[label] ?? ""
+            guard oldVal != newVal else { continue }
+
+            let meta = SettingsMetadataRegistry.trioSettingsMap[label]
+            auditStorage.logChange(
+                category: meta?.category ?? "Settings",
+                subcategory: meta?.subcategory ?? "General",
+                settingName: meta?.name ?? label,
+                settingKey: "settings.\(label)",
+                oldValue: oldVal,
+                newValue: newVal,
+                unit: meta?.unit,
+                note: nil,
+                source: "manual"
+            )
+        }
+    }
+
+    private func logPreferencesChanges(old: Preferences, new: Preferences) {
+        let mirror = Mirror(reflecting: new)
+        let oldMirror = Mirror(reflecting: old)
+
+        let oldDict = Dictionary(uniqueKeysWithValues: oldMirror.children.compactMap { child -> (String, String)? in
+            guard let label = child.label else { return nil }
+            return (label, "\(child.value)")
+        })
+
+        for child in mirror.children {
+            guard let label = child.label else { continue }
+            let newVal = "\(child.value)"
+            let oldVal = oldDict[label] ?? ""
+            guard oldVal != newVal else { continue }
+
+            let meta = SettingsMetadataRegistry.preferencesMap[label]
+            auditStorage.logChange(
+                category: meta?.category ?? "Algorithm",
+                subcategory: meta?.subcategory ?? "General",
+                settingName: meta?.name ?? label,
+                settingKey: "preferences.\(label)",
+                oldValue: oldVal,
+                newValue: newVal,
+                unit: meta?.unit,
+                note: nil,
+                source: "manual"
+            )
+        }
     }
 }
