@@ -71,7 +71,7 @@ extension SettingsAuditLog {
         /// Returns the daily basal total string (e.g. "18.4 U") for basal profile entries,
         /// or nil if the entry is not a basal profile change.
         func dailyBasalTotal(from raw: String) -> String? {
-            guard settingKey == "therapy.basalProfile" || (unit == "U/hr" && raw.contains(":")) else { return nil }
+            guard settingKey == "therapy.basalProfile" else { return nil }
             guard let total = Self.calculateDailyBasalTotal(from: raw) else { return nil }
             let nf = NumberFormatter()
             nf.minimumFractionDigits = 1
@@ -90,7 +90,7 @@ extension SettingsAuditLog {
                 // Expected format: "HH:mm: X.X U/hr" or "HH:mm: X.X"
                 guard let colonSpaceRange = trimmed.range(of: ": ") else { continue }
                 let timeStr = String(trimmed[trimmed.startIndex ..< colonSpaceRange.lowerBound])
-                var valueStr = String(trimmed[colonSpaceRange.upperBound...])
+                let valueStr = String(trimmed[colonSpaceRange.upperBound...])
                     .replacingOccurrences(of: " U/hr", with: "")
                     .trimmingCharacters(in: .whitespaces)
 
