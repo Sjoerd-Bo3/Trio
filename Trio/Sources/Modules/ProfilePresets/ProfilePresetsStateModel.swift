@@ -121,6 +121,11 @@ extension ProfilePresets {
             }
         }
 
+        func reorderPresets(from source: IndexSet, to destination: Int) {
+            presets.move(fromOffsets: source, toOffset: destination)
+            provider.savePresets(presets)
+        }
+
         func beginRename(for preset: ProfilePreset) {
             presetToRename = preset
             renameNewName = preset.name

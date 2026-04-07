@@ -28,6 +28,10 @@ extension ProfilePresets {
             profilePresetStorage.savePresets(existing)
         }
 
+        func savePresets(_ presets: [ProfilePreset]) {
+            profilePresetStorage.savePresets(presets)
+        }
+
         func activatePreset(_ preset: ProfilePreset) -> Bool {
             profilePresetStorage.activatePreset(preset)
         }

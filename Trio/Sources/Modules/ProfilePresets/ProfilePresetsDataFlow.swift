@@ -9,6 +9,7 @@ protocol ProfilePresetsProvider: Provider {
     func loadCurrentProfile() -> ProfilePreset?
     func saveCurrentAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
     func savePreset(_ preset: ProfilePreset)
+    func savePresets(_ presets: [ProfilePreset])
     func activatePreset(_ preset: ProfilePreset) -> Bool
     func deletePreset(id: String)
     func renamePreset(id: String, newName: String)

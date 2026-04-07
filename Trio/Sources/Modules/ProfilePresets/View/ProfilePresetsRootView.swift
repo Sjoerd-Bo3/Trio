@@ -47,6 +47,7 @@ extension ProfilePresets {
                         ForEach(state.presets) { preset in
                             presetRow(preset)
                         }
+                        .onMove(perform: state.reorderPresets)
                     }
                     .listRowBackground(Color.chart)
                 }
