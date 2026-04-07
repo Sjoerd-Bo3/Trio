@@ -83,7 +83,7 @@ extension ProfilePresets {
 
                         Label {
                             Text(
-                                "Each preset stores: Basal Rates, Insulin Sensitivities (ISF), Carb Ratios (CR), and Glucose Targets. Optionally also SMB and Dynamic ISF settings.",
+                                "Each preset stores: Basal Rates, Insulin Sensitivities (ISF), Carb Ratios (CR), Glucose Targets, SMB, and Dynamic ISF settings.",
                                 comment: "ProfilePresets: description of what is stored in a preset"
                             )
                         } icon: {
@@ -618,6 +618,7 @@ extension ProfilePresets {
             case isf
             case cr
             case targets
+            case smbDyn
             case summary
 
             var title: String {
@@ -632,6 +633,8 @@ extension ProfilePresets {
                     return String(localized: "CR", comment: "ProfilePresets: save tab for carb ratios")
                 case .targets:
                     return String(localized: "Targets", comment: "ProfilePresets: save tab for glucose targets")
+                case .smbDyn:
+                    return String(localized: "SMB/dynISF", comment: "ProfilePresets: save tab for SMB and dynamic ISF settings")
                 case .summary:
                     return String(localized: "Summary", comment: "ProfilePresets: save tab for final summary")
                 }
@@ -684,6 +687,8 @@ extension ProfilePresets {
                             saveCRTab
                         case .targets:
                             saveTargetsTab
+                        case .smbDyn:
+                            saveSMBDynTab
                         case .summary:
                             saveSummaryTab
                         }
@@ -702,8 +707,6 @@ extension ProfilePresets {
                         Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button")) {
                             state.newPresetName = ""
                             state.newPresetIcon = ProfilePreset.defaultIcon
-                            state.includeSMBSettings = false
-                            state.includeDynamicSettings = false
                             state.showingSaveDialog = false
                         }
                     }
@@ -782,8 +785,6 @@ extension ProfilePresets {
                     }
                     .padding(.vertical, 4)
                 }
-
-                saveOptionsSection
             }
         }
 
@@ -912,6 +913,114 @@ extension ProfilePresets {
             }
         }
 
+        private var saveSMBDynTab: some View {
+            List {
+                if let preview = state.savePreviewProfile {
+                    if let smb = preview.smbSettings {
+                        Section(
+                            header: Text("SMB Settings", comment: "ProfilePresets: SMB settings tab header")
+                        ) {
+                            saveSMBSettingRow(
+                                label: String(localized: "Enable SMB Always", comment: "ProfilePresets: SMB setting"),
+                                value: smb.enableSMBAlways ? "✓" : "✗"
+                            )
+                            saveSMBSettingRow(
+                                label: String(localized: "Enable SMB with COB", comment: "ProfilePresets: SMB setting"),
+                                value: smb.enableSMBWithCOB ? "✓" : "✗"
+                            )
+                            saveSMBSettingRow(
+                                label: String(localized: "Enable SMB with Temp Target", comment: "ProfilePresets: SMB setting"),
+                                value: smb.enableSMBWithTemptarget ? "✓" : "✗"
+                            )
+                            saveSMBSettingRow(
+                                label: String(localized: "Enable SMB After Carbs", comment: "ProfilePresets: SMB setting"),
+                                value: smb.enableSMBAfterCarbs ? "✓" : "✗"
+                            )
+                            saveSMBSettingRow(
+                                label: String(localized: "Enable UAM", comment: "ProfilePresets: SMB setting"),
+                                value: smb.enableUAM ? "✓" : "✗"
+                            )
+                            saveSMBSettingRow(
+                                label: String(localized: "Enable SMB High BG", comment: "ProfilePresets: SMB setting"),
+                                value: smb.enableSMBHighBG ? "✓" : "✗"
+                            )
+                            if smb.enableSMBHighBG {
+                                saveSMBSettingRow(
+                                    label: String(localized: "SMB High BG Target", comment: "ProfilePresets: SMB setting"),
+                                    value: "\(state.formatGlucose(smb.enableSMBHighBGTarget)) \(state.units.rawValue)"
+                                )
+                            }
+                            saveSMBSettingRow(
+                                label: String(localized: "Max SMB Basal Minutes", comment: "ProfilePresets: SMB setting"),
+                                value: "\(formatDecimal(smb.maxSMBBasalMinutes, decimals: 0)) min"
+                            )
+                            saveSMBSettingRow(
+                                label: String(localized: "Max UAM SMB Basal Minutes", comment: "ProfilePresets: SMB setting"),
+                                value: "\(formatDecimal(smb.maxUAMSMBBasalMinutes, decimals: 0)) min"
+                            )
+                            saveSMBSettingRow(
+                                label: String(localized: "Max Delta BG Threshold", comment: "ProfilePresets: SMB setting"),
+                                value: formatDecimal(smb.maxDeltaBGthreshold, decimals: 2)
+                            )
+                        }
+                    }
+
+                    if let dynamic = preview.dynamicSettings {
+                        Section(
+                            header: Text("dynISF Settings", comment: "ProfilePresets: dynamic ISF settings tab header")
+                        ) {
+                            saveSMBSettingRow(
+                                label: String(localized: "Type", comment: "ProfilePresets: Dynamic ISF type label"),
+                                value: state.dynamicISFType(for: dynamic)
+                            )
+                            saveSMBSettingRow(
+                                label: String(
+                                    localized: "Adjustment Factor",
+                                    comment: "ProfilePresets: Dynamic ISF setting"
+                                ),
+                                value: formatDecimal(dynamic.adjustmentFactor, decimals: 2)
+                            )
+                            saveSMBSettingRow(
+                                label: String(
+                                    localized: "Adjustment Factor (Sigmoid)",
+                                    comment: "ProfilePresets: Dynamic ISF setting"
+                                ),
+                                value: formatDecimal(dynamic.adjustmentFactorSigmoid, decimals: 2)
+                            )
+                            saveSMBSettingRow(
+                                label: String(
+                                    localized: "Weight Percentage",
+                                    comment: "ProfilePresets: Dynamic ISF setting"
+                                ),
+                                value: formatDecimal(dynamic.weightPercentage, decimals: 2)
+                            )
+                            saveSMBSettingRow(
+                                label: String(
+                                    localized: "TDD Adjusted Basal",
+                                    comment: "ProfilePresets: Dynamic ISF setting"
+                                ),
+                                value: dynamic.tddAdjBasal ? "✓" : "✗"
+                            )
+                        }
+                    }
+                } else {
+                    Text("Loading…", comment: "ProfilePresets: loading placeholder")
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+
+        @ViewBuilder private func saveSMBSettingRow(label: String, value: String) -> some View {
+            HStack {
+                Text(label)
+                    .font(.subheadline)
+                Spacer()
+                Text(value)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundColor(.secondary)
+            }
+        }
+
         private var saveSummaryTab: some View {
             Form {
                 if state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -1026,36 +1135,32 @@ extension ProfilePresets {
                             }
                         }
 
-                        if state.includeSMBSettings {
-                            HStack {
-                                Label {
-                                    Text("SMB Settings", comment: "ProfilePresets: SMB label in summary")
-                                } icon: {
-                                    Image(systemName: "bolt.fill")
-                                        .foregroundColor(.orange)
-                                }
-                                .font(.subheadline)
-                                Spacer()
-                                Text("Included", comment: "ProfilePresets: included label")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                        HStack {
+                            Label {
+                                Text("SMB Settings", comment: "ProfilePresets: SMB label in summary")
+                            } icon: {
+                                Image(systemName: "bolt.fill")
+                                    .foregroundColor(.orange)
                             }
+                            .font(.subheadline)
+                            Spacer()
+                            Text("Included", comment: "ProfilePresets: included label")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
 
-                        if state.includeDynamicSettings {
-                            HStack {
-                                Label {
-                                    Text("Dynamic ISF", comment: "ProfilePresets: Dynamic ISF label in summary")
-                                } icon: {
-                                    Image(systemName: "waveform.path")
-                                        .foregroundColor(.purple)
-                                }
-                                .font(.subheadline)
-                                Spacer()
-                                Text("Included", comment: "ProfilePresets: included label")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                        HStack {
+                            Label {
+                                Text("Dynamic ISF", comment: "ProfilePresets: Dynamic ISF label in summary")
+                            } icon: {
+                                Image(systemName: "waveform.path")
+                                    .foregroundColor(.purple)
                             }
+                            .font(.subheadline)
+                            Spacer()
+                            Text("Included", comment: "ProfilePresets: included label")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                     }
                 }
@@ -1076,36 +1181,6 @@ extension ProfilePresets {
         }
 
         // MARK: - Save Options Section
-
-        private var saveOptionsSection: some View {
-            Section(
-                header: Text(
-                    "Include Extra Settings",
-                    comment: "ProfilePresets: section header for extra settings toggles"
-                )
-            ) {
-                Toggle(isOn: $state.includeSMBSettings) {
-                    Label {
-                        Text("SMB Settings", comment: "ProfilePresets: toggle label for including SMB settings")
-                    } icon: {
-                        Image(systemName: "bolt.fill")
-                            .foregroundColor(.orange)
-                    }
-                }
-
-                Toggle(isOn: $state.includeDynamicSettings) {
-                    Label {
-                        Text(
-                            "Dynamic ISF Settings",
-                            comment: "ProfilePresets: toggle label for including Dynamic ISF settings"
-                        )
-                    } icon: {
-                        Image(systemName: "waveform.path")
-                            .foregroundColor(.purple)
-                    }
-                }
-            }
-        }
 
         // MARK: - Helpers
 
@@ -1176,6 +1251,10 @@ extension ProfilePresets {
 
         private func formatDecimal(_ value: Decimal) -> String {
             String(format: "%.1f", NSDecimalNumber(decimal: value).doubleValue)
+        }
+
+        private func formatDecimal(_ value: Decimal, decimals: Int) -> String {
+            String(format: "%.\(decimals)f", NSDecimalNumber(decimal: value).doubleValue)
         }
 
         private func formatRate(_ value: Decimal) -> String {

@@ -172,8 +172,8 @@ extension Adjustments {
             guard let preset = profilePresetStorage.saveCurrentProfileAsPreset(
                 name: name,
                 icon: icon,
-                includeSMB: false,
-                includeDynamic: false
+                includeSMB: true,
+                includeDynamic: true
             ) else { return }
             profilePresets.append(preset)
         }

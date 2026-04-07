@@ -17,10 +17,6 @@ extension ProfilePresets {
         var isProfileDiverged: Bool = false
         let presetSwitchCoordinator = PresetSwitchCoordinator()
 
-        // Save options
-        var includeSMBSettings: Bool = false
-        var includeDynamicSettings: Bool = false
-
         // Percentage adjustment
         var showingAdjustmentSheet: Bool = false
         var adjustmentPercentage: Int = 100
@@ -70,8 +66,8 @@ extension ProfilePresets {
             if let preset = provider.saveCurrentAsPreset(
                 name: newPresetName.trimmingCharacters(in: .whitespaces),
                 icon: newPresetIcon,
-                includeSMB: includeSMBSettings,
-                includeDynamic: includeDynamicSettings
+                includeSMB: true,
+                includeDynamic: true
             ) {
                 presets.append(preset)
             } else {
@@ -79,8 +75,6 @@ extension ProfilePresets {
             }
             newPresetName = ""
             newPresetIcon = ProfilePreset.defaultIcon
-            includeSMBSettings = false
-            includeDynamicSettings = false
             savePreviewProfile = nil
         }
 
