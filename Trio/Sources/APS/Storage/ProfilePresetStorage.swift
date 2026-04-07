@@ -263,13 +263,13 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         }
     }
 
-    /// Called when the active preset becomes diverged. Closes the non-diverged run and opens a diverged one.
+    /// Called when the active preset becomes diverged from current settings. Closes the matching run and opens a new diverged one.
     func openDivertedRun(for preset: ProfilePreset) {
         closeActiveRun()
         createRun(for: preset, isDiverted: true)
     }
 
-    /// Called when the active preset is no longer diverged (settings were updated to match). Closes the diverged run and opens a fresh non-diverged one.
+    /// Called when the active preset is no longer diverged (settings were updated to match). Closes the diverged run and opens a fresh matching one.
     func closeDivertedRun(for preset: ProfilePreset) {
         closeActiveRun()
         createRun(for: preset, isDiverted: false)
