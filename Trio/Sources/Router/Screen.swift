@@ -51,6 +51,7 @@ enum Screen: Identifiable, Hashable {
     case appDiagnostics
     case settingsExport
     case profilePresets
+    case settingsAuditLog
 
     var id: Int { String(reflecting: self).hashValue }
 }
@@ -168,6 +169,8 @@ extension Screen {
             SettingsExport.RootView(resolver: resolver)
         case .profilePresets:
             ProfilePresets.RootView(resolver: resolver)
+        case .settingsAuditLog:
+            SettingsAuditLog.RootView(resolver: resolver)
         }
     }
 

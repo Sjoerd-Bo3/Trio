@@ -12,6 +12,7 @@ extension Adjustments {
         @ObservationIgnored @Injected() var apsManager: APSManager!
         @ObservationIgnored @Injected() var overrideStorage: OverrideStorage!
         @ObservationIgnored @Injected() var nightscoutManager: NightscoutManager!
+        @ObservationIgnored @Injected() var auditStorage: SettingsAuditStorage!
 
         // MARK: - Override and Temp Target Properties
 

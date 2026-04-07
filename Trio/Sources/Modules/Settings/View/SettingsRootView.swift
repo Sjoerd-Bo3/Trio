@@ -278,6 +278,14 @@ extension Settings {
                         }
                     ).listRowBackground(Color.chart)
 
+                    Section(
+                        header: Text("Settings History"),
+                        content: {
+                            Text("Settings Change Log")
+                                .navigationLink(to: .settingsAuditLog, from: self)
+                        }
+                    ).listRowBackground(Color.chart)
+
                 } else {
                     Section(
                         header: Text("Search Results"),

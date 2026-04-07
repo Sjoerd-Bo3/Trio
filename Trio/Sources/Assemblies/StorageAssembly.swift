@@ -19,5 +19,6 @@ final class StorageAssembly: Assembly {
         container.register(Keychain.self) { _ in BaseKeychain() }
         container.register(AlertHistoryStorage.self) { r in BaseAlertHistoryStorage(resolver: r) }
         container.register(ProfilePresetStorage.self) { r in BaseProfilePresetStorage(resolver: r) }
+        container.register(SettingsAuditStorage.self) { r in BaseSettingsAuditStorage(resolver: r) }
     }
 }

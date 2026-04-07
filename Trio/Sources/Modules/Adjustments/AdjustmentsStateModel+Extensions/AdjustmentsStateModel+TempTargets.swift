@@ -228,6 +228,23 @@ extension Adjustments.StateModel {
         )
         try await tempTargetStorage.storeTempTarget(tempTarget: tempTarget)
         tempTargetStorage.saveTempTargetsToStorage([tempTarget])
+
+        // Audit log the custom TT activation
+        let targetUnit = units == .mmolL ? tempTargetTarget.formattedAsMmolL : "\(tempTargetTarget)"
+        let unitLabel = units == .mmolL ? "mmol/L" : "mg/dL"
+        let name = tempTargetName.isEmpty ? "Custom Temp Target" : tempTargetName
+        auditStorage.logChange(
+            category: "Adjustments",
+            subcategory: "Temp Targets",
+            settingName: "Temp Target",
+            settingKey: "adjustments.tempTarget",
+            oldValue: "(none)",
+            newValue: "\(name): \(targetUnit) \(unitLabel), \(tempTargetDuration) min",
+            unit: nil,
+            note: nil,
+            source: "manual"
+        )
+
         await resetTempTargetState()
         isTempTargetEnabled = true
         updateLatestTempTargetConfiguration()
@@ -272,6 +289,24 @@ extension Adjustments.StateModel {
             if viewContext.hasChanges {
                 try viewContext.save()
             }
+
+            // Audit log the TT activation
+            let name = tempTargetToEnact.name ?? "Temp Target"
+            let targetVal = tempTargetToEnact.target?.decimalValue ?? 0
+            let durationVal = tempTargetToEnact.duration?.decimalValue ?? 0
+            let targetUnit = units == .mmolL ? targetVal.formattedAsMmolL : "\(targetVal)"
+            let unitLabel = units == .mmolL ? "mmol/L" : "mg/dL"
+            auditStorage.logChange(
+                category: "Adjustments",
+                subcategory: "Temp Targets",
+                settingName: "Temp Target",
+                settingKey: "adjustments.tempTarget",
+                oldValue: "(none)",
+                newValue: "\(name): \(targetUnit) \(unitLabel), \(durationVal) min",
+                unit: nil,
+                note: nil,
+                source: "manual"
+            )
 
             updateLatestTempTargetConfiguration()
 
@@ -323,6 +358,23 @@ extension Adjustments.StateModel {
                         newTempTargetRunStored.target = canceledTempTarget.target ?? 0
                         newTempTargetRunStored.tempTarget = canceledTempTarget
                         newTempTargetRunStored.isUploadedToNS = false
+
+                        // Audit log the TT cancellation
+                        let name = canceledTempTarget.name ?? "Temp Target"
+                        let targetVal = canceledTempTarget.target?.decimalValue ?? 0
+                        let targetUnit = self.units == .mmolL ? targetVal.formattedAsMmolL : "\(targetVal)"
+                        let unitLabel = self.units == .mmolL ? "mmol/L" : "mg/dL"
+                        self.auditStorage.logChange(
+                            category: "Adjustments",
+                            subcategory: "Temp Targets",
+                            settingName: "Temp Target",
+                            settingKey: "adjustments.tempTarget",
+                            oldValue: "\(name): \(targetUnit) \(unitLabel)",
+                            newValue: "(cancelled)",
+                            unit: nil,
+                            note: nil,
+                            source: "manual"
+                        )
                     }
                 }
 
