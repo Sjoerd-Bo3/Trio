@@ -10,7 +10,6 @@ extension SettingsAuditLog {
         @Environment(AppState.self) var appState
 
         @State private var selectedEvent: ChangeEvent?
-        @State private var showNoteEditor = false
         @State private var noteText = ""
 
         var body: some View {
@@ -30,12 +29,11 @@ extension SettingsAuditLog {
                 ForEach(state.groupedEvents, id: \.0) { day, dayEvents in
                     Section(header: Text(day)) {
                         ForEach(dayEvents) { event in
-                            EventRow(event: event)
+                            EventRow(event: event, units: state.units)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    selectedEvent = event
                                     noteText = event.note
-                                    showNoteEditor = true
+                                    selectedEvent = event
                                 }
                         }
                     }
@@ -48,8 +46,13 @@ extension SettingsAuditLog {
             .navigationBarTitleDisplayMode(.automatic)
             .searchable(text: $state.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
             .onAppear(perform: configureView)
-            .sheet(isPresented: $showNoteEditor) {
-                noteEditorSheet
+            .sheet(item: $selectedEvent) { event in
+                NavigationView {
+                    EventDetailView(event: event, units: state.units, noteText: $noteText) {
+                        state.updateNote(forGroup: event.id, note: noteText)
+                        selectedEvent = nil
+                    }
+                }
             }
         }
 
@@ -79,18 +82,6 @@ extension SettingsAuditLog {
             }
             .listRowBackground(Color.chart)
         }
-
-        @ViewBuilder
-        private var noteEditorSheet: some View {
-            if let event = selectedEvent {
-                NavigationView {
-                    EventDetailView(event: event, noteText: $noteText) {
-                        state.updateNote(forGroup: event.id, note: noteText)
-                        showNoteEditor = false
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -98,6 +89,7 @@ extension SettingsAuditLog {
 
 private struct EventRow: View {
     let event: SettingsAuditLog.ChangeEvent
+    let units: GlucoseUnits
 
     private static let timeFormatter: DateFormatter = {
         let df = DateFormatter()
@@ -140,19 +132,19 @@ private struct EventRow: View {
                         .foregroundColor(.primary)
                         .lineLimit(1)
                     Spacer()
-                    Text(entry.oldValue)
+                    Text(entry.displayValue(entry.oldValue, units: units))
                         .font(.caption2)
                         .foregroundColor(.red)
                         .lineLimit(1)
                     Image(systemName: "arrow.right")
                         .font(.system(size: 8))
                         .foregroundColor(.secondary)
-                    Text(entry.newValue)
+                    Text(entry.displayValue(entry.newValue, units: units))
                         .font(.caption2)
                         .foregroundColor(.green)
                         .lineLimit(1)
-                    if let unit = entry.unit, !unit.isEmpty {
-                        Text(unit)
+                    if let displayUnit = entry.displayUnit(units: units) {
+                        Text(displayUnit)
                             .font(.system(size: 9))
                             .foregroundColor(.secondary)
                     }
@@ -167,6 +159,7 @@ private struct EventRow: View {
 
 private struct EventDetailView: View {
     let event: SettingsAuditLog.ChangeEvent
+    let units: GlucoseUnits
     @Binding var noteText: String
     let onSave: () -> Void
 
@@ -197,19 +190,19 @@ private struct EventDetailView: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                         HStack(spacing: 4) {
-                            Text(entry.oldValue)
+                            Text(entry.displayValue(entry.oldValue, units: units))
                                 .font(.caption)
                                 .foregroundColor(.red)
                                 .lineLimit(1)
                             Image(systemName: "arrow.right")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
-                            Text(entry.newValue)
+                            Text(entry.displayValue(entry.newValue, units: units))
                                 .font(.caption)
                                 .foregroundColor(.green)
                                 .lineLimit(1)
-                            if let unit = entry.unit, !unit.isEmpty {
-                                Text(unit)
+                            if let displayUnit = entry.displayUnit(units: units) {
+                                Text(displayUnit)
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }

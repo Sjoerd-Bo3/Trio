@@ -33,6 +33,55 @@ extension SettingsAuditLog {
             source = stored.source ?? "manual"
             groupId = stored.groupId ?? stored.id ?? UUID()
         }
+
+        /// Returns the display string for a value, converting mg/dL → mmol/L when needed.
+        func displayValue(_ raw: String, units: GlucoseUnits) -> String {
+            guard unit == "mg/dL", units == .mmolL else { return raw }
+            return Self.convertGlucoseString(raw, to: units)
+        }
+
+        /// The display unit label, adjusted for the user's preferred glucose unit.
+        func displayUnit(units: GlucoseUnits) -> String? {
+            guard let u = unit, !u.isEmpty else { return nil }
+            if u == "mg/dL" { return units.rawValue }
+            return u
+        }
+
+        /// Converts a string that may contain one or more mg/dL numeric values to the target unit.
+        /// Handles both single values ("120") and comma-separated lists ("08:00: 100, 12:00: 90").
+        private static func convertGlucoseString(_ raw: String, to units: GlucoseUnits) -> String {
+            guard units == .mmolL else { return raw }
+
+            // Handle comma-separated therapy profile entries (e.g. "08:00: 100, 12:00: 90")
+            if raw.contains(",") {
+                let parts = raw.components(separatedBy: ", ")
+                let converted = parts.map { convertSingleSegment($0, to: units) }
+                return converted.joined(separator: ", ")
+            }
+            return convertSingleSegment(raw, to: units)
+        }
+
+        /// Converts a single segment like "120" or "08:00: 100" from mg/dL to mmol/L.
+        private static func convertSingleSegment(_ segment: String, to units: GlucoseUnits) -> String {
+            // Try to find a numeric portion at the end (possibly after "HH:mm: ")
+            let trimmed = segment.trimmingCharacters(in: .whitespaces)
+
+            // Pattern: optional time prefix "HH:mm: " followed by a number
+            if let colonRange = trimmed.range(of: ": ", options: .backwards) {
+                let prefix = String(trimmed[trimmed.startIndex ..< colonRange.upperBound])
+                let numStr = String(trimmed[colonRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+                if let decimal = Decimal(string: numStr) {
+                    return prefix + decimal.formatted(for: units)
+                }
+                return segment
+            }
+
+            // Plain number
+            if let decimal = Decimal(string: trimmed) {
+                return decimal.formatted(for: units)
+            }
+            return segment
+        }
     }
 
     /// A single change event that groups all individual setting changes sharing the same `groupId`.
@@ -61,6 +110,7 @@ extension SettingsAuditLog {
         var searchText: String = ""
         var selectedCategory: String? = nil
         var entries: [ChangeEntry] = []
+        var units: GlucoseUnits = .mgdL
 
         private static let groupingCalendar: Calendar = .current
 
@@ -81,6 +131,7 @@ extension SettingsAuditLog {
         }
 
         override func subscribe() {
+            units = settingsManager.settings.units
             loadEntries()
         }
 
