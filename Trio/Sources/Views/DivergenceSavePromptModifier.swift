@@ -7,7 +7,8 @@ struct DivergenceSavePromptModifier: ViewModifier {
     @Bindable var coordinator: PresetSwitchCoordinator
 
     /// The display name of the currently active preset (shown in the prompt messages).
-    let activePresetName: String
+    /// When `nil`, falls back to a localised "Unknown Preset" string.
+    let activePresetName: String?
 
     private static let unknownPreset = String(
         localized: "Unknown Preset",
@@ -51,15 +52,18 @@ struct DivergenceSavePromptModifier: ViewModifier {
     }
 
     /// Returns the active preset name, falling back to a localised "Unknown Preset" string
-    /// instead of an empty string to prevent blank button labels.
+    /// to prevent blank button labels.
     private var resolvedName: String {
-        activePresetName.isEmpty ? Self.unknownPreset : activePresetName
+        if let name = activePresetName, !name.isEmpty {
+            return name
+        }
+        return Self.unknownPreset
     }
 }
 
 extension View {
     /// Attaches the divergence save prompt for profile preset switching.
-    func divergenceSavePrompt(coordinator: PresetSwitchCoordinator, activePresetName: String) -> some View {
+    func divergenceSavePrompt(coordinator: PresetSwitchCoordinator, activePresetName: String?) -> some View {
         modifier(DivergenceSavePromptModifier(coordinator: coordinator, activePresetName: activePresetName))
     }
 }

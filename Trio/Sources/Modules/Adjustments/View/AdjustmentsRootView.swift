@@ -205,7 +205,7 @@ extension Adjustments {
                 }
                 .divergenceSavePrompt(
                     coordinator: state.presetSwitchCoordinator,
-                    activePresetName: state.activeProfilePreset?.name ?? ""
+                    activePresetName: state.activeProfilePreset?.name
                 )
             }).background(appState.trioBackgroundColor(for: colorScheme))
         }

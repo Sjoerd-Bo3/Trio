@@ -162,7 +162,7 @@ extension ProfilePresets {
             }
             .divergenceSavePrompt(
                 coordinator: state.presetSwitchCoordinator,
-                activePresetName: state.activePreset?.name ?? ""
+                activePresetName: state.activePreset?.name
             )
             .alert(
                 Text(
