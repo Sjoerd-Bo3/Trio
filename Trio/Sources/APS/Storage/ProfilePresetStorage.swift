@@ -26,6 +26,7 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     @Injected() private var storage: FileStorage!
     @Injected() private var broadcaster: Broadcaster!
     @Injected() private var settingsManager: SettingsManager!
+    @Injected() private var auditStorage: SettingsAuditStorage!
 
     private let viewContext = CoreDataStack.shared.persistentContainer.viewContext
     private let backgroundContext = CoreDataStack.shared.newTaskContext()
@@ -149,6 +150,19 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         existingPresets.append(preset)
         savePresets(existingPresets)
 
+        // Log preset creation in audit log
+        auditStorage.logChange(
+            category: "Profiles",
+            subcategory: "Preset Created",
+            settingName: "Profile Preset",
+            settingKey: SettingsMetadataRegistry.ProfileKeys.presetCreated,
+            oldValue: "(none)",
+            newValue: name,
+            unit: nil,
+            note: nil,
+            source: "manual"
+        )
+
         return preset
     }
 
@@ -166,13 +180,38 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             return true
         }
 
+        // Capture old therapy settings for audit log before overwriting
+        let oldTherapy = loadCurrentTherapySettings()
+        let previousPresetName = activePreset()?.name
+
         // Close any existing open profile preset run before activating a new one
         closeActiveRun()
+
+        // Isolate this activation from any adjacent manual edits
+        let presetSource = "preset:\(preset.name)"
+        auditStorage.forceNewGroup()
+        auditStorage.currentSource = presetSource
 
         storage.save(preset.basalProfile, as: OpenAPS.Settings.basalProfile)
         storage.save(preset.insulinSensitivities, as: OpenAPS.Settings.insulinSensitivities)
         storage.save(preset.carbRatios, as: OpenAPS.Settings.carbRatios)
         storage.save(preset.bgTargets, as: OpenAPS.Settings.bgTargets)
+
+        // Log top-level preset activation event
+        auditStorage.logChange(
+            category: "Profiles",
+            subcategory: "Preset Activation",
+            settingName: "Active Profile",
+            settingKey: SettingsMetadataRegistry.ProfileKeys.activeProfile,
+            oldValue: previousPresetName ?? "(none)",
+            newValue: preset.name,
+            unit: nil,
+            note: nil,
+            source: presetSource
+        )
+
+        // Log individual therapy profile changes
+        logTherapyChanges(from: oldTherapy, to: preset, source: presetSource)
 
         if preset.smbSettings != nil || preset.dynamicSettings != nil {
             var prefs = settingsManager.preferences
@@ -200,8 +239,13 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
                 prefs.tddAdjBasal = dynamic.tddAdjBasal
             }
 
+            // currentSource is already set, so SettingsManager's Mirror-based logging
+            // will tag the SMB/Dynamic preference changes with the preset source
             settingsManager.preferences = prefs
         }
+
+        // Clear the source override now that all preset changes are logged
+        auditStorage.currentSource = nil
 
         broadcaster.notify(BasalProfileObserver.self, on: .main) {
             $0.basalProfileDidChange(preset.basalProfile)
@@ -230,6 +274,53 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         )
 
         return true
+    }
+
+    /// Logs individual therapy profile changes (basal, ISF, CR, targets) from old to new preset values.
+    private func logTherapyChanges(from oldTherapy: CurrentTherapySettings?, to preset: ProfilePreset, source: String) {
+        let oldBasal = oldTherapy?.basalProfile ?? []
+        auditStorage.logTherapyProfileChange(
+            subcategory: "Basal Rates",
+            settingName: "Basal Profile",
+            settingKey: "therapy.basalProfile",
+            oldEntries: oldBasal.map { "\($0.start): \($0.rate) U/hr" },
+            newEntries: preset.basalProfile.map { "\($0.start): \($0.rate) U/hr" },
+            unit: "U/hr",
+            source: source
+        )
+
+        let oldISF = oldTherapy?.insulinSensitivities.sensitivities ?? []
+        auditStorage.logTherapyProfileChange(
+            subcategory: "Insulin Sensitivity Factor",
+            settingName: "ISF Profile",
+            settingKey: "therapy.insulinSensitivities",
+            oldEntries: oldISF.map { "\($0.start): \($0.sensitivity) mg/dL/U" },
+            newEntries: preset.insulinSensitivities.sensitivities.map { "\($0.start): \($0.sensitivity) mg/dL/U" },
+            unit: "mg/dL/U",
+            source: source
+        )
+
+        let oldCR = oldTherapy?.carbRatios.schedule ?? []
+        auditStorage.logTherapyProfileChange(
+            subcategory: "Carb Ratio",
+            settingName: "Carb Ratio Profile",
+            settingKey: "therapy.carbRatios",
+            oldEntries: oldCR.map { "\($0.start): \($0.ratio) g/U" },
+            newEntries: preset.carbRatios.schedule.map { "\($0.start): \($0.ratio) g/U" },
+            unit: "g/U",
+            source: source
+        )
+
+        let oldTargets = oldTherapy?.bgTargets.targets ?? []
+        auditStorage.logTherapyProfileChange(
+            subcategory: "BG Targets",
+            settingName: "BG Target Profile",
+            settingKey: "therapy.bgTargets",
+            oldEntries: oldTargets.map { "\($0.start): \($0.low)-\($0.high) mg/dL" },
+            newEntries: preset.bgTargets.targets.map { "\($0.start): \($0.low)-\($0.high) mg/dL" },
+            unit: "mg/dL",
+            source: source
+        )
     }
 
     // MARK: - CoreData run management
@@ -301,8 +392,26 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     /// Fully deactivates the current profile preset: clears the stored active preset ID,
     /// closes any open run, and posts a notification with nil to update the UI.
     func deactivatePreset() {
+        let previousPresetName = activePreset()?.name
         storage.remove(OpenAPS.Trio.activeProfilePresetId)
         closeActiveRun()
+
+        // Log deactivation in audit log
+        if let name = previousPresetName {
+            auditStorage.forceNewGroup()
+            auditStorage.logChange(
+                category: "Profiles",
+                subcategory: "Preset Deactivation",
+                settingName: "Active Profile",
+                settingKey: SettingsMetadataRegistry.ProfileKeys.activeProfile,
+                oldValue: name,
+                newValue: "(none)",
+                unit: nil,
+                note: nil,
+                source: "preset:\(name)"
+            )
+        }
+
         Foundation.NotificationCenter.default.post(
             name: BaseProfilePresetStorage.profilePresetActivatedNotification,
             object: nil
@@ -414,6 +523,7 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     }
 
     func deletePreset(id: String) {
+        let presetName = presets().first(where: { $0.id == id })?.name
         // If the deleted preset is the active one, deactivate it first
         if activePresetId() == id {
             deactivatePreset()
@@ -421,6 +531,21 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         var existingPresets = presets()
         existingPresets.removeAll { $0.id == id }
         savePresets(existingPresets)
+
+        // Log preset deletion in audit log
+        if let name = presetName {
+            auditStorage.logChange(
+                category: "Profiles",
+                subcategory: "Preset Deleted",
+                settingName: "Profile Preset",
+                settingKey: SettingsMetadataRegistry.ProfileKeys.presetDeleted,
+                oldValue: name,
+                newValue: "(deleted)",
+                unit: nil,
+                note: nil,
+                source: "manual"
+            )
+        }
     }
 
     func renamePreset(id: String, newName: String) {
@@ -458,6 +583,19 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             dynamicSettings: existing.dynamicSettings != nil ? currentDynamicSettings() : nil
         )
         savePresets(existingPresets)
+
+        // Log preset update in audit log (no therapy settings change, only the preset definition)
+        auditStorage.logChange(
+            category: "Profiles",
+            subcategory: "Preset Update",
+            settingName: "Profile Preset",
+            settingKey: SettingsMetadataRegistry.ProfileKeys.presetUpdated,
+            oldValue: "\(existing.name) (previous snapshot)",
+            newValue: "\(existing.name) (updated to current settings)",
+            unit: nil,
+            note: nil,
+            source: "preset-update:\(existing.name)"
+        )
 
         // If this is the active preset, close the diverged run and open a matching one (gap 17.8)
         if activePresetId() == id {

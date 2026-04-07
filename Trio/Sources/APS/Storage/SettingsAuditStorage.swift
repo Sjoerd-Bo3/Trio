@@ -31,8 +31,19 @@ protocol SettingsAuditStorage: AnyObject {
         settingKey: String,
         oldEntries: [String],
         newEntries: [String],
-        unit: String
+        unit: String,
+        source: String
     )
+
+    /// Forces the next logged change to start a new group, regardless of the 10-minute window.
+    /// Use before logging preset activations to isolate them from adjacent manual edits.
+    func forceNewGroup()
+
+    /// Temporary source override. When non-nil, `logChange` and the SettingsManager
+    /// mirror-based logger use this value instead of the caller-supplied source.
+    /// Set before a preset activation's `settingsManager.preferences` assignment and
+    /// reset immediately after, so that the Mirror-based preference changes inherit the preset source.
+    var currentSource: String? { get set }
 }
 
 extension SettingsAuditStorage {
@@ -42,7 +53,8 @@ extension SettingsAuditStorage {
         settingKey: String,
         oldEntries: [String],
         newEntries: [String],
-        unit: String
+        unit: String,
+        source: String = "manual"
     ) {
         let oldStr = oldEntries.joined(separator: ", ")
         let newStr = newEntries.joined(separator: ", ")
@@ -56,7 +68,7 @@ extension SettingsAuditStorage {
             newValue: newStr.isEmpty ? "(empty)" : newStr,
             unit: unit,
             note: nil,
-            source: "manual"
+            source: currentSource ?? source
         )
     }
 }
@@ -74,6 +86,11 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
 
     /// Serial queue protecting `currentGroup` from concurrent access.
     private let groupLock = NSLock()
+
+    /// When non-nil, overrides the `source` parameter for all logged changes.
+    /// Used during preset activations so that Mirror-based preference changes
+    /// automatically inherit the preset source.
+    var currentSource: String?
 
     init(resolver: Resolver) {
         injectServices(resolver)
@@ -94,6 +111,12 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
         return newId
     }
 
+    func forceNewGroup() {
+        groupLock.lock()
+        defer { groupLock.unlock() }
+        currentGroup = nil
+    }
+
     func logChange(
         category: String,
         subcategory: String,
@@ -107,6 +130,7 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
     ) {
         guard oldValue != newValue else { return }
 
+        let effectiveSource = currentSource ?? source
         let groupId = resolveGroupId()
 
         backgroundContext.perform { [weak self] in
@@ -122,7 +146,7 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
             entry.newValue = newValue
             entry.unit = unit
             entry.note = note
-            entry.source = source
+            entry.source = effectiveSource
             entry.groupId = groupId
 
             do {

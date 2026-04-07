@@ -25,6 +25,16 @@ enum SettingsMetadataRegistry {
         return map
     }()
 
+    // MARK: - Profile Presets metadata keys
+
+    /// Well-known setting keys for profile preset lifecycle events.
+    enum ProfileKeys {
+        static let activeProfile = "profile.active"
+        static let presetCreated = "profile.created"
+        static let presetDeleted = "profile.deleted"
+        static let presetUpdated = "profile.updated"
+    }
+
     private static let trioSettingsMetadata: [SettingMetadata] = [
         // Units & Basics
         .init(key: "units", name: "Glucose Units", category: "Therapy", subcategory: "Units & Limits", unit: nil),
