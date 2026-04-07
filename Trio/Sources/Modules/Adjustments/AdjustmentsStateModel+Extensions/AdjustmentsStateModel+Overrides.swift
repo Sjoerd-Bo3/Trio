@@ -22,6 +22,32 @@ extension Adjustments.StateModel {
             guard viewContext.hasChanges else { return }
             try viewContext.save()
 
+            // Audit log the override activation
+            let name = overrideToEnact.name ?? "Override"
+            let pct = overrideToEnact.percentage
+            var details = "\(name): \(Int(pct))%"
+            if overrideToEnact.overrideTarget, let targetVal = overrideToEnact.target?.decimalValue {
+                let targetUnit = units == .mmolL ? targetVal.formattedAsMmolL : "\(targetVal)"
+                let unitLabel = units == .mmolL ? "mmol/L" : "mg/dL"
+                details += ", target \(targetUnit) \(unitLabel)"
+            }
+            if overrideToEnact.indefinite {
+                details += ", indefinite"
+            } else if let dur = overrideToEnact.duration?.decimalValue, dur > 0 {
+                details += ", \(dur) min"
+            }
+            auditStorage.logChange(
+                category: "Adjustments",
+                subcategory: "Overrides",
+                settingName: "Override",
+                settingKey: "adjustments.override",
+                oldValue: "(none)",
+                newValue: details,
+                unit: nil,
+                note: nil,
+                source: "manual"
+            )
+
             updateLatestOverrideConfiguration()
         } catch {
             debugPrint("\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to enact Override Preset")
@@ -60,6 +86,21 @@ extension Adjustments.StateModel {
                         )
                         newOverrideRunStored.override = canceledOverride
                         newOverrideRunStored.isUploadedToNS = false
+
+                        // Audit log the override cancellation
+                        let name = canceledOverride.name ?? "Override"
+                        let pct = canceledOverride.percentage
+                        self.auditStorage.logChange(
+                            category: "Adjustments",
+                            subcategory: "Overrides",
+                            settingName: "Override",
+                            settingKey: "adjustments.override",
+                            oldValue: "\(name): \(Int(pct))%",
+                            newValue: "(cancelled)",
+                            unit: nil,
+                            note: nil,
+                            source: "manual"
+                        )
                     }
                 }
 
@@ -115,6 +156,31 @@ extension Adjustments.StateModel {
 
             // Then save and activate a new custom Override
             try await overrideStorage.storeOverride(override: override)
+
+            // Audit log the custom override activation
+            let name = overrideName.isEmpty ? "Custom Override" : overrideName
+            var details = "\(name): \(Int(overridePercentage))%"
+            if shouldOverrideTarget {
+                let targetUnit = units == .mmolL ? target.formattedAsMmolL : "\(target)"
+                let unitLabel = units == .mmolL ? "mmol/L" : "mg/dL"
+                details += ", target \(targetUnit) \(unitLabel)"
+            }
+            if indefinite {
+                details += ", indefinite"
+            } else if overrideDuration > 0 {
+                details += ", \(overrideDuration) min"
+            }
+            auditStorage.logChange(
+                category: "Adjustments",
+                subcategory: "Overrides",
+                settingName: "Override",
+                settingKey: "adjustments.override",
+                oldValue: "(none)",
+                newValue: details,
+                unit: nil,
+                note: nil,
+                source: "manual"
+            )
 
             // Reset State variables
             await resetStateVariables()

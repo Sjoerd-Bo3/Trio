@@ -64,6 +64,7 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
     @Injected() private var glucoseStorage: GlucoseStorage!
     @Injected() private var settingsManager: SettingsManager!
     @Injected() private var bluetoothProvider: BluetoothStateManager!
+    @Injected() private var auditStorage: SettingsAuditStorage!
 
     @Persisted(key: "BaseDeviceDataManager.lastEventDate") var lastEventDate: Date? = nil
     @SyncAccess(lock: accessLock) @Persisted(key: "BaseDeviceDataManager.lastHeartBeatTime") var lastHeartBeatTime: Date =
@@ -85,6 +86,23 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
 
     var pumpManager: PumpManagerUI? {
         didSet {
+            // Audit log pump changes
+            let oldName = oldValue?.localizedTitle
+            let newName = pumpManager?.localizedTitle
+            if oldName != newName {
+                auditStorage?.logChange(
+                    category: "Devices",
+                    subcategory: "Pump",
+                    settingName: "Pump",
+                    settingKey: "devices.pump",
+                    oldValue: oldName ?? "(none)",
+                    newValue: newName ?? "(disconnected)",
+                    unit: nil,
+                    note: nil,
+                    source: "manual"
+                )
+            }
+
             if let pumpManager = pumpManager {
                 pumpManager.pumpManagerDelegate = self
                 pumpManager.delegateQueue = processQueue
