@@ -28,7 +28,8 @@ extension TargetsEditor {
         }
 
         func saveProfile(_ profile: BGTargets) {
-            let old = self.profile
+            let old = storage.retrieve(OpenAPS.Settings.bgTargets, as: BGTargets.self)
+                ?? BGTargets(units: .mgdL, userPreferredUnits: .mgdL, targets: [])
             storage.save(profile, as: OpenAPS.Settings.bgTargets)
             logTargetsChange(old: old, new: profile)
         }

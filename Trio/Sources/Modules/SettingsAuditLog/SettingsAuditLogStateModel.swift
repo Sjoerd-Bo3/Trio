@@ -8,13 +8,8 @@ extension SettingsAuditLog {
         var searchText: String = ""
         var selectedCategory: String? = nil
         var entries: [SettingsChangeStored] = []
-        var isLoadingMore: Bool = false
-        var hasMore: Bool = true
 
-        private let pageSize = 50
-        private var currentOffset = 0
-
-        let viewContext = CoreDataStack.shared.persistentContainer.viewContext
+        private static let groupingCalendar: Calendar = .current
 
         private static let groupingFormatter: DateFormatter = {
             let df = DateFormatter()
@@ -23,6 +18,7 @@ extension SettingsAuditLog {
             return df
         }()
 
+        /// Distinct categories from loaded entries. Recomputed only when entries change.
         var allCategories: [String] {
             var cats = Set<String>()
             for entry in entries {
@@ -32,34 +28,21 @@ extension SettingsAuditLog {
         }
 
         override func subscribe() {
-            loadInitial()
+            loadEntries()
         }
 
-        func loadInitial() {
-            currentOffset = 0
-            hasMore = true
-            entries = []
-            loadMore()
-        }
-
-        func loadMore() {
-            guard hasMore, !isLoadingMore else { return }
-            isLoadingMore = true
-            let loaded = provider.auditStorage.fetchHistory(
+        func loadEntries() {
+            entries = provider.auditStorage.fetchHistory(
                 category: selectedCategory == "All" ? nil : selectedCategory,
                 since: nil,
-                limit: pageSize + currentOffset
+                limit: 500
             )
-            entries = loaded
-            hasMore = loaded.count >= pageSize + currentOffset
-            currentOffset += pageSize
-            isLoadingMore = false
         }
 
         func updateNote(for entry: SettingsChangeStored, note: String) {
             guard let id = entry.id else { return }
             provider.auditStorage.updateNote(for: id, note: note)
-            loadInitial()
+            loadEntries()
         }
 
         var filteredEntries: [SettingsChangeStored] {
@@ -75,16 +58,29 @@ extension SettingsAuditLog {
         }
 
         var groupedEntries: [(String, [SettingsChangeStored])] {
+            let cal = Self.groupingCalendar
             let df = Self.groupingFormatter
-            let grouped = Dictionary(grouping: filteredEntries) { entry -> String in
-                guard let date = entry.date else { return "Unknown" }
-                return df.string(from: date)
+            // Group by (year, month, day) components to avoid parsing formatted strings for sorting
+            let grouped = Dictionary(grouping: filteredEntries) { entry -> DateComponents in
+                guard let date = entry.date else { return DateComponents() }
+                return cal.dateComponents([.year, .month, .day], from: date)
             }
-            return grouped.sorted { a, b in
-                let dateA = df.date(from: a.key) ?? .distantPast
-                let dateB = df.date(from: b.key) ?? .distantPast
-                return dateA > dateB
-            }
+            return grouped
+                .sorted { a, b in
+                    // Sort descending by date components
+                    let aDate = cal.date(from: a.key) ?? .distantPast
+                    let bDate = cal.date(from: b.key) ?? .distantPast
+                    return aDate > bDate
+                }
+                .map { components, dayEntries in
+                    let label: String
+                    if let date = cal.date(from: components) {
+                        label = df.string(from: date)
+                    } else {
+                        label = "Unknown"
+                    }
+                    return (label, dayEntries)
+                }
         }
     }
 }

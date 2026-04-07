@@ -43,15 +43,6 @@ extension SettingsAuditLog {
                     .listRowBackground(Color.chart)
                 }
 
-                if state.hasMore {
-                    Section {
-                        Button("Load More") {
-                            state.loadMore()
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    }
-                    .listRowBackground(Color.chart)
-                }
             }
             .scrollContentBackground(.hidden)
             .background(appState.trioBackgroundColor(for: colorScheme))
@@ -73,7 +64,7 @@ extension SettingsAuditLog {
                             let isSelected = (state.selectedCategory ?? "All") == cat
                             Button {
                                 state.selectedCategory = cat == "All" ? nil : cat
-                                state.loadInitial()
+                                state.loadEntries()
                             } label: {
                                 Text(cat)
                                     .font(.caption)

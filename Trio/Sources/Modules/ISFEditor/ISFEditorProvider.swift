@@ -35,7 +35,8 @@ extension ISFEditor {
         }
 
         func saveProfile(_ profile: InsulinSensitivities) {
-            let old = self.profile
+            let old = storage.retrieve(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
+                ?? InsulinSensitivities(units: .mgdL, userPreferredUnits: .mgdL, sensitivities: [])
             storage.save(profile, as: OpenAPS.Settings.insulinSensitivities)
             logISFChange(old: old, new: profile)
         }

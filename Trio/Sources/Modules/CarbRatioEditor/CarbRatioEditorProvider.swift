@@ -12,7 +12,8 @@ extension CarbRatioEditor {
         }
 
         func saveProfile(_ profile: CarbRatios) {
-            let old = self.profile
+            let old = storage.retrieve(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
+                ?? CarbRatios(units: .grams, schedule: [])
             storage.save(profile, as: OpenAPS.Settings.carbRatios)
             logCRChange(old: old, new: profile)
         }
