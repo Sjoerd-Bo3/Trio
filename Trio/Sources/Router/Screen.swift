@@ -169,6 +169,7 @@ extension Screen {
         case .settingsAuditLog:
             SettingsAuditLog.RootView(resolver: resolver)
         }
+    }
 
     func modal(resolver: Resolver) -> Main.Modal {
         .init(screen: self, view: view(resolver: resolver).asAny())
