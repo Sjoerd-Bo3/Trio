@@ -47,18 +47,20 @@ extension SettingsAuditLog {
             self.groupId = groupId
         }
 
+        /// Force-copies every String so the ChangeEntry owns its own storage
+        /// and does not share NSString backing with Core Data managed objects.
         init(from stored: SettingsChangeStored) {
             id = stored.id ?? UUID()
             date = stored.date ?? .distantPast
-            category = stored.category ?? ""
-            subcategory = stored.subcategory ?? ""
-            settingName = stored.settingName ?? ""
-            settingKey = stored.settingKey ?? ""
-            oldValue = stored.oldValue ?? ""
-            newValue = stored.newValue ?? ""
-            unit = stored.unit
-            note = stored.note ?? ""
-            source = stored.source ?? "manual"
+            category = String(stored.category ?? "")
+            subcategory = String(stored.subcategory ?? "")
+            settingName = String(stored.settingName ?? "")
+            settingKey = String(stored.settingKey ?? "")
+            oldValue = String(stored.oldValue ?? "")
+            newValue = String(stored.newValue ?? "")
+            unit = stored.unit.map { String($0) }
+            note = String(stored.note ?? "")
+            source = String(stored.source ?? "manual")
             groupId = stored.groupId ?? stored.id ?? UUID()
         }
 
