@@ -81,8 +81,7 @@ extension Adjustments {
         var isProfileDiverged: Bool = false
         var showingProfileActivateConfirmation: Bool = false
         var selectedProfilePreset: ProfilePreset?
-        var showingDivergenceSavePrompt: Bool = false
-        var pendingPresetSwitch: ProfilePreset?
+        let presetSwitchCoordinator = PresetSwitchCoordinator()
 
         // Combine
         private var cancellables = Set<AnyCancellable>()
@@ -108,20 +107,30 @@ extension Adjustments {
             profilePresets = profilePresetStorage.presets()
             activeProfilePreset = profilePresetStorage.activePreset()
             refreshProfileDivergence()
+            configurePresetSwitchCoordinator()
         }
 
         // MARK: - Profile Presets
 
-        /// Initiates a profile preset switch. If the current active preset is diverged,
-        /// shows the divergence save prompt first; otherwise shows the normal activation confirmation.
-        func requestProfilePresetSwitch(_ preset: ProfilePreset) {
-            if isProfileDiverged, activeProfilePreset != nil {
-                pendingPresetSwitch = preset
-                showingDivergenceSavePrompt = true
-            } else {
-                selectedProfilePreset = preset
-                showingProfileActivateConfirmation = true
+        /// Wires the shared `PresetSwitchCoordinator` callbacks to this state model's logic.
+        private func configurePresetSwitchCoordinator() {
+            presetSwitchCoordinator.onProceedWithSwitch = { [weak self] preset in
+                self?.selectedProfilePreset = preset
+                self?.showingProfileActivateConfirmation = true
             }
+            presetSwitchCoordinator.onUpdateCurrentPreset = { [weak self] in
+                guard let self, let active = self.activeProfilePreset else { return }
+                self.updateProfilePresetToCurrentSettings(active)
+            }
+        }
+
+        /// Initiates a profile preset switch via the shared coordinator.
+        func requestProfilePresetSwitch(_ preset: ProfilePreset) {
+            presetSwitchCoordinator.requestSwitch(
+                to: preset,
+                isDiverged: isProfileDiverged,
+                hasActivePreset: activeProfilePreset != nil
+            )
         }
 
         func activateProfilePreset(_ preset: ProfilePreset) {
@@ -129,31 +138,6 @@ extension Adjustments {
                 activeProfilePreset = preset
                 isProfileDiverged = false
             }
-        }
-
-        /// Updates the current active preset with diverged settings, then switches to the pending preset.
-        func updateCurrentPresetAndSwitch() {
-            guard let active = activeProfilePreset, let pending = pendingPresetSwitch else { return }
-            updateProfilePresetToCurrentSettings(active)
-            proceedWithPendingSwitch(pending)
-        }
-
-        /// Discards the diverged changes and switches directly to the pending preset.
-        func discardChangesAndSwitch() {
-            guard let pending = pendingPresetSwitch else { return }
-            proceedWithPendingSwitch(pending)
-        }
-
-        /// Cancels the pending preset switch entirely.
-        func cancelPendingSwitch() {
-            pendingPresetSwitch = nil
-        }
-
-        /// Activates the pending preset via the normal confirmation flow.
-        private func proceedWithPendingSwitch(_ preset: ProfilePreset) {
-            pendingPresetSwitch = nil
-            selectedProfilePreset = preset
-            showingProfileActivateConfirmation = true
         }
 
         func refreshProfileDivergence() {

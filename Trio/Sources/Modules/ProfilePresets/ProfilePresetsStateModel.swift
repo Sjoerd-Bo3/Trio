@@ -15,8 +15,7 @@ extension ProfilePresets {
         var units: GlucoseUnits = .mgdL
         var activePreset: ProfilePreset?
         var isProfileDiverged: Bool = false
-        var showingDivergenceSavePrompt: Bool = false
-        var pendingPresetSwitch: ProfilePreset?
+        let presetSwitchCoordinator = PresetSwitchCoordinator()
 
         // Save options
         var includeSMBSettings: Bool = false
@@ -51,6 +50,7 @@ extension ProfilePresets {
             currentProfile = provider.loadCurrentProfile()
             activePreset = provider.loadActivePreset()
             refreshProfileDivergence()
+            configurePresetSwitchCoordinator()
         }
 
         func refreshCurrentProfile() {
@@ -84,16 +84,25 @@ extension ProfilePresets {
             savePreviewProfile = nil
         }
 
-        /// Initiates a profile preset switch. If the current active preset is diverged,
-        /// shows the divergence save prompt first; otherwise shows the normal activation confirmation.
-        func requestPresetSwitch(_ preset: ProfilePreset) {
-            if isProfileDiverged, activePreset != nil {
-                pendingPresetSwitch = preset
-                showingDivergenceSavePrompt = true
-            } else {
-                selectedPreset = preset
-                showingActivateConfirmation = true
+        /// Wires the shared `PresetSwitchCoordinator` callbacks to this state model's logic.
+        private func configurePresetSwitchCoordinator() {
+            presetSwitchCoordinator.onProceedWithSwitch = { [weak self] preset in
+                self?.selectedPreset = preset
+                self?.showingActivateConfirmation = true
             }
+            presetSwitchCoordinator.onUpdateCurrentPreset = { [weak self] in
+                guard let self, let active = self.activePreset else { return }
+                self.updatePresetToCurrentSettings(active)
+            }
+        }
+
+        /// Initiates a profile preset switch via the shared coordinator.
+        func requestPresetSwitch(_ preset: ProfilePreset) {
+            presetSwitchCoordinator.requestSwitch(
+                to: preset,
+                isDiverged: isProfileDiverged,
+                hasActivePreset: activePreset != nil
+            )
         }
 
         func activatePreset(_ preset: ProfilePreset) {
@@ -103,31 +112,6 @@ extension ProfilePresets {
                 activePreset = preset
                 isProfileDiverged = false
             }
-        }
-
-        /// Updates the current active preset with diverged settings, then switches to the pending preset.
-        func updateCurrentPresetAndSwitch() {
-            guard let active = activePreset, let pending = pendingPresetSwitch else { return }
-            updatePresetToCurrentSettings(active)
-            proceedWithPendingSwitch(pending)
-        }
-
-        /// Discards the diverged changes and switches directly to the pending preset.
-        func discardChangesAndSwitch() {
-            guard let pending = pendingPresetSwitch else { return }
-            proceedWithPendingSwitch(pending)
-        }
-
-        /// Cancels the pending preset switch entirely.
-        func cancelPendingSwitch() {
-            pendingPresetSwitch = nil
-        }
-
-        /// Activates the pending preset via the normal confirmation flow.
-        private func proceedWithPendingSwitch(_ preset: ProfilePreset) {
-            pendingPresetSwitch = nil
-            selectedPreset = preset
-            showingActivateConfirmation = true
         }
 
         func deletePreset(_ preset: ProfilePreset) {

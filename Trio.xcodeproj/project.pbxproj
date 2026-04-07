@@ -77,7 +77,9 @@
 		3811DE5C25C9D4D500A708ED /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5425C9D4D500A708ED /* Formatters.swift */; };
 		3811DE5D25C9D4D500A708ED /* Publisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5525C9D4D500A708ED /* Publisher.swift */; };
 		3811DE5F25C9D4D500A708ED /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5725C9D4D500A708ED /* ProgressBar.swift */; };
-		3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */; };
+		5BD4EAB56D214E8B9856C82D /* PresetSwitchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444D7FF319E24E5ABB3EA85F /* PresetSwitchCoordinator.swift */; };
+468C3F851FE245DCBD1E6E19 /* DivergenceSavePromptModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */; };
+3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */; };
 		3811DE8F25C9D80400A708ED /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE8E25C9D80400A708ED /* User.swift */; };
 		3811DEA925C9D88300A708ED /* AppearanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE9325C9D88200A708ED /* AppearanceManager.swift */; };
 		3811DEAB25C9D88300A708ED /* HTTPResponseStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE9625C9D88300A708ED /* HTTPResponseStatus.swift */; };
@@ -938,7 +940,9 @@ A631E9E032EA6B20DC562273 /* ProfilePresetsProvider.swift in Sources */ = {isa = 
 		3811DE5425C9D4D500A708ED /* Formatters.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
 		3811DE5525C9D4D500A708ED /* Publisher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Publisher.swift; sourceTree = "<group>"; };
 		3811DE5725C9D4D500A708ED /* ProgressBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
-		3811DE5925C9D4D500A708ED /* ViewModifiers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
+		444D7FF319E24E5ABB3EA85F /* PresetSwitchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetSwitchCoordinator.swift; sourceTree = "<group>"; };
+4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivergenceSavePromptModifier.swift; sourceTree = "<group>"; };
+3811DE5925C9D4D500A708ED /* ViewModifiers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
 		3811DE8E25C9D80400A708ED /* User.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		3811DE9325C9D88200A708ED /* AppearanceManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppearanceManager.swift; sourceTree = "<group>"; };
 		3811DE9625C9D88300A708ED /* HTTPResponseStatus.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPResponseStatus.swift; sourceTree = "<group>"; };
@@ -2347,7 +2351,8 @@ EDC09FCB2D3640FD781EFD10 /* PresetChartViews.swift */ = {isa = PBXFileReference;
 			isa = PBXGroup;
 			children = (
 				DD6A4E072DBD95F1008C4B26 /* BluetoothRequiredView.swift */,
-				3811DE5925C9D4D500A708ED /* ViewModifiers.swift */,
+				4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */,
+3811DE5925C9D4D500A708ED /* ViewModifiers.swift */,
 				3883581B25EE79BB00E024B2 /* TextFieldWithToolBar.swift */,
 				383420D825FFEB3F002D46C1 /* Popup.swift */,
 				389ECDFD2601061500D86C4F /* View+Snapshot.swift */,
@@ -2520,7 +2525,8 @@ EDC09FCB2D3640FD781EFD10 /* PresetChartViews.swift */ = {isa = PBXFileReference;
 				38C4D33625E9A1A200D30B77 /* DispatchQueue+Extensions.swift */,
 				389487392614928B004DF424 /* DispatchTimer.swift */,
 				DD940BAB2CA75889000830A5 /* DynamicGlucoseColor.swift */,
-				3811DE5425C9D4D500A708ED /* Formatters.swift */,
+				444D7FF319E24E5ABB3EA85F /* PresetSwitchCoordinator.swift */,
+3811DE5425C9D4D500A708ED /* Formatters.swift */,
 				38FEF412273B317A00574A46 /* HKUnit.swift */,
 				38B4F3AE25E2979F00E76A18 /* IndexedCollection.swift */,
 				389A571F26079BAA00BC102F /* Interpolation.swift */,
@@ -4487,7 +4493,9 @@ ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */,
 				38E98A2925F52C9300C0CED0 /* Error+Extensions.swift in Sources */,
 				3E62C7822F54CC1B00433237 /* BolusDisplayThreshold.swift in Sources */,
 				38EA05DA261F6E7C0064E39B /* SimpleLogReporter.swift in Sources */,
-				3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */,
+				5BD4EAB56D214E8B9856C82D /* PresetSwitchCoordinator.swift in Sources */,
+468C3F851FE245DCBD1E6E19 /* DivergenceSavePromptModifier.swift in Sources */,
+3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */,
 				3811DEAC25C9D88300A708ED /* NightscoutManager.swift in Sources */,
 				BD793CB22CE8033500D669AC /* TempTargetRunStored.swift in Sources */,
 				BD7DA9A92AE06E9200601B20 /* BolusCalculatorStateModel.swift in Sources */,

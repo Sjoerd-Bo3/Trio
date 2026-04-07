@@ -203,35 +203,10 @@ extension Adjustments {
                         )
                     }
                 }
-                .confirmationDialog(
-                    Text(
-                        "Unsaved Changes",
-                        comment: "Adjustments: title for divergence save prompt when switching presets"
-                    ),
-                    isPresented: $state.showingDivergenceSavePrompt,
-                    titleVisibility: .visible
-                ) {
-                    Button(String(
-                        localized: "Update '\(state.activeProfilePreset?.name ?? "")'",
-                        comment: "Adjustments: update existing preset with current settings before switching"
-                    )) {
-                        state.updateCurrentPresetAndSwitch()
-                    }
-                    Button(String(
-                        localized: "Discard Changes",
-                        comment: "Adjustments: discard diverged settings and switch preset"
-                    ), role: .destructive) {
-                        state.discardChangesAndSwitch()
-                    }
-                    Button(String(localized: "Cancel", comment: "Adjustments: cancel button"), role: .cancel) {
-                        state.cancelPendingSwitch()
-                    }
-                } message: {
-                    Text(
-                        "Your current therapy settings have been modified since '\(state.activeProfilePreset?.name ?? "")' was activated. What would you like to do with these changes?",
-                        comment: "Adjustments: message explaining diverged settings before preset switch"
-                    )
-                }
+                .divergenceSavePrompt(
+                    coordinator: state.presetSwitchCoordinator,
+                    activePresetName: state.activeProfilePreset?.name ?? ""
+                )
             }).background(appState.trioBackgroundColor(for: colorScheme))
         }
 

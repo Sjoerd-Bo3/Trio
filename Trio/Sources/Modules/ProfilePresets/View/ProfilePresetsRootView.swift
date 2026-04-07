@@ -160,35 +160,10 @@ extension ProfilePresets {
                     )
                 }
             }
-            .confirmationDialog(
-                Text(
-                    "Unsaved Changes",
-                    comment: "ProfilePresets: title for divergence save prompt when switching presets"
-                ),
-                isPresented: $state.showingDivergenceSavePrompt,
-                titleVisibility: .visible
-            ) {
-                Button(String(
-                    localized: "Update '\(state.activePreset?.name ?? "")'",
-                    comment: "ProfilePresets: update existing preset with current settings before switching"
-                )) {
-                    state.updateCurrentPresetAndSwitch()
-                }
-                Button(String(
-                    localized: "Discard Changes",
-                    comment: "ProfilePresets: discard diverged settings and switch preset"
-                ), role: .destructive) {
-                    state.discardChangesAndSwitch()
-                }
-                Button(String(localized: "Cancel", comment: "ProfilePresets: cancel button"), role: .cancel) {
-                    state.cancelPendingSwitch()
-                }
-            } message: {
-                Text(
-                    "Your current therapy settings have been modified since '\(state.activePreset?.name ?? "")' was activated. What would you like to do with these changes?",
-                    comment: "ProfilePresets: message explaining diverged settings before preset switch"
-                )
-            }
+            .divergenceSavePrompt(
+                coordinator: state.presetSwitchCoordinator,
+                activePresetName: state.activePreset?.name ?? ""
+            )
             .alert(
                 Text(
                     "Cannot Save Preset",
