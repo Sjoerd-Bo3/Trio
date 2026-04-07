@@ -379,6 +379,8 @@ extension Home {
             broadcaster.register(PumpSettingsObserver.self, observer: self)
             broadcaster.register(BasalProfileObserver.self, observer: self)
             broadcaster.register(BGTargetsObserver.self, observer: self)
+            broadcaster.register(InsulinSensitivitiesObserver.self, observer: self)
+            broadcaster.register(CarbRatiosObserver.self, observer: self)
             broadcaster.register(PumpReservoirObserver.self, observer: self)
             broadcaster.register(PumpDeactivatedObserver.self, observer: self)
 
@@ -715,6 +717,8 @@ extension Home.StateModel:
     PumpSettingsObserver,
     BasalProfileObserver,
     BGTargetsObserver,
+    InsulinSensitivitiesObserver,
+    CarbRatiosObserver,
     PumpReservoirObserver,
     PumpDeactivatedObserver
 {
@@ -791,6 +795,14 @@ extension Home.StateModel:
         Task {
             await setupGlucoseTargets()
         }
+        refreshProfileDivergence()
+    }
+
+    func insulinSensitivitiesDidChange(_: InsulinSensitivities) {
+        refreshProfileDivergence()
+    }
+
+    func carbRatiosDidChange(_: CarbRatios) {
         refreshProfileDivergence()
     }
 

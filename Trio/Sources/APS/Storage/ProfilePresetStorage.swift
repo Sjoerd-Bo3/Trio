@@ -205,6 +205,14 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
             $0.bgTargetsDidChange(preset.bgTargets)
         }
 
+        broadcaster.notify(InsulinSensitivitiesObserver.self, on: .main) {
+            $0.insulinSensitivitiesDidChange(preset.insulinSensitivities)
+        }
+
+        broadcaster.notify(CarbRatiosObserver.self, on: .main) {
+            $0.carbRatiosDidChange(preset.carbRatios)
+        }
+
         storage.save(preset.id, as: OpenAPS.Trio.activeProfilePresetId)
 
         // Create a new non-diverged run entry for this activation
