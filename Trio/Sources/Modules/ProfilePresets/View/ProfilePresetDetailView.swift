@@ -19,17 +19,7 @@ extension ProfilePresets {
                 case .isf: String(localized: "ISF", comment: "ProfilePresetDetail: tab label for ISF")
                 case .cr: String(localized: "CR", comment: "ProfilePresetDetail: tab label for carb ratios")
                 case .targets: String(localized: "Targets", comment: "ProfilePresetDetail: tab label for glucose targets")
-                case .smbDyn: String(localized: "SMB/dynISF", comment: "ProfilePresetDetail: tab label for SMB and dynamic ISF")
-                }
-            }
-
-            var icon: String {
-                switch self {
-                case .basal: "drop.fill"
-                case .isf: "arrow.up.arrow.down"
-                case .cr: "fork.knife"
-                case .targets: "target"
-                case .smbDyn: "bolt.fill"
+                case .smbDyn: String(localized: "SMB/dISF", comment: "ProfilePresetDetail: tab label for SMB and dynamic ISF")
                 }
             }
         }
@@ -50,48 +40,35 @@ extension ProfilePresets {
 
         var body: some View {
             VStack(spacing: 0) {
-                tabBar
-                TabView(selection: $selectedTab) {
-                    basalTab.tag(DetailTab.basal)
-                    isfTab.tag(DetailTab.isf)
-                    crTab.tag(DetailTab.cr)
-                    targetsTab.tag(DetailTab.targets)
-                    if hasSMBOrDynamic {
-                        smbDynTab.tag(DetailTab.smbDyn)
+                // Standard segmented picker tab bar
+                Picker(
+                    String(localized: "Detail Tab", comment: "ProfilePresetDetail: tab picker accessibility label"),
+                    selection: $selectedTab
+                ) {
+                    ForEach(availableTabs, id: \.self) { tab in
+                        Text(tab.label).tag(tab)
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+
+                // Tab content
+                switch selectedTab {
+                case .basal:
+                    basalTab
+                case .isf:
+                    isfTab
+                case .cr:
+                    crTab
+                case .targets:
+                    targetsTab
+                case .smbDyn:
+                    smbDynTab
+                }
             }
             .navigationTitle(Text(preset.name))
             .navigationBarTitleDisplayMode(.inline)
-        }
-
-        // MARK: - Tab Bar
-
-        private var tabBar: some View {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    ForEach(availableTabs, id: \.self) { tab in
-                        Button {
-                            withAnimation { selectedTab = tab }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: tab.icon)
-                                    .font(.system(size: 10))
-                                Text(tab.label)
-                                    .font(.caption.bold())
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(selectedTab == tab ? Color.accentColor : Color.secondary.opacity(0.15))
-                            .foregroundColor(selectedTab == tab ? .white : .primary)
-                            .clipShape(Capsule())
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-            }
         }
 
         // MARK: - Basal Tab

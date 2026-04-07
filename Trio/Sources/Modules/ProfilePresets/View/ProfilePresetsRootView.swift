@@ -612,7 +612,7 @@ extension ProfilePresets {
 
         // MARK: - Save Preset Sheet
 
-        private enum SaveTab: Int, CaseIterable {
+        private enum SaveStep: Int, CaseIterable {
             case setup = 0
             case basal
             case isf
@@ -624,59 +624,42 @@ extension ProfilePresets {
             var title: String {
                 switch self {
                 case .setup:
-                    return String(localized: "Setup", comment: "ProfilePresets: save tab for name/icon/options")
+                    return String(localized: "Setup", comment: "ProfilePresets: save step for name/icon/options")
                 case .basal:
-                    return String(localized: "Basal", comment: "ProfilePresets: save tab for basal rates")
+                    return String(localized: "Basal", comment: "ProfilePresets: save step for basal rates")
                 case .isf:
-                    return String(localized: "ISF", comment: "ProfilePresets: save tab for ISF")
+                    return String(localized: "ISF", comment: "ProfilePresets: save step for ISF")
                 case .cr:
-                    return String(localized: "CR", comment: "ProfilePresets: save tab for carb ratios")
+                    return String(localized: "CR", comment: "ProfilePresets: save step for carb ratios")
                 case .targets:
-                    return String(localized: "Targets", comment: "ProfilePresets: save tab for glucose targets")
+                    return String(localized: "Targets", comment: "ProfilePresets: save step for glucose targets")
                 case .smbDyn:
-                    return String(localized: "SMB/dynISF", comment: "ProfilePresets: save tab for SMB and dynamic ISF settings")
+                    return String(localized: "SMB / Dynamic ISF", comment: "ProfilePresets: save step for SMB and dynamic ISF settings")
                 case .summary:
-                    return String(localized: "Summary", comment: "ProfilePresets: save tab for final summary")
+                    return String(localized: "Summary", comment: "ProfilePresets: save step for final summary")
                 }
             }
         }
 
-        @State private var saveTabSelection: SaveTab = .setup
+        @State private var currentSaveStep: SaveStep = .setup
 
         private var savePresetSheet: some View {
             NavigationView {
                 VStack(spacing: 0) {
-                    // Tab bar
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 4) {
-                            ForEach(SaveTab.allCases, id: \.rawValue) { tab in
-                                Button {
-                                    saveTabSelection = tab
-                                } label: {
-                                    Text(tab.title)
-                                        .font(.caption.bold())
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            saveTabSelection == tab
-                                                ? Color.accentColor
-                                                : Color.secondary.opacity(0.15)
-                                        )
-                                        .foregroundColor(saveTabSelection == tab ? .white : .primary)
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                    }
+                    // Progress indicator
+                    saveStepProgressBar
+
+                    // Step title
+                    Text(currentSaveStep.title)
+                        .font(.headline)
+                        .padding(.top, 8)
+                        .padding(.bottom, 4)
 
                     Divider()
 
-                    // Tab content
+                    // Step content
                     Group {
-                        switch saveTabSelection {
+                        switch currentSaveStep {
                         case .setup:
                             saveSetupTab
                         case .basal:
@@ -693,6 +676,11 @@ extension ProfilePresets {
                             saveSummaryTab
                         }
                     }
+
+                    Divider()
+
+                    // Navigation buttons
+                    saveNavigationButtons
                 }
                 .navigationTitle(
                     Text("Save Profile Preset", comment: "ProfilePresets: navigation title for save sheet")
@@ -700,7 +688,7 @@ extension ProfilePresets {
                 .navigationBarTitleDisplayMode(.inline)
                 .onAppear {
                     state.prepareSavePreview()
-                    saveTabSelection = .setup
+                    currentSaveStep = .setup
                 }
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -710,25 +698,120 @@ extension ProfilePresets {
                             state.showingSaveDialog = false
                         }
                     }
-                    ToolbarItem(placement: .confirmationAction) {
-                        if saveTabSelection == .summary {
-                            Button(String(localized: "Confirm & Save", comment: "ProfilePresets: confirm save button")) {
-                                state.saveCurrentProfileAsPreset()
-                                state.showingSaveDialog = false
-                            }
-                            .disabled(state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty)
-                        } else {
-                            Button(String(localized: "Next", comment: "ProfilePresets: next tab button")) {
-                                if let currentIndex = SaveTab.allCases.firstIndex(of: saveTabSelection),
-                                   currentIndex + 1 < SaveTab.allCases.count
-                                {
-                                    saveTabSelection = SaveTab.allCases[currentIndex + 1]
-                                }
-                            }
+                }
+            }
+        }
+
+        private var saveStepProgressBar: some View {
+            let allSteps = SaveStep.allCases
+            let currentIndex = allSteps.firstIndex(of: currentSaveStep) ?? 0
+            let progress = Double(currentIndex) / Double(allSteps.count - 1)
+
+            return VStack(spacing: 4) {
+                // Step dots
+                HStack(spacing: 0) {
+                    ForEach(Array(allSteps.enumerated()), id: \.offset) { index, _ in
+                        Circle()
+                            .fill(index <= currentIndex ? Color.accentColor : Color.secondary.opacity(0.3))
+                            .frame(width: 8, height: 8)
+                        if index < allSteps.count - 1 {
+                            Spacer()
                         }
                     }
                 }
+                .padding(.horizontal, 24)
+
+                // Progress bar
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.secondary.opacity(0.2))
+                            .frame(height: 4)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.accentColor)
+                            .frame(width: geometry.size.width * progress, height: 4)
+                            .animation(.easeInOut(duration: 0.3), value: progress)
+                    }
+                }
+                .frame(height: 4)
+                .padding(.horizontal, 24)
+
+                // Step counter
+                Text(verbatim: "\(currentIndex + 1) / \(allSteps.count)")
+                .font(.caption2)
+                .foregroundColor(.secondary)
             }
+            .padding(.top, 12)
+        }
+
+        private var saveNavigationButtons: some View {
+            HStack {
+                // Back button
+                if currentSaveStep != .setup {
+                    Button {
+                        withAnimation {
+                            if let currentIndex = SaveStep.allCases.firstIndex(of: currentSaveStep),
+                               currentIndex > 0
+                            {
+                                currentSaveStep = SaveStep.allCases[currentIndex - 1]
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Back", comment: "ProfilePresets: back button")
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .foregroundColor(.primary)
+                    }
+                }
+
+                Spacer()
+
+                // Next / Confirm & Save button
+                if currentSaveStep == .summary {
+                    Button {
+                        state.saveCurrentProfileAsPreset()
+                        state.showingSaveDialog = false
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Confirm & Save", comment: "ProfilePresets: confirm save button")
+                            Image(systemName: "checkmark")
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .foregroundColor(.white)
+                        .background(Capsule().fill(
+                            state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty
+                                ? Color.gray
+                                : Color.accentColor
+                        ))
+                    }
+                    .disabled(state.newPresetName.trimmingCharacters(in: .whitespaces).isEmpty)
+                } else {
+                    Button {
+                        withAnimation {
+                            if let currentIndex = SaveStep.allCases.firstIndex(of: currentSaveStep),
+                               currentIndex + 1 < SaveStep.allCases.count
+                            {
+                                currentSaveStep = SaveStep.allCases[currentIndex + 1]
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Next", comment: "ProfilePresets: next step button")
+                            Image(systemName: "chevron.right")
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .foregroundColor(.white)
+                        .background(Capsule().fill(Color.accentColor))
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
         }
 
         // MARK: - Save Sheet Tabs
