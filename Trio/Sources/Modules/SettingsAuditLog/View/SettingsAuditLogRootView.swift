@@ -33,12 +33,10 @@ extension SettingsAuditLog {
                 ForEach(state.groupedEvents, id: \.0) { day, dayEvents in
                     Section(header: Text(day)) {
                         ForEach(dayEvents) { event in
-                            EventRow(event: event, units: state.units)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    noteText = event.note
-                                    selectedEvent = event
-                                }
+                            EventRow(event: event, units: state.units, onOpenDetail: {
+                                noteText = event.note
+                                selectedEvent = event
+                            })
                         }
                     }
                     .listRowBackground(Color.chart)
@@ -164,6 +162,9 @@ extension SettingsAuditLog {
 private struct EventRow: View {
     let event: SettingsAuditLog.ChangeEvent
     let units: GlucoseUnits
+    let onOpenDetail: () -> Void
+
+    @State private var isExpanded = false
 
     private static let timeFormatter: DateFormatter = {
         let df = DateFormatter()
@@ -179,70 +180,68 @@ private struct EventRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(event.summaryLabel)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    Text(event.categories.joined(separator: ", "))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        if let icon = event.presetIcon {
+                            Image(systemName: icon)
+                                .font(.subheadline)
+                                .foregroundColor(.accentColor)
+                        }
+                        Text(event.summaryLabel)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    if event.isPresetEvent || event.isPresetUpdate {
+                        Text(event.categories.joined(separator: ", "))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text(event.categories.joined(separator: ", "))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(timeString)
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    if !event.note.isEmpty {
-                        Image(systemName: "note.text")
-                            .font(.caption)
-                            .foregroundColor(.accentColor)
+                    HStack(spacing: 4) {
+                        if !event.note.isEmpty {
+                            Image(systemName: "note.text")
+                                .font(.caption)
+                                .foregroundColor(.accentColor)
+                        }
+                        if event.isPresetEvent, event.presetDetailEntries.count > 0 {
+                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if event.isPresetEvent, event.presetDetailEntries.count > 0 {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded.toggle()
+                    }
+                } else {
+                    onOpenDetail()
+                }
+            }
+            .onLongPressGesture(minimumDuration: 0.5) {
+                onOpenDetail()
+            }
 
-            ForEach(event.entries) { entry in
-                VStack(spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text(entry.settingName)
-                            .font(.caption2)
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-                        Spacer()
-                        Text(entry.displayValue(entry.oldValue, units: units))
-                            .font(.caption2)
-                            .foregroundColor(.red)
-                            .lineLimit(1)
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 8))
-                            .foregroundColor(.secondary)
-                        Text(entry.displayValue(entry.newValue, units: units))
-                            .font(.caption2)
-                            .foregroundColor(.green)
-                            .lineLimit(1)
-                        if let displayUnit = entry.displayUnit(units: units) {
-                            Text(displayUnit)
-                                .font(.system(size: 9))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    if let oldTotal = entry.dailyBasalTotal(from: entry.oldValue),
-                       let newTotal = entry.dailyBasalTotal(from: entry.newValue)
-                    {
-                        HStack(spacing: 4) {
-                            Spacer()
-                            Text("Daily total:")
-                                .font(.system(size: 9))
-                                .foregroundColor(.secondary)
-                            Text(oldTotal)
-                                .font(.system(size: 9))
-                                .foregroundColor(.red)
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 7))
-                                .foregroundColor(.secondary)
-                            Text(newTotal)
-                                .font(.system(size: 9))
-                                .foregroundColor(.green)
-                        }
-                    }
+            // For preset events, show detail entries only when expanded
+            if event.isPresetEvent {
+                if isExpanded {
+                    presetDetailEntries
+                }
+            } else {
+                // Non-preset events: show all entries inline (existing behavior)
+                ForEach(event.entries) { entry in
+                    entryRow(entry)
                 }
             }
 
@@ -256,6 +255,62 @@ private struct EventRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private var presetDetailEntries: some View {
+        Divider()
+        ForEach(event.presetDetailEntries) { entry in
+            entryRow(entry)
+        }
+    }
+
+    @ViewBuilder
+    private func entryRow(_ entry: SettingsAuditLog.ChangeEntry) -> some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 4) {
+                Text(entry.settingName)
+                    .font(.caption2)
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                Spacer()
+                Text(entry.displayValue(entry.oldValue, units: units))
+                    .font(.caption2)
+                    .foregroundColor(.red)
+                    .lineLimit(1)
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 8))
+                    .foregroundColor(.secondary)
+                Text(entry.displayValue(entry.newValue, units: units))
+                    .font(.caption2)
+                    .foregroundColor(.green)
+                    .lineLimit(1)
+                if let displayUnit = entry.displayUnit(units: units) {
+                    Text(displayUnit)
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                }
+            }
+            if let oldTotal = entry.dailyBasalTotal(from: entry.oldValue),
+               let newTotal = entry.dailyBasalTotal(from: entry.newValue)
+            {
+                HStack(spacing: 4) {
+                    Spacer()
+                    Text("Daily total:")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                    Text(oldTotal)
+                        .font(.system(size: 9))
+                        .foregroundColor(.red)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 7))
+                        .foregroundColor(.secondary)
+                    Text(newTotal)
+                        .font(.system(size: 9))
+                        .foregroundColor(.green)
+                }
+            }
+        }
     }
 }
 
@@ -285,6 +340,11 @@ private struct EventDetailView: View {
                 LabeledContent("Date", value: formattedDate)
                 LabeledContent("Changes", value: "\(event.entries.count)")
                 LabeledContent("Categories", value: event.categories.joined(separator: ", "))
+                if event.isPresetEvent, let name = event.presetName {
+                    LabeledContent("Source", value: "Profile preset: \(name)")
+                } else if event.isPresetUpdate {
+                    LabeledContent("Source", value: "Preset definition update")
+                }
             }
             Section("Changes") {
                 ForEach(event.entries) { entry in

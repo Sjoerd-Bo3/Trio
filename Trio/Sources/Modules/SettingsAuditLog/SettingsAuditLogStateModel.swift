@@ -217,8 +217,50 @@ extension SettingsAuditLog {
         let entries: [ChangeEntry]
         let note: String
 
+        /// Whether this event was caused by a profile preset activation.
+        var isPresetEvent: Bool {
+            entries.contains { $0.source.hasPrefix("preset:") }
+        }
+
+        /// The preset name if this is a preset-triggered event, or nil.
+        var presetName: String? {
+            guard let source = entries.first(where: { $0.source.hasPrefix("preset:") })?.source else { return nil }
+            return String(source.dropFirst("preset:".count))
+        }
+
+        /// Whether this event is a preset definition update (not an activation).
+        var isPresetUpdate: Bool {
+            entries.contains { $0.source.hasPrefix("preset-update:") }
+        }
+
+        /// The top-level "Active Profile" entry for preset activations, if present.
+        var presetActivationEntry: ChangeEntry? {
+            entries.first { $0.settingKey == SettingsMetadataRegistry.ProfileKeys.activeProfile }
+        }
+
+        /// The preset icon from the activation entry, if available. Falls back to a generic icon.
+        var presetIcon: String? {
+            guard isPresetEvent || isPresetUpdate else { return nil }
+            return "person.crop.circle"
+        }
+
+        /// The detail entries for a preset event (everything except the top-level activation entry).
+        var presetDetailEntries: [ChangeEntry] {
+            entries.filter { $0.settingKey != SettingsMetadataRegistry.ProfileKeys.activeProfile }
+        }
+
         /// Summary label, e.g. "3 settings changed" or the single setting name.
         var summaryLabel: String {
+            if let name = presetName {
+                if entries.contains(where: { $0.subcategory == "Preset Deactivation" }) {
+                    return "Profile deactivated: \(name)"
+                }
+                return "Profile switched to \(name)"
+            }
+            if isPresetUpdate, let source = entries.first?.source {
+                let name = String(source.dropFirst("preset-update:".count))
+                return "Profile preset updated: \(name)"
+            }
             if entries.count == 1 {
                 return entries.first?.settingName ?? "1 setting changed"
             }
