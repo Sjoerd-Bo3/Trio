@@ -859,24 +859,54 @@ The following user journeys are not documented:
 
 ### 17.10 Summary of Identified Gaps
 
-| # | Gap | Severity | Type |
-|---|-----|----------|------|
-| 17.1 | Stale `active_profile_preset_id.json` after preset deletion while app not running | Low | Edge case |
-| 17.2 | Concurrent `activatePreset()` calls may create duplicate CoreData runs | Low | Race condition |
-| 17.3 | "Save as New" + switch fires both actions simultaneously without awaiting save completion | Medium | UX flow gap |
-| 17.4 | Override ↔ Profile Preset interaction is undocumented | Low | Documentation |
-| 17.5 | Open (active) runs may be uploaded to Nightscout with 1-min duration and never re-uploaded | Medium | Data correctness |
-| 17.6 | `scaled(by:)` has no validation — 0% causes division by zero | High | Crash bug |
-| 17.7 | Rename doesn't notify HomeStateModel — stale name on home indicator | Low | UI consistency |
-| 17.8 | `updatePresetToCurrentSettings` doesn't immediately close the diverged run in CoreData | Low | Timing window |
-| 17.9 | Several user journeys undocumented (import, re-activate same, delete all, background) | Low | Documentation |
-| 17.10 | Same-preset re-activation creates unnecessary CoreData run churn | Low | Optimization |
+| # | Gap | Severity | Type | Status |
+|---|-----|----------|------|--------|
+| 17.1 | Stale `active_profile_preset_id.json` after preset deletion while app not running | Low | Edge case | ✅ Fixed — `closeStaleRuns()` closes orphaned runs at cold-start |
+| 17.2 | Concurrent `activatePreset()` calls may create duplicate CoreData runs | Low | Race condition | Open |
+| 17.3 | "Save as New" + switch fires both actions simultaneously without awaiting save completion | Medium | UX flow gap | Open |
+| 17.4 | Override ↔ Profile Preset interaction is undocumented | Low | Documentation | Open |
+| 17.5 | Open (active) runs may be uploaded to Nightscout with 1-min duration and never re-uploaded | Medium | Data correctness | ✅ Fixed — predicate now requires `endDate != nil` |
+| 17.6 | `scaled(by:)` has no validation — 0% causes division by zero | High | Crash bug | ✅ Fixed — returns `nil` for percentage ≤ 0 |
+| 17.7 | Rename doesn't notify HomeStateModel — stale name on home indicator | Low | UI consistency | ✅ Fixed — posts `profilePresetActivatedNotification` on rename |
+| 17.8 | `updatePresetToCurrentSettings` doesn't immediately close the diverged run in CoreData | Low | Timing window | ✅ Fixed — now closes diverged run and opens matching run |
+| 17.9 | Several user journeys undocumented (import, re-activate same, delete all, background) | Low | Documentation | Open |
+| 17.10 | Same-preset re-activation creates unnecessary CoreData run churn | Low | Optimization | ✅ Fixed — `activatePreset()` returns early if same preset is active and settings match |
 
 ---
 
-### 17.11 Recommended Additional State — Activation Validation
+### 17.11 Cold-Start Recovery
 
-The current `activatePreset()` guard only checks that arrays are non-empty. A more complete validation state machine:
+When the app is force-quit or crashes, open CoreData runs (endDate == nil) are left behind. On the next cold-start, `HomeStateModel.subscribe()` now performs recovery:
+
+```mermaid
+flowchart TD
+    A[App Cold Start] --> B["closeStaleRuns()"]
+    B --> C[Fetch all runs where endDate == nil]
+    C --> D{Any open runs?}
+    D -->|No| E[Continue]
+    D -->|Yes| F[Set endDate = now on all open runs]
+    F --> G[Save CoreData context]
+    G --> E
+
+    E --> H["activePreset = profilePresetStorage.activePreset()"]
+    H --> I{Preset found?}
+    I -->|No| J[No indicator shown]
+    I -->|Yes| K["settingsMatchPreset(preset)"]
+    K --> L{Settings match?}
+    L -->|Yes| M["Open non-diverged run\nwasDivergedBeforeRefresh = false"]
+    L -->|No| N["Open diverged run\nwasDivergedBeforeRefresh = true\nisProfileDiverged = true"]
+```
+
+This ensures:
+- No duplicate open runs accumulate across restarts
+- The active preset indicator is always displayed correctly after restart
+- The divergence state is accurately initialized (not starting from `false` and requiring a subsequent observer callback)
+
+---
+
+### 17.12 Activation Validation State Machine
+
+`activatePreset()` now validates inputs before proceeding:
 
 ```mermaid
 stateDiagram-v2
@@ -886,11 +916,11 @@ stateDiagram-v2
     ValidatePreset --> Rejected : ISF sensitivities empty
     ValidatePreset --> Rejected : CR schedule empty
     ValidatePreset --> Rejected : BG targets empty
-    ValidatePreset --> Rejected : preset not found in presets() array
-    ValidatePreset --> Rejected : preset.id == activePresetId() (same preset)
+    ValidatePreset --> NoOp : preset.id == activePresetId() AND settings match
     ValidatePreset --> Accepted : all checks pass
 
     Rejected --> [*] : return false
+    NoOp --> [*] : return true (skip re-activation)
 
     Accepted --> CloseExistingRun
     CloseExistingRun --> WriteSettings
@@ -900,5 +930,5 @@ stateDiagram-v2
     CreateNewRun --> PostNotification
     PostNotification --> [*] : return true
 
-    Note right of Rejected: ⚠️ "preset not found" and "same preset"\nare not checked in current code
+    Note right of NoOp: ✅ Same-preset guard prevents\nunnecessary CoreData churn
 ```
