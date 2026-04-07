@@ -33,7 +33,7 @@ extension SettingsAuditLog {
 
         func loadEntries() {
             entries = provider.auditStorage.fetchHistory(
-                category: selectedCategory == "All" ? nil : selectedCategory,
+                category: selectedCategory,
                 since: nil,
                 limit: 500
             )
