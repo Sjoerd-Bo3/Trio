@@ -861,7 +861,7 @@ The following user journeys are not documented:
 
 | # | Gap | Severity | Type | Status |
 |---|-----|----------|------|--------|
-| 17.1 | Stale `active_profile_preset_id.json` after preset deletion while app not running | Low | Edge case | ✅ Fixed — `closeStaleRuns()` closes orphaned runs at cold-start |
+| 17.1 | Stale `active_profile_preset_id.json` after preset deletion while app not running | Low | Edge case | Mitigated — `activePreset()` already returns `nil` when the ID references a deleted preset; `deletePreset()` auto-deactivates. Cold-start `closeStaleRuns()` handles orphaned CoreData runs. |
 | 17.2 | Concurrent `activatePreset()` calls may create duplicate CoreData runs | Low | Race condition | Open |
 | 17.3 | "Save as New" + switch fires both actions simultaneously without awaiting save completion | Medium | UX flow gap | Open |
 | 17.4 | Override ↔ Profile Preset interaction is undocumented | Low | Documentation | Open |

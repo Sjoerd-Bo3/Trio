@@ -311,8 +311,9 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
 
     /// Closes all open runs (endDate == nil) that were left behind from a previous app session.
     /// Called at cold-start so that stale runs don't accumulate or get uploaded with incorrect durations.
+    /// Uses `performAndWait` to ensure runs are closed before the caller proceeds.
     func closeStaleRuns() {
-        viewContext.perform {
+        viewContext.performAndWait {
             let fetchRequest: NSFetchRequest<ProfilePresetRunStored> = ProfilePresetRunStored.fetchRequest()
             fetchRequest.predicate = NSPredicate.activeProfilePresetRun // endDate == nil
 
