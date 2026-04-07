@@ -6,7 +6,6 @@ import SwiftUI
 struct ProfilePresetView: ChartContent {
     let profilePresetRunStored: [ProfilePresetRunStored]
     let units: GlucoseUnits
-    let minY: Decimal
     let maxY: Decimal
 
     var body: some ChartContent {
@@ -18,21 +17,21 @@ struct ProfilePresetView: ChartContent {
             let label = isDiverted
                 ? String(localized: "\(presetName) (Diverted)")
                 : presetName
+            let displayMaxY = units == .mgdL ? maxY : maxY.asMmolL
 
-            // Draw a subtle background band across the full Y range
-            RectangleMark(
+            // Draw a thin bar at the top of the chart, matching the override/TT pattern
+            RuleMark(
                 xStart: .value("Start", start, unit: .second),
                 xEnd: .value("End", end, unit: .second),
-                yStart: .value("Min", units == .mgdL ? minY : minY.asMmolL),
-                yEnd: .value("Max", units == .mgdL ? maxY : maxY.asMmolL)
+                y: .value("Value", displayMaxY)
             )
-            .foregroundStyle(isDiverted ? Color.orange.opacity(0.1) : Color.teal.opacity(0.1))
-            .annotation(position: .overlay, alignment: .topLeading) {
+            .foregroundStyle(isDiverted ? Color.orange.opacity(0.4) : Color.teal.opacity(0.4))
+            .lineStyle(.init(lineWidth: 8))
+            .annotation(position: .overlay, alignment: .leading) {
                 Text(label)
-                    .font(.caption2)
+                    .font(.system(size: 8))
                     .foregroundStyle(isDiverted ? Color.orange : Color.teal)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 2)
             }
         }
     }

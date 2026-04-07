@@ -32,6 +32,12 @@ struct DivergenceSavePromptModifier: ViewModifier {
                     coordinator.updateCurrentPresetAndSwitch()
                 }
                 Button(String(
+                    localized: "Save as New Preset",
+                    comment: "DivergenceSavePrompt: save diverged settings as a new preset before switching"
+                )) {
+                    coordinator.saveAsNewPresetAndSwitch()
+                }
+                Button(String(
                     localized: "Discard Changes",
                     comment: "DivergenceSavePrompt: discard diverged settings and switch preset"
                 ), role: .destructive) {

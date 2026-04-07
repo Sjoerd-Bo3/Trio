@@ -9,7 +9,7 @@ import Observation
 /// 1. `requestSwitch(to:)` checks if the current preset is diverged.
 /// 2. If diverged → stores the pending preset and shows the divergence prompt.
 /// 3. If not diverged → proceeds directly to the activation confirmation.
-/// 4. From the prompt the user can: Update current + switch, Discard + switch, or Cancel.
+/// 4. From the prompt the user can: Update current + switch, Save as new + switch, Discard + switch, or Cancel.
 @Observable final class PresetSwitchCoordinator {
     // MARK: - State
 
@@ -28,6 +28,10 @@ import Observation
     /// Called when the user chooses "Update" in the divergence prompt.
     /// The implementation should persist the current settings into the active preset.
     var onUpdateCurrentPreset: (() -> Void)?
+
+    /// Called when the user chooses "Save as New Preset" in the divergence prompt.
+    /// The implementation should save the current settings as a brand-new preset.
+    var onSaveAsNewPreset: (() -> Void)?
 
     // MARK: - Actions
 
@@ -51,6 +55,13 @@ import Observation
     func updateCurrentPresetAndSwitch() {
         guard let pending = pendingPresetSwitch else { return }
         onUpdateCurrentPreset?()
+        proceedWithPendingSwitch(pending)
+    }
+
+    /// Saves the diverged settings as a new preset, then switches to the pending preset.
+    func saveAsNewPresetAndSwitch() {
+        guard let pending = pendingPresetSwitch else { return }
+        onSaveAsNewPreset?()
         proceedWithPendingSwitch(pending)
     }
 

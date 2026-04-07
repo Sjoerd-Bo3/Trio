@@ -25,6 +25,7 @@ extension Adjustments {
         @State var showCancelTempTargetConfirmDialog = false
         @State var showProfileCheckmark: Bool = false
         @State var selectedProfilePresetID: String?
+        @State var newPresetName: String = ""
 
         private var shouldDisplayStickyOverrideStopButton: Bool {
             state.isOverrideEnabled && state.activeOverrideName.isNotEmpty
@@ -207,6 +208,41 @@ extension Adjustments {
                     coordinator: state.presetSwitchCoordinator,
                     activePresetName: state.activeProfilePreset?.name
                 )
+                .alert(
+                    Text(
+                        "Save as New Preset",
+                        comment: "Adjustments: title for save as new preset alert"
+                    ),
+                    isPresented: $state.showingSaveNewPresetSheet
+                ) {
+                    TextField(
+                        String(
+                            localized: "Preset Name",
+                            comment: "Adjustments: placeholder for new preset name"
+                        ),
+                        text: $newPresetName
+                    )
+                    Button(String(
+                        localized: "Save",
+                        comment: "Adjustments: save button for new preset"
+                    )) {
+                        let trimmed = newPresetName.trimmingCharacters(in: .whitespaces)
+                        guard !trimmed.isEmpty else { return }
+                        state.saveCurrentAsNewPreset(name: trimmed, icon: "person.crop.circle")
+                        newPresetName = ""
+                    }
+                    Button(String(
+                        localized: "Cancel",
+                        comment: "Adjustments: cancel save new preset"
+                    ), role: .cancel) {
+                        newPresetName = ""
+                    }
+                } message: {
+                    Text(
+                        "Enter a name for the new profile preset.",
+                        comment: "Adjustments: message for save as new preset alert"
+                    )
+                }
             }).background(appState.trioBackgroundColor(for: colorScheme))
         }
 

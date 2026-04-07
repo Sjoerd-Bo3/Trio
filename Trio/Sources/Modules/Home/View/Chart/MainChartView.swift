@@ -139,7 +139,6 @@ extension MainChartView {
                 ProfilePresetView(
                     profilePresetRunStored: state.profilePresetRunStored,
                     units: state.units,
-                    minY: state.minYAxisValue,
                     maxY: state.maxYAxisValue
                 )
 
@@ -190,7 +189,8 @@ extension MainChartView {
                         lowGlucose: lowGlucose,
                         currentGlucoseTarget: currentGlucoseTarget,
                         glucoseColorScheme: glucoseColorScheme,
-                        isSmoothingEnabled: state.settingsManager.settings.smoothGlucose
+                        isSmoothingEnabled: state.settingsManager.settings.smoothGlucose,
+                        profilePresetRunStored: state.profilePresetRunStored
                     )
                 }
             }

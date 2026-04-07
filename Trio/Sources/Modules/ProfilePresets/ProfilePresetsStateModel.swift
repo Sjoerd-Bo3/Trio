@@ -94,6 +94,9 @@ extension ProfilePresets {
                 guard let self, let active = self.activePreset else { return }
                 self.updatePresetToCurrentSettings(active)
             }
+            presetSwitchCoordinator.onSaveAsNewPreset = { [weak self] in
+                self?.showingSaveDialog = true
+            }
         }
 
         /// Initiates a profile preset switch via the shared coordinator.
@@ -115,8 +118,13 @@ extension ProfilePresets {
         }
 
         func deletePreset(_ preset: ProfilePreset) {
+            let wasActive = activePreset?.id == preset.id
             provider.deletePreset(id: preset.id)
             presets.removeAll { $0.id == preset.id }
+            if wasActive {
+                activePreset = nil
+                isProfileDiverged = false
+            }
         }
 
         func beginRename(for preset: ProfilePreset) {

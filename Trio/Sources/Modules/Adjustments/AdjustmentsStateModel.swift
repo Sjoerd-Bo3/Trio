@@ -82,6 +82,7 @@ extension Adjustments {
         var showingProfileActivateConfirmation: Bool = false
         var selectedProfilePreset: ProfilePreset?
         let presetSwitchCoordinator = PresetSwitchCoordinator()
+        var showingSaveNewPresetSheet: Bool = false
 
         // Combine
         private var cancellables = Set<AnyCancellable>()
@@ -121,6 +122,9 @@ extension Adjustments {
             presetSwitchCoordinator.onUpdateCurrentPreset = { [weak self] in
                 guard let self, let active = self.activeProfilePreset else { return }
                 self.updateProfilePresetToCurrentSettings(active)
+            }
+            presetSwitchCoordinator.onSaveAsNewPreset = { [weak self] in
+                self?.showingSaveNewPresetSheet = true
             }
         }
 
@@ -162,6 +166,16 @@ extension Adjustments {
                 activeProfilePreset = updated
                 isProfileDiverged = false
             }
+        }
+
+        func saveCurrentAsNewPreset(name: String, icon: String) {
+            guard let preset = profilePresetStorage.saveCurrentProfileAsPreset(
+                name: name,
+                icon: icon,
+                includeSMB: false,
+                includeDynamic: false
+            ) else { return }
+            profilePresets.append(preset)
         }
 
         /// Retrieves the current glucose target based on the time of day.

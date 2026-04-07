@@ -8,6 +8,7 @@ protocol ProfilePresetStorage {
     func saveCurrentProfileAsPreset(name: String, icon: String, includeSMB: Bool, includeDynamic: Bool) -> ProfilePreset?
     func currentProfile() -> ProfilePreset?
     func activatePreset(_ preset: ProfilePreset) -> Bool
+    func deactivatePreset()
     func deactivateCurrentRun()
     func deletePreset(id: String)
     func renamePreset(id: String, newName: String)
@@ -280,6 +281,17 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
         closeActiveRun()
     }
 
+    /// Fully deactivates the current profile preset: clears the stored active preset ID,
+    /// closes any open run, and posts a notification with nil to update the UI.
+    func deactivatePreset() {
+        storage.remove(OpenAPS.Trio.activeProfilePresetId)
+        closeActiveRun()
+        Foundation.NotificationCenter.default.post(
+            name: BaseProfilePresetStorage.profilePresetActivatedNotification,
+            object: nil
+        )
+    }
+
     // MARK: - Nightscout upload support
 
     func getProfilePresetRunsNotYetUploadedToNightscout() async throws -> [NightscoutTreatment] {
@@ -360,6 +372,10 @@ final class BaseProfilePresetStorage: ProfilePresetStorage, Injectable {
     }
 
     func deletePreset(id: String) {
+        // If the deleted preset is the active one, deactivate it first
+        if activePresetId() == id {
+            deactivatePreset()
+        }
         var existingPresets = presets()
         existingPresets.removeAll { $0.id == id }
         savePresets(existingPresets)
