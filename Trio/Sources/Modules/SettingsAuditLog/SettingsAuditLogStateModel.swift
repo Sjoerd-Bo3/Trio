@@ -16,6 +16,13 @@ extension SettingsAuditLog {
 
         let viewContext = CoreDataStack.shared.persistentContainer.viewContext
 
+        private static let groupingFormatter: DateFormatter = {
+            let df = DateFormatter()
+            df.dateStyle = .medium
+            df.timeStyle = .none
+            return df
+        }()
+
         var allCategories: [String] {
             var cats = Set<String>()
             for entry in entries {
@@ -68,15 +75,11 @@ extension SettingsAuditLog {
         }
 
         var groupedEntries: [(String, [SettingsChangeStored])] {
-            let df = DateFormatter()
-            df.dateStyle = .medium
-            df.timeStyle = .none
-
+            let df = Self.groupingFormatter
             let grouped = Dictionary(grouping: filteredEntries) { entry -> String in
                 guard let date = entry.date else { return "Unknown" }
                 return df.string(from: date)
             }
-
             return grouped.sorted { a, b in
                 let dateA = df.date(from: a.key) ?? .distantPast
                 let dateB = df.date(from: b.key) ?? .distantPast

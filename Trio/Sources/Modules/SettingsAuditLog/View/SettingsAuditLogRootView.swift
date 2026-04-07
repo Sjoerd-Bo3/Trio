@@ -110,11 +110,15 @@ extension SettingsAuditLog {
 private struct EntryRow: View {
     let entry: SettingsChangeStored
 
-    private var timeString: String {
-        guard let date = entry.date else { return "" }
+    private static let timeFormatter: DateFormatter = {
         let df = DateFormatter()
         df.timeStyle = .short
-        return df.string(from: date)
+        return df
+    }()
+
+    private var timeString: String {
+        guard let date = entry.date else { return "" }
+        return Self.timeFormatter.string(from: date)
     }
 
     var body: some View {
@@ -172,12 +176,16 @@ private struct EntryDetailView: View {
 
     @Environment(\.dismiss) var dismiss
 
-    private var formattedDate: String {
-        guard let date = entry.date else { return "—" }
+    private static let detailFormatter: DateFormatter = {
         let df = DateFormatter()
         df.dateStyle = .medium
         df.timeStyle = .short
-        return df.string(from: date)
+        return df
+    }()
+
+    private var formattedDate: String {
+        guard let date = entry.date else { return "—" }
+        return Self.detailFormatter.string(from: date)
     }
 
     var body: some View {
