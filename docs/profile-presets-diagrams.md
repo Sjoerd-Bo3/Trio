@@ -644,9 +644,9 @@ stateDiagram-v2
     OrphanedId --> NoActivePreset : activeProfilePreset = nil (stale ID in file)
 
     SettingsCheck --> Matching : settingsMatchPreset() == true
-    SettingsCheck --> DiveredAtBoot : settingsMatchPreset() == false
+    SettingsCheck --> DivergedAtBoot : settingsMatchPreset() == false
 
-    DiveredAtBoot --> Diverged : isProfileDiverged = true, openDivertedRun()
+    DivergedAtBoot --> Diverged : isProfileDiverged = true, openDivertedRun()
     
     Note right of OrphanedId: ⚠️ GAP - stale ID is NOT cleaned up.\nactive_profile_preset_id.json still exists\nbut points to a deleted preset.
 ```
