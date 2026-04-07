@@ -19,7 +19,7 @@ extension ProfilePresets {
                 case .isf: String(localized: "ISF", comment: "ProfilePresetDetail: tab label for ISF")
                 case .cr: String(localized: "CR", comment: "ProfilePresetDetail: tab label for carb ratios")
                 case .targets: String(localized: "Targets", comment: "ProfilePresetDetail: tab label for glucose targets")
-                case .smbDyn: String(localized: "SMB/dISF", comment: "ProfilePresetDetail: tab label for SMB and dynamic ISF")
+                case .smbDyn: String(localized: "SMB / dynISF", comment: "ProfilePresetDetail: tab label for SMB and dynamic ISF")
                 }
             }
         }

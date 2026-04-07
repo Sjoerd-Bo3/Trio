@@ -634,7 +634,7 @@ extension ProfilePresets {
                 case .targets:
                     return String(localized: "Targets", comment: "ProfilePresets: save step for glucose targets")
                 case .smbDyn:
-                    return String(localized: "SMB / Dynamic ISF", comment: "ProfilePresets: save step for SMB and dynamic ISF settings")
+                    return String(localized: "SMB / dynISF", comment: "ProfilePresets: save step for SMB and dynamic ISF settings")
                 case .summary:
                     return String(localized: "Summary", comment: "ProfilePresets: save step for final summary")
                 }
@@ -745,15 +745,16 @@ extension ProfilePresets {
         }
 
         private var saveNavigationButtons: some View {
-            HStack {
+            let allSteps = SaveStep.allCases
+            let currentIndex = allSteps.firstIndex(of: currentSaveStep) ?? 0
+
+            return HStack {
                 // Back button
                 if currentSaveStep != .setup {
                     Button {
                         withAnimation {
-                            if let currentIndex = SaveStep.allCases.firstIndex(of: currentSaveStep),
-                               currentIndex > 0
-                            {
-                                currentSaveStep = SaveStep.allCases[currentIndex - 1]
+                            if currentIndex > 0 {
+                                currentSaveStep = allSteps[currentIndex - 1]
                             }
                         }
                     } label: {
@@ -765,6 +766,12 @@ extension ProfilePresets {
                         .padding(.vertical, 10)
                         .foregroundColor(.primary)
                     }
+                    .accessibilityLabel(
+                        Text(
+                            "Back to \(currentIndex > 0 ? allSteps[currentIndex - 1].title : "")",
+                            comment: "ProfilePresets: accessibility label for back button"
+                        )
+                    )
                 }
 
                 Spacer()
@@ -792,10 +799,8 @@ extension ProfilePresets {
                 } else {
                     Button {
                         withAnimation {
-                            if let currentIndex = SaveStep.allCases.firstIndex(of: currentSaveStep),
-                               currentIndex + 1 < SaveStep.allCases.count
-                            {
-                                currentSaveStep = SaveStep.allCases[currentIndex + 1]
+                            if currentIndex + 1 < allSteps.count {
+                                currentSaveStep = allSteps[currentIndex + 1]
                             }
                         }
                     } label: {
@@ -808,6 +813,12 @@ extension ProfilePresets {
                         .foregroundColor(.white)
                         .background(Capsule().fill(Color.accentColor))
                     }
+                    .accessibilityLabel(
+                        Text(
+                            "Next: \(currentIndex + 1 < allSteps.count ? allSteps[currentIndex + 1].title : "")",
+                            comment: "ProfilePresets: accessibility label for next button"
+                        )
+                    )
                 }
             }
             .padding(.horizontal)
