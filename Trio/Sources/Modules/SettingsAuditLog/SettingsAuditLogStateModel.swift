@@ -70,13 +70,16 @@ extension SettingsAuditLog {
             return Self.convertGlucoseString(cleaned, to: units)
         }
 
+        /// Regex to match time prefixes with seconds: "HH:mm:ss: " → captures "HH:mm" and ": "
+        private static let timeSecondsRegex = try! NSRegularExpression(pattern: #"(\d{1,2}:\d{2}):\d{2}(: )"#)
+
         /// Strips seconds from time prefixes in therapy profile value strings.
         /// e.g. "06:00:00: 1.0 U/hr" → "06:00: 1.0 U/hr"
         private static func stripTimeSeconds(_ raw: String) -> String {
-            raw.replacingOccurrences(
-                of: #"(\d{1,2}:\d{2}):\d{2}(: )"#,
-                with: "$1$2",
-                options: .regularExpression
+            timeSecondsRegex.stringByReplacingMatches(
+                in: raw,
+                range: NSRange(raw.startIndex..., in: raw),
+                withTemplate: "$1$2"
             )
         }
 
