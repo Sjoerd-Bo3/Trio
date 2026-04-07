@@ -36,23 +36,29 @@ extension SettingsAuditLog {
 
         /// Returns the display string for a value, converting mg/dL → mmol/L when needed.
         func displayValue(_ raw: String, units: GlucoseUnits) -> String {
-            guard unit == "mg/dL", units == .mmolL else { return raw }
+            guard units == .mmolL, let u = unit, Self.glucoseConvertibleUnits.contains(u) else { return raw }
             return Self.convertGlucoseString(raw, to: units)
         }
 
         /// The display unit label, adjusted for the user's preferred glucose unit.
         func displayUnit(units: GlucoseUnits) -> String? {
             guard let u = unit, !u.isEmpty else { return nil }
-            if u == "mg/dL" { return units.rawValue }
+            if units == .mmolL, Self.glucoseConvertibleUnits.contains(u) {
+                return u.replacingOccurrences(of: "mg/dL", with: units.rawValue)
+            }
             return u
         }
 
+        /// Units whose numeric values are stored in mg/dL and should be converted for display.
+        private static let glucoseConvertibleUnits: Set<String> = ["mg/dL", "mg/dL/U"]
+
         /// Converts a string that may contain one or more mg/dL numeric values to the target unit.
-        /// Handles both single values ("120") and comma-separated lists ("08:00: 100, 12:00: 90").
+        /// Handles both single values ("120"), ranges ("100-120"), and comma-separated lists
+        /// like "08:00: 100, 12:00: 90" or "08:00: 100-120 mg/dL, 12:00: 90-110 mg/dL".
         private static func convertGlucoseString(_ raw: String, to units: GlucoseUnits) -> String {
             guard units == .mmolL else { return raw }
 
-            // Handle comma-separated therapy profile entries (e.g. "08:00: 100, 12:00: 90")
+            // Handle comma-separated therapy profile entries
             if raw.contains(",") {
                 let parts = raw.components(separatedBy: ", ")
                 let converted = parts.map { convertSingleSegment($0, to: units) }
@@ -61,24 +67,42 @@ extension SettingsAuditLog {
             return convertSingleSegment(raw, to: units)
         }
 
-        /// Converts a single segment like "120" or "08:00: 100" from mg/dL to mmol/L.
+        /// Converts a single segment like "120", "100-120", "08:00: 100" or "08:00: 100-120 mg/dL"
+        /// from mg/dL to mmol/L.
         private static func convertSingleSegment(_ segment: String, to units: GlucoseUnits) -> String {
-            // Try to find a numeric portion at the end (possibly after "HH:mm: ")
             let trimmed = segment.trimmingCharacters(in: .whitespaces)
 
-            // Pattern: optional time prefix "HH:mm: " followed by a number
+            // Pattern: optional time prefix "HH:mm: " followed by the value part
+            let prefix: String
+            let valuePart: String
             if let colonRange = trimmed.range(of: ": ", options: .backwards) {
-                let prefix = String(trimmed[trimmed.startIndex ..< colonRange.upperBound])
-                let numStr = String(trimmed[colonRange.upperBound...]).trimmingCharacters(in: .whitespaces)
-                if let decimal = Decimal(string: numStr) {
-                    return prefix + decimal.formatted(for: units)
+                prefix = String(trimmed[trimmed.startIndex ..< colonRange.upperBound])
+                valuePart = String(trimmed[colonRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            } else {
+                prefix = ""
+                valuePart = trimmed
+            }
+
+            // Strip trailing unit label (e.g. " mg/dL" or " mg/dL/U") for parsing
+            let stripped = valuePart
+                .replacingOccurrences(of: " mg/dL/U", with: "")
+                .replacingOccurrences(of: " mg/dL", with: "")
+                .trimmingCharacters(in: .whitespaces)
+
+            // Handle range format "100-120"
+            if stripped.contains("-") {
+                let rangeParts = stripped.components(separatedBy: "-")
+                if rangeParts.count == 2,
+                   let low = Decimal(string: rangeParts[0].trimmingCharacters(in: .whitespaces)),
+                   let high = Decimal(string: rangeParts[1].trimmingCharacters(in: .whitespaces))
+                {
+                    return prefix + low.formatted(for: units) + "-" + high.formatted(for: units)
                 }
-                return segment
             }
 
             // Plain number
-            if let decimal = Decimal(string: trimmed) {
-                return decimal.formatted(for: units)
+            if let decimal = Decimal(string: stripped) {
+                return prefix + decimal.formatted(for: units)
             }
             return segment
         }
