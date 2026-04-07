@@ -26,7 +26,7 @@ extension Adjustments.StateModel {
             let name = overrideToEnact.name ?? "Override"
             let pct = overrideToEnact.percentage
             var details = "\(name): \(Int(pct))%"
-            if overrideToEnact.overrideTarget, let targetVal = overrideToEnact.target?.decimalValue {
+            if let targetVal = overrideToEnact.target?.decimalValue, targetVal > 0 {
                 let targetUnit = units == .mmolL ? targetVal.formattedAsMmolL : "\(targetVal)"
                 let unitLabel = units == .mmolL ? "mmol/L" : "mg/dL"
                 details += ", target \(targetUnit) \(unitLabel)"
