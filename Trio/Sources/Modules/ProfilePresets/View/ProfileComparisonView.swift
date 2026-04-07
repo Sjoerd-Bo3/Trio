@@ -61,8 +61,9 @@ extension ProfilePresets {
                     }
                 }
 
-                if !showDifferencesOnly || presetA.insulinSensitivities.sensitivities.count != presetB.insulinSensitivities
-                    .sensitivities.count
+                if !showDifferencesOnly
+                    || presetA.insulinSensitivities.sensitivities.count
+                        != presetB.insulinSensitivities.sensitivities.count
                 {
                     HStack {
                         Text("ISF Entries", comment: "ProfileComparison: ISF entries count label")
@@ -258,7 +259,8 @@ extension ProfilePresets {
                         ForEach(0 ..< maxEntries, id: \.self) { index in
                             let entryA = index < targetsA.count ? targetsA[index] : nil
                             let entryB = index < targetsB.count ? targetsB[index] : nil
-                            let isDifferent = entryA?.low != entryB?.low || entryA?.high != entryB?.high
+                            let isDifferent = entryA?.low != entryB?.low
+                                || entryA?.high != entryB?.high
                                 || entryA?.start != entryB?.start
 
                             if !showDifferencesOnly || isDifferent {
