@@ -21,6 +21,7 @@ protocol SettingsAuditStorage: AnyObject {
     func fetchChangeEntries(category: String?, since: Date?, limit: Int) -> [SettingsAuditLog.ChangeEntry]
     func updateNote(forGroup groupId: UUID, note: String)
     func deleteOldEntries(olderThan date: Date)
+    func deleteAllEntries()
 
     /// Convenience for logging therapy profile changes (Basal, ISF, CR, BG Targets).
     /// Formats old/new arrays into summary strings and delegates to `logChange`.
@@ -217,6 +218,16 @@ final class BaseSettingsAuditStorage: SettingsAuditStorage, Injectable {
             guard let self else { return }
             let request = NSFetchRequest<NSFetchRequestResult>(entityName: "SettingsChangeStored")
             request.predicate = NSPredicate(format: "date < %@", date as NSDate)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+            try? self.backgroundContext.execute(deleteRequest)
+            try? self.backgroundContext.save()
+        }
+    }
+
+    func deleteAllEntries() {
+        backgroundContext.perform { [weak self] in
+            guard let self else { return }
+            let request = NSFetchRequest<NSFetchRequestResult>(entityName: "SettingsChangeStored")
             let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
             try? self.backgroundContext.execute(deleteRequest)
             try? self.backgroundContext.save()

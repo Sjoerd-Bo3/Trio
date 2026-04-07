@@ -62,10 +62,22 @@ extension SettingsAuditLog {
             groupId = stored.groupId ?? stored.id ?? UUID()
         }
 
-        /// Returns the display string for a value, converting mg/dL → mmol/L when needed.
+        /// Returns the display string for a value, stripping seconds from time prefixes
+        /// and converting mg/dL → mmol/L when needed.
         func displayValue(_ raw: String, units: GlucoseUnits) -> String {
-            guard units == .mmolL, let u = unit, Self.glucoseConvertibleUnits.contains(u) else { return raw }
-            return Self.convertGlucoseString(raw, to: units)
+            let cleaned = Self.stripTimeSeconds(raw)
+            guard units == .mmolL, let u = unit, Self.glucoseConvertibleUnits.contains(u) else { return cleaned }
+            return Self.convertGlucoseString(cleaned, to: units)
+        }
+
+        /// Strips seconds from time prefixes in therapy profile value strings.
+        /// e.g. "06:00:00: 1.0 U/hr" → "06:00: 1.0 U/hr"
+        private static func stripTimeSeconds(_ raw: String) -> String {
+            raw.replacingOccurrences(
+                of: #"(\d{1,2}:\d{2}):\d{2}(: )"#,
+                with: "$1$2",
+                options: .regularExpression
+            )
         }
 
         /// Returns the daily basal total string (e.g. "18.4 U") for basal profile entries,
@@ -87,16 +99,16 @@ extension SettingsAuditLog {
 
             for segment in segments {
                 let trimmed = segment.trimmingCharacters(in: .whitespaces)
-                // Expected format: "HH:mm: X.X U/hr" or "HH:mm: X.X"
+                // Expected format: "HH:mm: X.X U/hr" or "HH:mm:ss: X.X U/hr"
                 guard let colonSpaceRange = trimmed.range(of: ": ") else { continue }
                 let timeStr = String(trimmed[trimmed.startIndex ..< colonSpaceRange.lowerBound])
                 let valueStr = String(trimmed[colonSpaceRange.upperBound...])
                     .replacingOccurrences(of: " U/hr", with: "")
                     .trimmingCharacters(in: .whitespaces)
 
-                // Parse time "HH:mm" → minutes since midnight
+                // Parse time "HH:mm" or "HH:mm:ss" → minutes since midnight
                 let timeParts = timeStr.components(separatedBy: ":")
-                guard timeParts.count == 2,
+                guard timeParts.count >= 2,
                       let hours = Int(timeParts[0].trimmingCharacters(in: .whitespaces)),
                       let mins = Int(timeParts[1].trimmingCharacters(in: .whitespaces))
                 else { continue }
@@ -323,6 +335,64 @@ extension SettingsAuditLog {
                     let sorted = dayEvents.sorted { $0.date > $1.date }
                     return (label, sorted)
                 }
+        }
+
+        // MARK: - Delete all entries
+
+        func deleteAllEntries() {
+            provider.auditStorage.deleteAllEntries()
+            entries = []
+        }
+
+        // MARK: - CSV Export
+
+        private static let csvDateFormatter: DateFormatter = {
+            let df = DateFormatter()
+            df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            return df
+        }()
+
+        /// Generates a CSV string of all filtered entries grouped by time.
+        func generateCSV() -> String {
+            var csv = "Date,Category,Subcategory,Setting,Old Value,New Value,Unit,Note\n"
+            for entry in filteredEntries {
+                let date = Self.csvDateFormatter.string(from: entry.date)
+                let oldVal = entry.displayValue(entry.oldValue, units: units)
+                let newVal = entry.displayValue(entry.newValue, units: units)
+                let unit = entry.displayUnit(units: units) ?? ""
+                csv += "\(csvEscape(date)),\(csvEscape(entry.category)),\(csvEscape(entry.subcategory)),"
+                csv += "\(csvEscape(entry.settingName)),\(csvEscape(oldVal)),\(csvEscape(newVal)),"
+                csv += "\(csvEscape(unit)),\(csvEscape(entry.note))\n"
+            }
+            return csv
+        }
+
+        /// Generates a CSV string of all filtered entries grouped by change event.
+        func generateGroupedCSV() -> String {
+            var csv = "Group Date,Group ID,Setting,Category,Subcategory,Old Value,New Value,Unit,Note\n"
+            for (_, dayEvents) in groupedEvents {
+                for event in dayEvents {
+                    for entry in event.entries {
+                        let date = Self.csvDateFormatter.string(from: entry.date)
+                        let oldVal = entry.displayValue(entry.oldValue, units: units)
+                        let newVal = entry.displayValue(entry.newValue, units: units)
+                        let unit = entry.displayUnit(units: units) ?? ""
+                        csv += "\(csvEscape(date)),\(csvEscape(event.id.uuidString)),"
+                        csv += "\(csvEscape(entry.settingName)),\(csvEscape(entry.category)),"
+                        csv += "\(csvEscape(entry.subcategory)),\(csvEscape(oldVal)),"
+                        csv += "\(csvEscape(newVal)),\(csvEscape(unit)),\(csvEscape(event.note))\n"
+                    }
+                }
+            }
+            return csv
+        }
+
+        private func csvEscape(_ value: String) -> String {
+            let needsQuoting = value.contains(",") || value.contains("\"") || value.contains("\n")
+            if needsQuoting {
+                return "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+            }
+            return value
         }
     }
 }

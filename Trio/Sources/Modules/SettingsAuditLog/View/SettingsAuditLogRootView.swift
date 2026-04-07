@@ -1,5 +1,6 @@
 import SwiftUI
 import Swinject
+import UIKit
 
 extension SettingsAuditLog {
     struct RootView: BaseView {
@@ -12,6 +13,9 @@ extension SettingsAuditLog {
         @State private var selectedEvent: ChangeEvent?
         @State private var noteText = ""
         @State private var debounceTask: Task<Void, Never>?
+        @State private var showDeleteConfirmation = false
+        @State private var showExportSheet = false
+        @State private var csvFileURL: URL?
 
         var body: some View {
             List {
@@ -60,6 +64,11 @@ extension SettingsAuditLog {
                     EventDetailView(event: event, units: state.units, noteText: $noteText)
                 }
             }
+            .sheet(isPresented: $showExportSheet) {
+                if let url = csvFileURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
             .onChange(of: noteText) { _, newValue in
                 guard let event = selectedEvent else { return }
                 debounceTask?.cancel()
@@ -69,7 +78,58 @@ extension SettingsAuditLog {
                     state.updateNote(forGroup: event.id, note: newValue)
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            exportCSV(grouped: false)
+                        } label: {
+                            Label("Export by Time", systemImage: "clock")
+                        }
+                        Button {
+                            exportCSV(grouped: true)
+                        } label: {
+                            Label("Export by Group", systemImage: "rectangle.stack")
+                        }
+                        Divider()
+                        Button(role: .destructive) {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete All Entries", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
+            }
+            .alert("Delete All Entries?", isPresented: $showDeleteConfirmation) {
+                Button("Delete", role: .destructive) {
+                    state.deleteAllEntries()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will permanently delete all settings history entries. This action cannot be undone.")
+            }
         }
+
+        private func exportCSV(grouped: Bool) {
+            let csv = grouped ? state.generateGroupedCSV() : state.generateCSV()
+            let fileName = "SettingsHistory_\(Self.filenameDateFormatter.string(from: Date())).csv"
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+            do {
+                try csv.write(to: tempURL, atomically: true, encoding: .utf8)
+                csvFileURL = tempURL
+                showExportSheet = true
+            } catch {
+                debug(.default, "Failed to write CSV: \(error)")
+            }
+        }
+
+        private static let filenameDateFormatter: DateFormatter = {
+            let df = DateFormatter()
+            df.dateFormat = "yyyyMMdd_HHmmss"
+            return df
+        }()
 
         @ViewBuilder
         private var categoryPicker: some View {
@@ -296,4 +356,16 @@ private struct EventDetailView: View {
             }
         }
     }
+}
+
+// MARK: - ShareSheet
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context _: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_: UIActivityViewController, context _: Context) {}
 }
