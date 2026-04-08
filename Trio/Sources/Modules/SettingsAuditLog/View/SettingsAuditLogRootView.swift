@@ -2,6 +2,21 @@ import SwiftUI
 import Swinject
 
 extension SettingsAuditLog {
+    /// Discriminant for the single `.sheet(item:)` used by RootView.
+    /// Consolidating sheets avoids the SwiftUI crash that can occur when
+    /// two `.sheet` modifiers compete on the same view hierarchy.
+    private enum ActiveSheet: Identifiable {
+        case eventDetail(ChangeEvent)
+        case export(URL)
+
+        var id: String {
+            switch self {
+            case .eventDetail(let event): return "detail-\(event.id)"
+            case .export(let url): return "export-\(url.absoluteString)"
+            }
+        }
+    }
+
     struct RootView: BaseView {
         let resolver: Resolver
         @State var state = StateModel()
@@ -9,12 +24,13 @@ extension SettingsAuditLog {
         @Environment(\.colorScheme) var colorScheme
         @Environment(AppState.self) var appState
 
+        /// Tracks the currently viewed event for note-editing across sheet lifecycle.
         @State private var selectedEvent: ChangeEvent?
         @State private var noteText = ""
         @State private var debounceTask: Task<Void, Never>?
         @State private var showDeleteConfirmation = false
-        @State private var showExportSheet = false
-        @State private var csvFileURL: URL?
+        /// Single active sheet – only one sheet is presented at a time.
+        @State private var activeSheet: ActiveSheet?
 
         var body: some View {
             List {
@@ -38,6 +54,7 @@ extension SettingsAuditLog {
                                 .onTapGesture {
                                     noteText = event.note
                                     selectedEvent = event
+                                    activeSheet = .eventDetail(event)
                                 }
                         }
                     }
@@ -58,13 +75,20 @@ extension SettingsAuditLog {
                     state.updateNote(forGroup: event.id, note: noteText)
                 }
             }
-            .sheet(item: $selectedEvent) { event in
-                NavigationView {
-                    EventDetailView(event: event, units: state.units, noteText: $noteText)
+            .sheet(item: $activeSheet, onDismiss: {
+                // Flush any pending note save when the detail sheet is dismissed.
+                if let task = debounceTask, let event = selectedEvent {
+                    task.cancel()
+                    debounceTask = nil
+                    state.updateNote(forGroup: event.id, note: noteText)
                 }
-            }
-            .sheet(isPresented: $showExportSheet) {
-                if let url = csvFileURL {
+            }) { sheet in
+                switch sheet {
+                case .eventDetail(let event):
+                    NavigationView {
+                        EventDetailView(event: event, units: state.units, noteText: $noteText)
+                    }
+                case .export(let url):
                     ShareSheet(activityItems: [url])
                 }
             }
@@ -117,8 +141,7 @@ extension SettingsAuditLog {
             let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
             do {
                 try csv.write(to: tempURL, atomically: true, encoding: .utf8)
-                csvFileURL = tempURL
-                showExportSheet = true
+                activeSheet = .export(tempURL)
             } catch {
                 debug(.default, "Failed to write CSV: \(error)")
             }
