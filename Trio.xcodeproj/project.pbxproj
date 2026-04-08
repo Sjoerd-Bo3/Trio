@@ -743,6 +743,14 @@
 		FE41E4D629463EE20047FD55 /* NightscoutPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE41E4D529463EE20047FD55 /* NightscoutPreferences.swift */; };
 		FE66D16B291F74F8005D6F77 /* Bundle+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */; };
 		FEFFA7A22929FE49007B8193 /* UIDevice+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */; };
+		FBCB3699E2A64154804513CB /* SettingsAuditStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AAA3132E8B54247814312BF /* SettingsAuditStorage.swift */; };
+		48CA13DF0276417A91EC645F /* SettingsMetadataRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E99596B1BB84920872C57F3 /* SettingsMetadataRegistry.swift */; };
+		7653F937FB444D939244C3F4 /* SettingsChangeStored+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAD0682F55104692AB78F945 /* SettingsChangeStored+CoreDataClass.swift */; };
+		265022BEAF494CF3A17FBE3B /* SettingsChangeStored+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E890DBA44C94C3EBFB05B4F /* SettingsChangeStored+CoreDataProperties.swift */; };
+		FA78C14237D94C23A43D7364 /* SettingsAuditLogDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D9D82C45974BABB46050FE /* SettingsAuditLogDataFlow.swift */; };
+		6134855D5A744E32B610E66D /* SettingsAuditLogProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0761A354F4004A5690B74369 /* SettingsAuditLogProvider.swift */; };
+		80ACD53EB1C24FAC88CD980F /* SettingsAuditLogStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45D942BE6567401B80F6F0C4 /* SettingsAuditLogStateModel.swift */; };
+		D21CE159AA2F40C099B3F5CC /* SettingsAuditLogRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE96FC62A4B242278697EBBA /* SettingsAuditLogRootView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1584,6 +1592,14 @@
 		FE41E4D529463EE20047FD55 /* NightscoutPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutPreferences.swift; sourceTree = "<group>"; };
 		FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Extensions.swift"; sourceTree = "<group>"; };
 		FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extensions.swift"; sourceTree = "<group>"; };
+		8AAA3132E8B54247814312BF /* SettingsAuditStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAuditStorage.swift; sourceTree = "<group>"; };
+		1E99596B1BB84920872C57F3 /* SettingsMetadataRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsMetadataRegistry.swift; sourceTree = "<group>"; };
+		EAD0682F55104692AB78F945 /* SettingsChangeStored+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsChangeStored+CoreDataClass.swift"; sourceTree = "<group>"; };
+		0E890DBA44C94C3EBFB05B4F /* SettingsChangeStored+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsChangeStored+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		D2D9D82C45974BABB46050FE /* SettingsAuditLogDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAuditLogDataFlow.swift; sourceTree = "<group>"; };
+		0761A354F4004A5690B74369 /* SettingsAuditLogProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAuditLogProvider.swift; sourceTree = "<group>"; };
+		45D942BE6567401B80F6F0C4 /* SettingsAuditLogStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAuditLogStateModel.swift; sourceTree = "<group>"; };
+		CE96FC62A4B242278697EBBA /* SettingsAuditLogRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAuditLogRootView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1951,6 +1967,7 @@
 				C2C98283C436DB934D7E7994 /* Treatments */,
 				190EBCC229FF134900BA767D /* UserInterfaceSettings */,
 				CE94597C29E9E1CD0047C9C6 /* WatchConfig */,
+				711F34EA2FAD42E58BB8DCF6 /* SettingsAuditLog */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -2526,6 +2543,7 @@
 				BDC2EA442C3043B000E5BBD0 /* OverrideStorage.swift */,
 				5864E8582C42CFAE00294306 /* DeterminationStorage.swift */,
 				BD4D73A12D15A4220052227B /* TDDStorage.swift */,
+				8AAA3132E8B54247814312BF /* SettingsAuditStorage.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -2547,6 +2565,7 @@
 			isa = PBXGroup;
 			children = (
 				38AEE75125F022080013F05B /* SettingsManager.swift */,
+				1E99596B1BB84920872C57F3 /* SettingsMetadataRegistry.swift */,
 			);
 			path = SettingsManager;
 			sourceTree = "<group>";
@@ -3669,6 +3688,8 @@
 				491D6FBA2D56741C00C49F67 /* TempTargetRunStored+CoreDataProperties.swift */,
 				491D6FBB2D56741C00C49F67 /* TempTargetStored+CoreDataClass.swift */,
 				491D6FBC2D56741C00C49F67 /* TempTargetStored+CoreDataProperties.swift */,
+				EAD0682F55104692AB78F945 /* SettingsChangeStored+CoreDataClass.swift */,
+				0E890DBA44C94C3EBFB05B4F /* SettingsChangeStored+CoreDataProperties.swift */,
 			);
 			path = "Classes+Properties";
 			sourceTree = "<group>";
@@ -3831,6 +3852,25 @@
 				F90692D2274B9A130037068D /* AppleHealthKitRootView.swift */,
 			);
 			path = View;
+			sourceTree = "<group>";
+		};
+		2E4621F96353486780553A79 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				CE96FC62A4B242278697EBBA /* SettingsAuditLogRootView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		711F34EA2FAD42E58BB8DCF6 /* SettingsAuditLog */ = {
+			isa = PBXGroup;
+			children = (
+				D2D9D82C45974BABB46050FE /* SettingsAuditLogDataFlow.swift */,
+				0761A354F4004A5690B74369 /* SettingsAuditLogProvider.swift */,
+				45D942BE6567401B80F6F0C4 /* SettingsAuditLogStateModel.swift */,
+				2E4621F96353486780553A79 /* View */,
+			);
+			path = SettingsAuditLog;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -4792,6 +4832,14 @@
 				8194B80890CDD6A3C13B0FEE /* SnoozeStateModel.swift in Sources */,
 				BDA25EE42D260CD500035F34 /* AppleWatchManager.swift in Sources */,
 				0437CE46C12535A56504EC19 /* SnoozeRootView.swift in Sources */,
+				FBCB3699E2A64154804513CB /* SettingsAuditStorage.swift in Sources */,
+				48CA13DF0276417A91EC645F /* SettingsMetadataRegistry.swift in Sources */,
+				7653F937FB444D939244C3F4 /* SettingsChangeStored+CoreDataClass.swift in Sources */,
+				265022BEAF494CF3A17FBE3B /* SettingsChangeStored+CoreDataProperties.swift in Sources */,
+				FA78C14237D94C23A43D7364 /* SettingsAuditLogDataFlow.swift in Sources */,
+				6134855D5A744E32B610E66D /* SettingsAuditLogProvider.swift in Sources */,
+				80ACD53EB1C24FAC88CD980F /* SettingsAuditLogStateModel.swift in Sources */,
+				D21CE159AA2F40C099B3F5CC /* SettingsAuditLogRootView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

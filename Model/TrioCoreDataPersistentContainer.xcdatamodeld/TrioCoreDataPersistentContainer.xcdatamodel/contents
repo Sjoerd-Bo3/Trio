@@ -247,6 +247,32 @@
             <fetchIndexElement property="startDate" type="Binary" order="descending"/>
         </fetchIndex>
     </entity>
+    <entity name="SettingsChangeStored" representedClassName="SettingsChangeStored" syncable="YES">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="subcategory" optional="YES" attributeType="String"/>
+        <attribute name="settingName" optional="YES" attributeType="String"/>
+        <attribute name="settingKey" optional="YES" attributeType="String"/>
+        <attribute name="oldValue" optional="YES" attributeType="String"/>
+        <attribute name="newValue" optional="YES" attributeType="String"/>
+        <attribute name="unit" optional="YES" attributeType="String"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="source" optional="YES" attributeType="String"/>
+        <attribute name="groupId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <fetchIndex name="byDate">
+            <fetchIndexElement property="date" type="Binary" order="descending"/>
+        </fetchIndex>
+        <fetchIndex name="bySettingKey">
+            <fetchIndexElement property="settingKey" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byCategory">
+            <fetchIndexElement property="category" type="Binary" order="ascending"/>
+        </fetchIndex>
+        <fetchIndex name="byGroupId">
+            <fetchIndexElement property="groupId" type="Binary" order="descending"/>
+        </fetchIndex>
+    </entity>
     <entity name="TempTargetStored" representedClassName="TempTargetStored" syncable="YES">
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="duration" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
