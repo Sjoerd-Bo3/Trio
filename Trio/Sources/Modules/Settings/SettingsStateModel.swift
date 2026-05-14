@@ -112,7 +112,8 @@ extension Settings {
 
             // Helper function to add a setting row
             func addSetting(category: String, subcategory: String = "", name: String, value: String, unit: String = "") {
-                csvContent += "\(csvEscape(category)),\(csvEscape(subcategory)),\(csvEscape(name)),\(csvEscape(value)),\(csvEscape(unit))\n"
+                csvContent +=
+                    "\(csvEscape(category)),\(csvEscape(subcategory)),\(csvEscape(name)),\(csvEscape(value)),\(csvEscape(unit))\n"
             }
 
             // Devices
@@ -149,7 +150,7 @@ extension Settings {
 
             // Algorithm Settings
             let algorithmCategory = String(localized: "Algorithm", comment: "Algorithm menu item in the Settings main view.")
-            
+
             // Autosens Settings
             let autosensSubcategory = String(localized: "Autosens")
             addSetting(
@@ -300,7 +301,9 @@ extension Settings {
                 category: algorithmCategory,
                 subcategory: targetBehaviorSubcategory,
                 name: String(localized: "Half Basal Exercise Target"),
-                value: trioSettings.units == .mgdL ? String(describing: preferences.halfBasalExerciseTarget) : String(describing: preferences.halfBasalExerciseTarget.asMmolL),
+                value: trioSettings
+                    .units == .mgdL ? String(describing: preferences.halfBasalExerciseTarget) :
+                    String(describing: preferences.halfBasalExerciseTarget.asMmolL),
                 unit: trioSettings.units.rawValue
             )
 
@@ -353,7 +356,9 @@ extension Settings {
                 category: algorithmCategory,
                 subcategory: additionalsSubcategory,
                 name: String(localized: "Min 5m Carb Impact"),
-                value: trioSettings.units == .mgdL ? String(describing: preferences.min5mCarbimpact) : String(describing: preferences.min5mCarbimpact.asMmolL),
+                value: trioSettings
+                    .units == .mgdL ? String(describing: preferences.min5mCarbimpact) :
+                    String(describing: preferences.min5mCarbimpact.asMmolL),
                 unit: trioSettings.units == .mgdL ? "mg/dL" : "mmol/L"
             )
             addSetting(
@@ -453,13 +458,15 @@ extension Settings {
             addSetting(
                 category: featuresCategory,
                 name: String(localized: "Low Threshold"),
-                value: trioSettings.units == .mgdL ? String(describing: trioSettings.low) : String(describing: trioSettings.low.asMmolL),
+                value: trioSettings
+                    .units == .mgdL ? String(describing: trioSettings.low) : String(describing: trioSettings.low.asMmolL),
                 unit: trioSettings.units.rawValue
             )
             addSetting(
                 category: featuresCategory,
                 name: String(localized: "High Threshold"),
-                value: trioSettings.units == .mgdL ? String(describing: trioSettings.high) : String(describing: trioSettings.high.asMmolL),
+                value: trioSettings
+                    .units == .mgdL ? String(describing: trioSettings.high) : String(describing: trioSettings.high.asMmolL),
                 unit: trioSettings.units.rawValue
             )
             addSetting(
@@ -538,13 +545,17 @@ extension Settings {
             addSetting(
                 category: notificationsCategory,
                 name: String(localized: "Low Glucose Alarm Limit"),
-                value: trioSettings.units == .mgdL ? String(describing: trioSettings.lowGlucose) : String(describing: trioSettings.lowGlucose.asMmolL),
+                value: trioSettings
+                    .units == .mgdL ? String(describing: trioSettings.lowGlucose) :
+                    String(describing: trioSettings.lowGlucose.asMmolL),
                 unit: trioSettings.units.rawValue
             )
             addSetting(
                 category: notificationsCategory,
                 name: String(localized: "High Glucose Alarm Limit"),
-                value: trioSettings.units == .mgdL ? String(describing: trioSettings.highGlucose) : String(describing: trioSettings.highGlucose.asMmolL),
+                value: trioSettings
+                    .units == .mgdL ? String(describing: trioSettings.highGlucose) :
+                    String(describing: trioSettings.highGlucose.asMmolL),
                 unit: trioSettings.units.rawValue
             )
             addSetting(

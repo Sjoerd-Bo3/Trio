@@ -91850,6 +91850,9 @@
         }
       }
     },
+    "Display and Allow Fat and Protein Entries" : {
+
+    },
     "Display Chart Threshold lines for Low and High" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -95957,6 +95960,9 @@
           }
         }
       }
+    },
+    "Duration of Insulin Action (DIA)" : {
+
     },
     "Dynamic" : {
       "localizations" : {
@@ -101466,6 +101472,9 @@
           }
         }
       }
+    },
+    "Enable SMB With Temporary Target" : {
+
     },
     "Enable SMB With Temptarget" : {
       "comment" : "Enable SMB With Temptarget",
@@ -113906,6 +113915,9 @@
           }
         }
       }
+    },
+    "Fat and Protein Factor" : {
+
     },
     "Fat and Protein Percentage" : {
       "localizations" : {
@@ -159562,6 +159574,9 @@
         }
       }
     },
+    "Max UAM SMB Basal Minutes" : {
+
+    },
     "Max Value" : {
       "localizations" : {
         "bg" : {
@@ -160508,6 +160523,9 @@
           }
         }
       }
+    },
+    "Maximum Duration (hours)" : {
+
     },
     "Maximum Duration In Hours" : {
       "comment" : "Duration",
@@ -198435,6 +198453,9 @@
         }
       }
     },
+    "Remaining Carbs Fraction" : {
+
+    },
     "Remaining Carbs Percentage" : {
       "comment" : "Remaining Carbs Percentage",
       "localizations" : {
@@ -220299,6 +220320,9 @@
           }
         }
       }
+    },
+    "Spread Interval (minutes)" : {
+
     },
     "STALE DATA" : {
       "comment" : "Information displayed when watch app data outdated or stale.",
