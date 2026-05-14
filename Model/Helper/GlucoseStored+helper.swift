@@ -20,17 +20,6 @@ extension GlucoseStored {
         return request
     }
 
-    static func glucoseIsHIGH(_ glucose: [GlucoseStored]) -> Bool {
-        guard glucose.count >= 4 else { return false }
-
-        let firstValue = glucose.first?.glucose
-
-        /// 400 mg/dL covers all Dexcom CGMs as well as European Libre 2 and most readings from xDrip4iOS.
-        /// U.S. / Canadian Libres can emit up to 500 mg/dL until it reads "HI"
-        /// Our condition considers both these values, 400 and 500, as possible "flat" readings when paired CGM reads HIGH.
-        return glucose.allSatisfy { $0.glucose == firstValue && ($0.glucose == 400 || $0.glucose == 500) }
-    }
-
     // Preview
     @discardableResult static func makePreviewGlucose(count: Int, provider: CoreDataStack) -> [GlucoseStored] {
         let context = provider.persistentContainer.viewContext
@@ -104,16 +93,6 @@ extension NSPredicate {
         return NSPredicate(format: "date >= %@ AND isUploadedToTidepool == %@", date as NSDate, false as NSNumber)
     }
 
-    static var manualGlucoseNotYetUploadedToNightscout: NSPredicate {
-        let date = Date.oneDayAgo
-        return NSPredicate(
-            format: "date >= %@ AND isUploadedToNS == %@ AND isManual == %@",
-            date as NSDate,
-            false as NSNumber,
-            true as NSNumber
-        )
-    }
-
     static var manualGlucoseNotYetUploadedToHealth: NSPredicate {
         let date = Date.oneDayAgo
         return NSPredicate(
@@ -132,42 +111,6 @@ extension NSPredicate {
             false as NSNumber,
             true as NSNumber
         )
-    }
-}
-
-extension GlucoseStored: Encodable {
-    enum CodingKeys: String, CodingKey {
-        case date
-        case dateString
-        case sgv
-        case glucose
-        case direction
-        case id
-        case type
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        try container.encode(dateFormatter.string(from: date ?? Date()), forKey: .dateString)
-
-        let dateAsUnixTimestamp = String(format: "%.0f", (date?.timeIntervalSince1970 ?? Date().timeIntervalSince1970) * 1000)
-        try container.encode(dateAsUnixTimestamp, forKey: .date)
-
-        try container.encode(direction, forKey: .direction)
-        try container.encode(id, forKey: .id)
-
-        // TODO: Handle the type of the glucose entry conditionally not hardcoded
-        try container.encode("sgv", forKey: .type)
-
-        if isManual {
-            try container.encode(glucose, forKey: .glucose)
-        } else {
-            try container.encode(glucose, forKey: .sgv)
-        }
     }
 }
 

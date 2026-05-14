@@ -417,7 +417,7 @@ enum DeliveryLimitSubstep: Int, CaseIterable, Identifiable {
 
                 VStack(alignment: .leading, spacing: 0) {
                     Text("What's NOT limited:")
-                    Text("• Manual boluses you enter yoursef")
+                    Text("• Manual boluses you enter yourself")
                     Text("• Manual temporary basal rates you set yourself")
                 }
             }
@@ -504,6 +504,7 @@ enum PumpOptionForOnboardingUnits: String, Equatable, CaseIterable, Identifiable
     case omnipodEros
     case omnipodDash
     case dana
+    case medtrum
 
     var id: String { rawValue }
 
@@ -517,6 +518,8 @@ enum PumpOptionForOnboardingUnits: String, Equatable, CaseIterable, Identifiable
             return "Omnipod DASH"
         case .dana:
             return "Dana (RS/-i)"
+        case .medtrum:
+            return "Medtrum Nano"
         }
     }
 }
@@ -562,6 +565,8 @@ enum NightscoutImportOption: String, Equatable, CaseIterable, Identifiable {
 enum NightscoutSubstep: Int, CaseIterable, Identifiable {
     case setupSelection
     case connectToNightscout
+    case uploadToNightscout
+    case uploadGlucoseToNightscout
     case importFromNightscout
 
     var id: Int { rawValue }

@@ -39,20 +39,25 @@ extension LiveActivityAttributes.ContentState {
 
     static func calculateChange(chart: [GlucoseData], units: GlucoseUnits) -> String {
         guard chart.count > 2 else { return "" }
-        let lastGlucose = chart.first?.glucose ?? 0
-        let secondLastGlucose = chart.dropFirst().first?.glucose ?? 0
-        let delta = lastGlucose - secondLastGlucose
-        let deltaAsDecimal = units == .mmolL ? Decimal(delta).asMmolL : Decimal(delta)
+
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 1
+        formatter.positivePrefix = "  +"
+        formatter.negativePrefix = "  -"
+
+        var lastGlucose = Decimal(chart.first?.glucose ?? 0)
+        var secondLastGlucose = Decimal(chart.dropFirst().first?.glucose ?? 0)
         if units == .mmolL {
+            lastGlucose = lastGlucose.asMmolL
+            secondLastGlucose = secondLastGlucose.asMmolL
+
             formatter.minimumFractionDigits = 1
             formatter.maximumFractionDigits = 1
         }
-        formatter.positivePrefix = "  +"
-        formatter.negativePrefix = "  -"
-        return formatter.string(from: deltaAsDecimal as NSNumber) ?? "--"
+
+        let delta = lastGlucose - secondLastGlucose
+        return formatter.string(from: delta as NSNumber) ?? "--"
     }
 
     init(
@@ -62,12 +67,13 @@ extension LiveActivityAttributes.ContentState {
         chart: [GlucoseData],
         settings: TrioSettings,
         determination: DeterminationData?,
+        iob: Decimal?,
         override: OverrideData?,
         widgetItems: [LiveActivityAttributes.LiveActivityItem]?
     ) {
         let glucose = bg.glucose
         let formattedBG = Self.formatGlucose(Int(glucose), units: units, forceSign: false)
-        var rotationDegrees: Double = 0.0
+        var rotationDegrees = 0.0
 
         switch bg.direction {
         case .doubleUp,
@@ -95,32 +101,19 @@ extension LiveActivityAttributes.ContentState {
         let trendString = bg.direction?.symbol as? String
         let change = Self.calculateChange(chart: chart, units: units)
 
-        let detailedState: LiveActivityAttributes.ContentAdditionalState?
-
-        switch settings.lockScreenView {
-        case .detailed:
-            let chartBG = chart.map { Decimal($0.glucose) }
-            let chartDate = chart.map(\.date)
-
-            /// glucose limits from UI settings, not from notifications settings
-            detailedState = LiveActivityAttributes.ContentAdditionalState(
-                chart: chartBG,
-                chartDate: chartDate,
-                rotationDegrees: rotationDegrees,
-                cob: Decimal(determination?.cob ?? 0),
-                iob: determination?.iob ?? 0 as Decimal,
-                tdd: determination?.tdd ?? 0 as Decimal,
-                isOverrideActive: override?.isActive ?? false,
-                overrideName: override?.overrideName ?? "Override",
-                overrideDate: override?.date ?? Date(),
-                overrideDuration: override?.duration ?? 0,
-                overrideTarget: override?.target ?? 0,
-                widgetItems: widgetItems ?? [] // set empty array here to silence compiler; this can never be nil
-            )
-
-        case .simple:
-            detailedState = nil
-        }
+        let detailedState = LiveActivityAttributes.ContentAdditionalState(
+            chart: chart.map { LiveActivityAttributes.ChartItem(value: Decimal($0.glucose), date: $0.date) },
+            rotationDegrees: rotationDegrees,
+            cob: Decimal(determination?.cob ?? 0),
+            iob: iob ?? 0 as Decimal,
+            tdd: determination?.tdd ?? 0 as Decimal,
+            isOverrideActive: override?.isActive ?? false,
+            overrideName: override?.overrideName ?? "Override",
+            overrideDate: override?.date ?? Date(),
+            overrideDuration: override?.duration ?? 0,
+            overrideTarget: override?.target ?? 0,
+            widgetItems: widgetItems ?? [] // set empty array here to silence compiler; this can never be nil
+        )
 
         self.init(
             unit: settings.units.rawValue,
@@ -132,6 +125,8 @@ extension LiveActivityAttributes.ContentState {
             lowGlucose: settings.low,
             target: determination?.target ?? 100 as Decimal,
             glucoseColorScheme: settings.glucoseColorScheme.rawValue,
+            useDetailedViewIOS: settings.lockScreenView == .detailed,
+            useDetailedViewWatchOS: settings.smartStackView == .detailed,
             detailedViewState: detailedState,
             isInitialState: false
         )

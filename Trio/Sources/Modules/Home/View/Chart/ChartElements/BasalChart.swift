@@ -104,7 +104,7 @@ extension MainChartView {
     }
 
     func drawSuspensions() -> some ChartContent {
-        let suspensions = state.suspensions
+        let suspensions = state.suspendAndResumeEvents
         return ForEach(suspensions) { suspension in
             let now = Date()
 
@@ -154,7 +154,8 @@ extension MainChartView {
             let duration = temp.tempBasal?.duration ?? 0
             let timestamp = temp.timestamp ?? Date()
             let end = timestamp + duration.minutes
-            let isInsulinSuspended = state.suspensions.contains { $0.timestamp ?? now >= timestamp && $0.timestamp ?? now <= end }
+            let isInsulinSuspended = state.suspendAndResumeEvents
+                .contains { $0.timestamp ?? now >= timestamp && $0.timestamp ?? now <= end }
 
             let rate = Double(truncating: temp.tempBasal?.rate ?? Decimal.zero as NSDecimalNumber) * (isInsulinSuspended ? 0 : 1)
 
@@ -176,6 +177,7 @@ extension MainChartView {
         let startOfDay = Calendar.current.startOfDay(for: beginDate)
         let profile = state.basalProfile
         var basalPoints: [BasalProfile] = []
+        var lastEntryBeforeRange: (amount: Double, date: Date)?
 
         // Iterate over the next three days, multiplying the time intervals
         for dayOffset in 0 ..< 3 {
@@ -184,8 +186,12 @@ extension MainChartView {
                 let basalTime = startOfDay.addingTimeInterval(entry.minutes.minutes.timeInterval + dayTimeOffset)
                 let basalTimeInterval = basalTime.timeIntervalSince1970
 
-                // Only append points within the timeBegin and timeEnd range
-                if basalTimeInterval >= timeBegin, basalTimeInterval < timeEnd {
+                if basalTimeInterval < timeBegin {
+                    // Track the last profile entry before the visible range
+                    if lastEntryBeforeRange == nil || basalTime > lastEntryBeforeRange!.date {
+                        lastEntryBeforeRange = (amount: Double(entry.rate), date: basalTime)
+                    }
+                } else if basalTimeInterval < timeEnd {
                     basalPoints.append(BasalProfile(
                         amount: Double(entry.rate),
                         isOverwritten: false,
@@ -193,6 +199,15 @@ extension MainChartView {
                     ))
                 }
             }
+        }
+
+        // Include the active profile entry at timeBegin so the line starts at the chart's left edge
+        if let lastBefore = lastEntryBeforeRange {
+            basalPoints.append(BasalProfile(
+                amount: lastBefore.amount,
+                isOverwritten: false,
+                startDate: beginDate
+            ))
         }
 
         return basalPoints

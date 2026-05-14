@@ -75,24 +75,13 @@ struct AddMealPresetView: View {
                 text: $presetCarbs,
                 placeholder: "0",
                 keyboardType: .numberPad,
-                numberFormatter: mealFormatter
+                numberFormatter: mealFormatter,
+                unitsText: String(localized: "g", comment: "Units for carbs")
             )
-            Text("g").foregroundColor(.secondary)
         }
     }
 
     @ViewBuilder private func proteinAndFat() -> some View {
-        HStack {
-            Text("Protein").foregroundColor(.red)
-            Spacer()
-            TextFieldWithToolBar(
-                text: $presetProtein,
-                placeholder: "0",
-                keyboardType: .numberPad,
-                numberFormatter: mealFormatter
-            )
-            Text("g").foregroundColor(.secondary)
-        }
         HStack {
             Text("Fat").foregroundColor(.orange)
             Spacer()
@@ -100,9 +89,20 @@ struct AddMealPresetView: View {
                 text: $presetFat,
                 placeholder: "0",
                 keyboardType: .numberPad,
-                numberFormatter: mealFormatter
+                numberFormatter: mealFormatter,
+                unitsText: String(localized: "g", comment: "Units for carbs")
             )
-            Text("g").foregroundColor(.secondary)
+        }
+        HStack {
+            Text("Protein").foregroundColor(.red)
+            Spacer()
+            TextFieldWithToolBar(
+                text: $presetProtein,
+                placeholder: "0",
+                keyboardType: .numberPad,
+                numberFormatter: mealFormatter,
+                unitsText: String(localized: "g", comment: "Units for carbs")
+            )
         }
     }
 

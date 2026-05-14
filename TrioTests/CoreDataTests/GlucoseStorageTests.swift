@@ -99,6 +99,17 @@ import Testing
         ) as? [GlucoseStored]
 
         #expect(remainingEntries?.isEmpty == true, "Should have no entries after deletion")
+
+        // Finally verify that it stored a copy
+        let archivedEntries = try await coreDataStack.fetchEntitiesAsync(
+            ofType: DeletedGlucoseStored.self,
+            onContext: testContext,
+            predicate: NSPredicate(format: "glucose == 140"),
+            key: "date",
+            ascending: false
+        ) as? [DeletedGlucoseStored]
+
+        #expect(archivedEntries?.isEmpty == false, "Should have archived entries after deletion")
     }
 
     @Test("Get glucose not yet uploaded to Nightscout") func testGetGlucoseNotYetUploadedToNightscout() async throws {
@@ -114,21 +125,6 @@ import Testing
         // Then
         #expect(!notUploadedEntries.isEmpty, "Should have entries not uploaded to NS")
         #expect(notUploadedEntries[0].glucose == 160, "Glucose value should match")
-    }
-
-    @Test("Get manual glucose not yet uploaded to Nightscout") func testGetManualGlucoseNotYetUploadedToNightscout() async throws {
-        // Given
-        storage.addManualGlucose(glucose: 180)
-
-        // When
-        let notUploadedEntries = try await storage.getManualGlucoseNotYetUploadedToNightscout()
-
-        // Then
-        #expect(!notUploadedEntries.isEmpty, "Should have manual entries not uploaded to NS")
-        let entry = notUploadedEntries[0]
-        #expect(entry.glucose == "180", "Glucose value should match")
-        #expect(entry.glucoseType == "Manual", "Type should be mbg for manual entries")
-        #expect(entry.eventType == .capillaryGlucose, "Type should be capillaryGlucose")
     }
 
     @Test(

@@ -54,11 +54,17 @@ extension Home {
         )) var latestTempTarget: FetchedResults<TempTargetStored>
 
         var bolusProgressFormatter: NumberFormatter {
+            let fractionDigits: Int = switch state.settingsManager.preferences.bolusIncrement {
+            case 0.1: 1
+            case 0.025: 3
+            default: 2
+            }
+
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
             formatter.minimum = 0
-            formatter.maximumFractionDigits = state.settingsManager.preferences.bolusIncrement > 0.05 ? 1 : 2
-            formatter.minimumFractionDigits = state.settingsManager.preferences.bolusIncrement > 0.05 ? 1 : 2
+            formatter.maximumFractionDigits = fractionDigits
+            formatter.minimumFractionDigits = fractionDigits
             formatter.allowsFloats = true
             formatter.roundingIncrement = Double(state.settingsManager.preferences.bolusIncrement) as NSNumber
             return formatter
@@ -147,6 +153,7 @@ extension Home {
                 reservoir: state.reservoir,
                 name: state.pumpName,
                 expiresAtDate: state.pumpExpiresAtDate,
+                activatedAtDate: state.pumpActivatedAtDate,
                 timerDate: state.timerDate,
                 pumpStatusHighlightMessage: state.pumpStatusHighlightMessage,
                 battery: state.batteryFromPersistence
@@ -162,22 +169,51 @@ extension Home {
             }
         }
 
-        var tempBasalString: String? {
-            guard let lastTempBasal = state.tempBasals.last?.tempBasal, let tempRate = lastTempBasal.rate else {
-                return nil
-            }
-            let rateString = Formatter.decimalFormatterWithTwoFractionDigits.string(from: tempRate as NSNumber) ?? "0"
+        var basalString: String? {
+            var rate: NSNumber = 0
             var manualBasalString = ""
 
-            if let apsManager = state.apsManager, apsManager.isManualTempBasal {
-                manualBasalString = String(
-                    localized:
-                    " - Manual Basal ⚠️",
-                    comment: "Manual Temp basal"
-                )
+            guard let apsManager = state.apsManager else {
+                return nil
             }
 
-            return rateString + String(localized: " U/hr", comment: "Unit per hour with space") + manualBasalString
+            if apsManager.isScheduledBasal == true {
+                guard let scheduledRate = scheduledBasalDeliveryRate(at: Date()) else {
+                    return nil
+                }
+                rate = scheduledRate
+            } else {
+                guard let lastTempBasal = state.tempBasals.last?.tempBasal, let tempRate = lastTempBasal.rate else {
+                    return nil
+                }
+                if apsManager.isManualTempBasal {
+                    manualBasalString = String(
+                        localized: " - Manual Basal ⚠️",
+                        comment: "Manual Temp basal"
+                    )
+                }
+                rate = tempRate
+            }
+
+            let rateString = Formatter.decimalFormatterWithThreeFractionDigits.string(from: rate) ?? "0"
+            return rateString + String(localized: " U/hr", comment: "Unit per hour with space") +
+                manualBasalString
+        }
+
+        // Returns the scheduled basal rate for the current time based on the saved basal scheduled.
+        // Would be better if in the future BasalDeliveryStatus could be updated to include this info.
+        func scheduledBasalDeliveryRate(at when: Date) -> NSNumber? {
+            let calendar = Calendar(identifier: .gregorian)
+            // calendar.timeZone = timeZone /// should come from pumpManager in case it's different!
+
+            let hours = calendar.component(.hour, from: when)
+            let minutes = calendar.component(.minute, from: when)
+            let totalMinutes = hours * 60 + minutes
+
+            if let rate = findBasalRateForOffset(for: totalMinutes, in: state.basalProfile) {
+                return NSDecimalNumber(decimal: rate)
+            }
+            return nil
         }
 
         var overrideString: String? {
@@ -185,11 +221,15 @@ extension Home {
                 return nil
             }
 
+            guard let settingsManager = state.settingsManager else {
+                return nil
+            }
+
             let percent = latestOverride.percentage
             let percentString = percent == 100 ? "" : "\(percent.formatted(.number)) %"
 
             let unit = state.units
-            var target = (latestOverride.target ?? 100) as Decimal
+            var target = (latestOverride.target ?? 0) as Decimal
             target = unit == .mmolL ? target.asMmolL : target
 
             var targetString = target == 0 ? "" : (fetchedTargetFormatter.string(from: target as NSNumber) ?? "") + " " + unit
@@ -229,9 +269,29 @@ extension Home {
                 : ""
 
             let smbToggleString = latestOverride.smbIsOff || latestOverride
-                .smbIsScheduledOff ? "SMBs Off\(smbScheduleString)" : ""
+                .smbIsScheduledOff ? String(localized: "SMBs Off\(smbScheduleString)") : ""
 
-            let components = [durationString, percentString, targetString, smbToggleString].filter { !$0.isEmpty }
+            var smbMinuteString: String = ""
+            var uamMinuteString: String = ""
+
+            if !latestOverride.smbIsOff, latestOverride.advancedSettings {
+                if let smbMinutes = latestOverride.smbMinutes,
+                   smbMinutes.decimalValue != settingsManager.preferences.maxSMBBasalMinutes
+                {
+                    smbMinuteString = "SMB\u{00A0}\(smbMinutes)\u{00A0}" +
+                        String(localized: "m", comment: "Abbreviation for Minutes")
+                }
+
+                if let uamMinutes = latestOverride.uamMinutes,
+                   uamMinutes.decimalValue != settingsManager.preferences.maxUAMSMBBasalMinutes
+                {
+                    uamMinuteString = "UAM\u{00A0}\(uamMinutes)\u{00A0}" +
+                        String(localized: "m", comment: "Abbreviation for Minutes")
+                }
+            }
+
+            let components = [durationString, percentString, targetString, smbToggleString, smbMinuteString, uamMinuteString]
+                .filter { !$0.isEmpty }
             return components.isEmpty ? nil : components.joined(separator: ", ")
         }
 
@@ -249,16 +309,20 @@ extension Home {
             var durationString = ""
             var percentageString = ""
             var target = (latestTempTarget.target ?? 100) as Decimal
-            var halfBasalTarget: Decimal = 160
-            if latestTempTarget.halfBasalTarget != nil {
-                halfBasalTarget = latestTempTarget.halfBasalTarget! as Decimal
-            } else { halfBasalTarget = state.settingHalfBasalTarget }
+            // Use TempTargetCalculations to get effective HBT (handles both custom and auto-adjusted standard TT)
+            let effectiveHBT = TempTargetCalculations.computeEffectiveHBT(
+                tempTargetHalfBasalTarget: latestTempTarget.halfBasalTarget?.decimalValue,
+                settingHalfBasalTarget: state.settingHalfBasalTarget,
+                target: target,
+                autosensMax: state.autosensMax
+            ) ?? state.settingHalfBasalTarget
             var showPercentage = false
             if target > 100, state.isExerciseModeActive || state.highTTraisesSens { showPercentage = true }
             if target < 100, state.lowTTlowersSens, state.autosensMax > 1 { showPercentage = true }
             if showPercentage {
                 percentageString =
-                    " \(state.computeAdjustedPercentage(halfBasalTargetValue: halfBasalTarget, tempTargetValue: target))%" }
+                    " \(Int(TempTargetCalculations.computeAdjustedPercentage(halfBasalTarget: effectiveHBT, target: target, autosensMax: state.autosensMax)))%"
+            }
             target = state.units == .mmolL ? target.asMmolL : target
             let targetString = target == 0 ? "" : (fetchedTargetFormatter.string(from: target as NSNumber) ?? "") + " " +
                 state.units.rawValue + percentageString
@@ -432,7 +496,7 @@ extension Home {
                     Text(
                         (
                             Formatter.decimalFormatterWithTwoFractionDigits
-                                .string(from: (state.enactedAndNonEnactedDeterminations.first?.iob ?? 0) as NSNumber) ?? "0"
+                                .string(from: state.currentIOB as NSNumber) ?? "0"
                         ) +
                             String(localized: " U", comment: "Insulin unit")
                     )
@@ -467,31 +531,34 @@ extension Home {
                         .font(.callout)
                 } else {
                     HStack {
-                        if state.pumpSuspended {
-                            Text("Pump suspended")
-                                .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                                .foregroundColor(.loopGray)
-                        } else if let tempBasalString = tempBasalString {
+                        /// Only display the insulin delivery rate info if the pump is not
+                        /// suspended and is available (e.g., pod is paired & not faulted).
+                        let pumpAvailable = state.apsManager.isScheduledBasal != nil
+                        if !state.apsManager.isSuspended && pumpAvailable {
                             Image(systemName: "drop.circle")
                                 .font(.callout)
                                 .foregroundColor(.insulinTintColor)
-                            if tempBasalString.count > 5 {
-                                Text(tempBasalString)
-                                    .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.85)
-                                    .truncationMode(.tail)
-                                    .allowsTightening(true)
+                            if let basalString = self.basalString {
+                                /// Adjust opacity when displaying a scheduled basal rate
+                                let opacity = state.apsManager?.isScheduledBasal == true ? 0.6 : 1.0
+                                if basalString.count > 5 {
+                                    Text(basalString)
+                                        .font(.callout).fontWeight(.bold).fontDesign(.rounded)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.85)
+                                        .truncationMode(.tail)
+                                        .allowsTightening(true)
+                                        .opacity(opacity)
+                                } else {
+                                    // Short strings can just display normally
+                                    Text(basalString)
+                                        .font(.callout).fontWeight(.bold).fontDesign(.rounded)
+                                        .opacity(opacity)
+                                }
                             } else {
-                                // Short strings can just display normally
-                                Text(tempBasalString).font(.callout).fontWeight(.bold).fontDesign(.rounded)
+                                Text("No Data")
+                                    .font(.callout).fontWeight(.bold).fontDesign(.rounded)
                             }
-                        } else {
-                            Image(systemName: "drop.circle")
-                                .font(.callout)
-                                .foregroundColor(.insulinTintColor)
-                            Text("No Data")
-                                .font(.callout).fontWeight(.bold).fontDesign(.rounded)
                         }
                     }
                 }
@@ -706,27 +773,6 @@ extension Home {
             }.padding(.horizontal, 10).padding(.bottom, UIDevice.adjustPadding(min: nil, max: 10))
         }
 
-        @ViewBuilder func bolusProgressBar(_ progress: Decimal) -> some View {
-            GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 15)
-                    .frame(height: 6)
-                    .foregroundColor(.clear)
-                    .background(
-                        LinearGradient(colors: [
-                            Color(red: 0.7215686275, green: 0.3411764706, blue: 1),
-                            Color(red: 0.6235294118, green: 0.4235294118, blue: 0.9803921569),
-                            Color(red: 0.4862745098, green: 0.5450980392, blue: 0.9529411765),
-                            Color(red: 0.3411764706, green: 0.6666666667, blue: 0.9254901961),
-                            Color(red: 0.262745098, green: 0.7333333333, blue: 0.9137254902)
-                        ], startPoint: .leading, endPoint: .trailing)
-                            .mask(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .frame(width: geo.size.width * CGFloat(progress))
-                            }
-                    )
-            }
-        }
-
         @ViewBuilder func bolusView(geo: GeometryProxy, _ progress: Decimal) -> some View {
             /// ensure that state.lastPumpBolus has a value, i.e. there is a last bolus done by the pump and not an external bolus
             /// - TRUE:  show the pump bolus
@@ -736,7 +782,7 @@ extension Home {
                 let bolusString =
                     (bolusProgressFormatter.string(from: bolusFraction as NSNumber) ?? "0")
                         + String(localized: " of ", comment: "Bolus string partial message: 'x U of y U' in home view") +
-                        (Formatter.decimalFormatterWithTwoFractionDigits.string(from: bolusTotal as NSNumber) ?? "0")
+                        (Formatter.decimalFormatterWithThreeFractionDigits.string(from: bolusTotal as NSNumber) ?? "0")
                         + String(localized: " U", comment: "Insulin unit")
 
                 ZStack {
@@ -782,14 +828,14 @@ extension Home {
                         }
                     }.padding(.horizontal, 10)
                         .padding(.trailing, 8)
-
-                }.padding(.horizontal, 10).padding(.bottom, UIDevice.adjustPadding(min: nil, max: 10))
-                    .overlay(alignment: .bottom) {
-                        // Use a geo-based offset here to position progress bar independent of device size
-                        let offset = geo.size.height * 0.0725
-                        bolusProgressBar(progress).padding(.horizontal, 18)
-                            .offset(y: offset)
-                    }.clipShape(RoundedRectangle(cornerRadius: 15))
+                }
+                .padding(.horizontal, 10)
+                .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 10))
+                .overlay(alignment: .bottom) {
+                    BolusProgressBar(progress: progress)
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 9)
+                }.clipShape(RoundedRectangle(cornerRadius: 15))
             }
         }
 
@@ -937,7 +983,6 @@ extension Home {
             }
             .navigationTitle("Home")
             .navigationBarHidden(true)
-            .ignoresSafeArea(.keyboard)
             .blur(radius: state.isLoopStatusPresented ? 3 : 0)
             .sheet(isPresented: $state.isLoopStatusPresented) {
                 LoopStatusView(state: state)
@@ -951,6 +996,7 @@ extension Home {
                 Button("Omnipod Eros") { state.addPump(.omnipod) }
                 Button("Omnipod DASH") { state.addPump(.omnipodBLE) }
                 Button("Dana(RS/-i)") { state.addPump(.dana) }
+                Button("Medtrum Nano") { state.addPump(.medtrum) }
                 Button("Pump Simulator") { state.addPump(.simulator) }
             } message: { Text("Select Pump Model") }
             .sheet(isPresented: $state.shouldDisplayPumpSetupSheet) {
@@ -964,7 +1010,7 @@ extension Home {
                 } else {
                     PumpConfig.PumpSetupView(
                         pumpType: state.setupPumpType,
-                        pumpInitialSettings: PumpConfig.PumpInitialSettings.default,
+                        pumpInitialSettings: state.pumpInitialSettings,
                         bluetoothManager: state.provider.apsManager.bluetoothManager!,
                         completionDelegate: state,
                         setupDelegate: state
@@ -1037,7 +1083,7 @@ extension Home {
                         .tabItem { Label("Main", systemImage: "chart.xyaxis.line") }
                         .badge(carbsRequiredBadge).tag(0)
 
-                    NavigationStack { DataTable.RootView(resolver: resolver) }
+                    NavigationStack { History.RootView(resolver: resolver) }
                         .tabItem { Label("History", systemImage: historySFSymbol) }.tag(1)
 
                     Spacer()

@@ -3,7 +3,7 @@ import UIKit
 // AppVersionChecker is a singleton responsible for checking the app's version status.
 // It fetches version data from remote sources (GitHub), caches the results, and notifies the user
 // if an update is available or if the current version is blacklisted.
-final class AppVersionChecker {
+@MainActor final class AppVersionChecker {
     // Shared singleton instance.
     static let shared = AppVersionChecker()
 
@@ -81,7 +81,7 @@ final class AppVersionChecker {
     //
     // - Parameter viewController: The UIViewController on which to present any alerts.
     func checkAndNotifyVersionStatus(in viewController: UIViewController) {
-        Task { @MainActor in
+        Task {
             let (latestVersion, isNewer, isBlacklisted) = await checkForNewVersion()
             let now = Date()
 
@@ -142,7 +142,7 @@ final class AppVersionChecker {
             completion(result.currentVersion, result.latestVersion, result.isNewer, result.isBlacklisted)
         }
     }
-    
+
     // Refreshes the version information and returns the current state (async version).
     //
     // This method triggers a version check (using cached values if valid or fetching fresh data)
@@ -175,7 +175,7 @@ final class AppVersionChecker {
             completion(result.0, result.1)
         }
     }
-    
+
     // Checks for the latest dev version with caching and comparison (async version).
     //
     // This method attempts to use cached dev version data if it is less than 24 hours old and
@@ -218,7 +218,7 @@ final class AppVersionChecker {
     // - isNewer: `true` if the fetched dev version is newer than the current version.
     private func fetchDevVersionAndUpdateCache(currentVersion: String) async -> (String?, Bool) {
         let versionData = await fetchData(for: .devVersionConfig)
-        
+
         // Parse the dev version from the fetched configuration data
         let configContents = versionData.flatMap { String(data: $0, encoding: .utf8) }
         let fetchedDevVersion = configContents.flatMap { self.parseDevVersionFromConfig(contents: $0) }
@@ -240,9 +240,9 @@ final class AppVersionChecker {
         } ?? false
 
         // Update persisted cache
-        self.persistedLatestDevVersion = fetchedDevVersion
-        self.latestDevVersionChecked = Date()
-        self.cachedForDevVersion = currentVersion
+        persistedLatestDevVersion = fetchedDevVersion
+        latestDevVersionChecked = Date()
+        cachedForDevVersion = currentVersion
 
         return (fetchedDevVersion, isNewer)
     }
@@ -265,7 +265,7 @@ final class AppVersionChecker {
             completion(result.0, result.1, result.2)
         }
     }
-    
+
     // Checks whether there is a new or blacklisted version (async version).
     //
     // This method attempts to use cached version data if it is less than 24 hours old and
@@ -322,9 +322,9 @@ final class AppVersionChecker {
         // Fetch both data types in parallel
         async let versionData = fetchData(for: .versionConfig)
         async let blacklistData = fetchData(for: .blacklistedVersions)
-        
+
         let (versionDataResult, blacklistDataResult) = await (versionData, blacklistData)
-        
+
         // Parse the version from the fetched configuration data.
         let fetchedVersion = versionDataResult
             .flatMap { String(data: $0, encoding: .utf8) }
@@ -343,10 +343,10 @@ final class AppVersionChecker {
             .contains(currentVersion) ?? false
 
         // Update persisted cache.
-        self.persistedLatestVersion = fetchedVersion
-        self.latestVersionChecked = Date()
-        self.currentVersionBlackListed = isBlacklisted
-        self.cachedForVersion = currentVersion
+        persistedLatestVersion = fetchedVersion
+        latestVersionChecked = Date()
+        currentVersionBlackListed = isBlacklisted
+        cachedForVersion = currentVersion
 
         return (fetchedVersion, isNewer, isBlacklisted)
     }
@@ -378,7 +378,7 @@ final class AppVersionChecker {
             return nil
         }
     }
-    
+
     // Legacy completion handler version for existing code
     private func fetchData(for dataType: GitHubDataType, completion: @escaping (Data?) -> Void) {
         guard let url = URL(string: dataType.url) else {
@@ -410,7 +410,7 @@ final class AppVersionChecker {
     private func parseVersionFromConfig(contents: String) -> String? {
         let lines = contents.split(separator: "\n")
         for line in lines {
-            if line.contains("APP_VERSION") && !line.contains("DEV") {
+            if line.contains("APP_VERSION"), !line.contains("DEV") {
                 let components = line.split(separator: "=").map {
                     $0.trimmingCharacters(in: .whitespacesAndNewlines)
                 }
@@ -488,10 +488,8 @@ final class AppVersionChecker {
     // - title: The title text for the alert.
     // - message: The body message of the alert.
     private func showAlert(on viewController: UIViewController, title: String, message: String) {
-        DispatchQueue.main.async {
-            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            viewController.present(alert, animated: true)
-        }
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        viewController.present(alert, animated: true)
     }
 }

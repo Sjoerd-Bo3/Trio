@@ -2,6 +2,7 @@ import CGMBLEKitUI
 import Combine
 import CoreData
 import Foundation
+import LoopKit
 import LoopKitUI
 import Observation
 import SwiftDate
@@ -20,6 +21,7 @@ extension Home {
         @ObservationIgnored @Injected() var tempTargetStorage: TempTargetsStorage!
         @ObservationIgnored @Injected() var overrideStorage: OverrideStorage!
         @ObservationIgnored @Injected() var bluetoothManager: BluetoothStateManager!
+        @ObservationIgnored @Injected() var iobService: IOBService!
 
         var cgmStateModel: CGMSettings.StateModel {
             CGMSettings.StateModel.shared
@@ -39,7 +41,6 @@ extension Home {
         var targetProfiles: [TargetProfile] = []
         var timerDate = Date()
         var closedLoop = false
-        var pumpSuspended = false
         var isLooping = false
         var statusTitle = ""
         var lastLoopDate: Date = .distantPast
@@ -47,6 +48,7 @@ extension Home {
         var reservoir: Decimal?
         var pumpName = ""
         var pumpExpiresAtDate: Date?
+        var pumpActivatedAtDate: Date?
         var highTTraisesSens: Bool = false
         var lowTTlowersSens: Bool = false
         var isExerciseModeActive: Bool = false
@@ -65,6 +67,7 @@ extension Home {
         var manualTempBasal = false
         var isSmoothingEnabled = false
         var maxIOB: Decimal = 0.0
+        var currentIOB: Decimal = 0.0
         var autosensMax: Decimal = 1.2
         var lowGlucose: Decimal = 70
         var highGlucose: Decimal = 180
@@ -74,6 +77,7 @@ extension Home {
         var displayXgridLines: Bool = false
         var displayYgridLines: Bool = false
         var thresholdLines: Bool = false
+        var bolusDisplayThreshold: BolusDisplayThreshold = .allUnits
         var hours: Int16 = 6
         var totalBolus: Decimal = 0
         var isLoopStatusPresented: Bool = false
@@ -90,7 +94,7 @@ extension Home {
         var fetchedTDDs: [TDD] = []
         var insulinFromPersistence: [PumpEventStored] = []
         var tempBasals: [PumpEventStored] = []
-        var suspensions: [PumpEventStored] = []
+        var suspendAndResumeEvents: [PumpEventStored] = []
         var batteryFromPersistence: [OpenAPS_Battery] = []
         var lastPumpBolus: PumpEventStored?
         var overrides: [OverrideStored] = []
@@ -105,6 +109,7 @@ extension Home {
         var cgmAvailable: Bool = false
         var listOfCGM: [CGMModel] = []
         var cgmCurrent = cgmDefaultModel
+        var pumpInitialSettings = PumpConfig.PumpInitialSettings.default
         var shouldRunDeleteOnSettingsChange = true
 
         var showCarbsRequiredBadge: Bool = true
@@ -215,12 +220,23 @@ extension Home {
                     group.addTask {
                         self.setupTempTargetsRunStored()
                     }
+                    group.addTask {
+                        self.iobService.updateIOB()
+                    }
                 }
             }
         }
 
         // These combine subscribers are only necessary due to the batch inserts of glucose/FPUs which do not trigger a ManagedObjectContext change notification
         private func registerSubscribers() {
+            iobService.iobPublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in
+                    guard let self = self else { return }
+                    self.currentIOB = self.iobService.currentIOB ?? 0
+                }
+                .store(in: &subscriptions)
+
             glucoseStorage.updatePublisher
                 .receive(on: queue)
                 .sink { [weak self] _ in
@@ -330,6 +346,11 @@ extension Home {
                 .weakAssign(to: \.pumpExpiresAtDate, on: self)
                 .store(in: &lifetime)
 
+            apsManager.pumpActivatedAtDate
+                .receive(on: DispatchQueue.main)
+                .weakAssign(to: \.pumpActivatedAtDate, on: self)
+                .store(in: &lifetime)
+
             apsManager.lastError
                 .receive(on: DispatchQueue.main)
                 .map { [weak self] error in
@@ -390,6 +411,7 @@ extension Home {
             eA1cDisplayUnit = settingsManager.settings.eA1cDisplayUnit
             displayXgridLines = settingsManager.settings.xGridLines
             displayYgridLines = settingsManager.settings.yGridLines
+            bolusDisplayThreshold = settingsManager.settings.bolusDisplayThreshold
             thresholdLines = settingsManager.settings.rulerMarks
             showCarbsRequiredBadge = settingsManager.settings.showCarbsRequiredBadge
             forecastDisplayType = settingsManager.settings.forecastDisplayType
@@ -537,9 +559,11 @@ extension Home {
         }
 
         private func setupPumpSettings() async {
-            let maxBasal = await provider.pumpSettings().maxBasal
+            let settings = await provider.pumpSettings()
             await MainActor.run {
-                self.maxBasal = maxBasal
+                self.maxBasal = settings.maxBasal
+                self.pumpInitialSettings.maxBasalRateUnitsPerHour = Double(settings.maxBasal)
+                self.pumpInitialSettings.maxBolusUnits = Double(settings.maxBolus)
             }
         }
 
@@ -547,6 +571,13 @@ extension Home {
             let basalProfile = await provider.getBasalProfile()
             await MainActor.run {
                 self.basalProfile = basalProfile
+
+                if let schedule = BasalRateSchedule(
+                    dailyItems: basalProfile
+                        .map { RepeatingScheduleValue(startTime: TimeInterval($0.minutes * 60), value: Double($0.rate)) }
+                ) {
+                    self.pumpInitialSettings.basalSchedule = schedule
+                }
             }
         }
 
@@ -645,6 +676,7 @@ extension Home.StateModel:
         displayXgridLines = settingsManager.settings.xGridLines
         displayYgridLines = settingsManager.settings.yGridLines
         thresholdLines = settingsManager.settings.rulerMarks
+        bolusDisplayThreshold = settingsManager.settings.bolusDisplayThreshold
         showCarbsRequiredBadge = settingsManager.settings.showCarbsRequiredBadge
         forecastDisplayType = settingsManager.settings.forecastDisplayType
         cgmAvailable = (fetchGlucoseManager.cgmGlucoseSourceType != CGMType.none)
