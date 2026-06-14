@@ -13,6 +13,9 @@ struct BolusStatsView: View {
     /// The state model containing cached statistics data.
     let state: Stat.StateModel
 
+    /// Debug override for the rolling-average window (0 = automatic per-interval default).
+    @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+
     /// The current scroll position in the chart.
     @State private var scrollPosition = Date()
     /// The currently selected date in the chart.
@@ -191,7 +194,7 @@ struct BolusStatsView: View {
                     for: bolusStats,
                     date: { $0.date },
                     value: { $0.manualBolus + $0.smb + $0.external },
-                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval),
+                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval, override: rollingAverageWindowOverride),
                     centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
                 )
             ) { point in
