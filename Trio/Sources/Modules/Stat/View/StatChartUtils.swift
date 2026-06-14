@@ -223,4 +223,101 @@ struct StatChartUtils {
             Text(label).foregroundStyle(Color.secondary)
         }.font(.caption)
     }
+
+    // MARK: - Rolling Average Trend Line
+
+    /// The stroke style used for overlaid rolling-average trend lines.
+    static let rollingAverageStrokeStyle = StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 4])
+
+    /// A single point on a rolling-average trend line.
+    struct RollingAveragePoint: Identifiable {
+        let id = UUID()
+        /// The date of the point, offset to align with the center of its corresponding bar.
+        let date: Date
+        /// The averaged value at this point.
+        let value: Double
+    }
+
+    /// Computes a centered rolling (moving) average over a series of dated values.
+    ///
+    /// A centered window is used so the trend line is not shifted relative to the bars it
+    /// overlays. Points near the edges use a partial (clamped) window so the line spans the
+    /// full data range. Each point's date is offset by half a bar width so the line aligns
+    /// with the center of the bars rather than their leading edge.
+    ///
+    /// - Parameters:
+    ///   - items: The source data, assumed sorted ascending by date.
+    ///   - date: Closure returning the date (bin start) for an item.
+    ///   - value: Closure returning the value to be averaged for an item.
+    ///   - window: The number of points to include in the averaging window. A window < 2
+    ///     disables smoothing and plots the raw values.
+    ///   - centerOffset: Seconds added to each date so points align with bar centers.
+    /// - Returns: An array of `RollingAveragePoint` aligned to the input dates.
+    static func rollingAverage<T>(
+        for items: [T],
+        date: (T) -> Date,
+        value: (T) -> Double,
+        window: Int,
+        centerOffset: TimeInterval
+    ) -> [RollingAveragePoint] {
+        guard items.count > 1 else { return [] }
+
+        let values = items.map(value)
+        let dates = items.map(date)
+        let halfWindow = max(0, window / 2)
+
+        return items.indices.map { index in
+            let lower = max(0, index - halfWindow)
+            let upper = min(items.count - 1, index + halfWindow)
+            let sum = values[lower ... upper].reduce(0, +)
+            let average = sum / Double(upper - lower + 1)
+            return RollingAveragePoint(date: dates[index].addingTimeInterval(centerOffset), value: average)
+        }
+    }
+
+    /// Returns the rolling-average window size (in number of bars) for the given interval.
+    ///
+    /// Windows are chosen to smooth out hour-to-hour or day-to-day noise while still
+    /// following the longer trend across the visible range.
+    static func rollingAverageWindow(for selectedInterval: Stat.StateModel.StatsTimeInterval) -> Int {
+        switch selectedInterval {
+        case .day: return 3 // 3 hours
+        case .week: return 3 // 3 days
+        case .month: return 7 // 7 days
+        case .total: return 7 // 7 days
+        }
+    }
+
+    /// Returns the offset, in seconds, from a bar's bin start to its center for the given interval.
+    ///
+    /// Bars are binned to the start of an hour (day view) or the start of a day (all other
+    /// views); this offset re-centers an overlaid trend line on top of the bars.
+    static func barCenterOffset(for selectedInterval: Stat.StateModel.StatsTimeInterval) -> TimeInterval {
+        selectedInterval == .day ? 1800 : 43200 // half hour : half day
+    }
+
+    /// Creates a legend item that renders a short dashed line, matching overlaid trend lines.
+    ///
+    /// - Parameters:
+    ///   - label: The text label for the legend item.
+    ///   - color: The color of the dashed line symbol.
+    /// - Returns: A SwiftUI view displaying a dashed line symbol and a label.
+    @ViewBuilder static func dashedLegendItem(label: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            HorizontalLine()
+                .stroke(color, style: StrokeStyle(lineWidth: 2, dash: [3, 2]))
+                .frame(width: 18, height: 4)
+            Text(label).foregroundStyle(Color.secondary)
+        }.font(.caption)
+    }
+}
+
+/// A simple horizontal line shape used to render dashed legend symbols.
+private struct HorizontalLine: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        return path
+    }
 }
