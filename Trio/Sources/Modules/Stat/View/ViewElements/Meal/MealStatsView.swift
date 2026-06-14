@@ -165,6 +165,26 @@ struct MealStatsView: View {
                 }
             }
 
+            // Rolling-average trend line over total carbs (plus fat and protein when FPU conversion is enabled)
+            ForEach(
+                StatChartUtils.rollingAverage(
+                    for: mealStats,
+                    date: { $0.date },
+                    value: { state.useFPUconversion ? $0.carbs + $0.fat + $0.protein : $0.carbs },
+                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval),
+                    centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
+                )
+            ) { point in
+                LineMark(
+                    x: .value("Date", point.date),
+                    y: .value("Rolling Average", point.value),
+                    series: .value("Series", "Rolling Average")
+                )
+                .foregroundStyle(Color.primary)
+                .lineStyle(StatChartUtils.rollingAverageStrokeStyle)
+                .interpolationMethod(.catmullRom)
+            }
+
             // Selection popover outside of the ForEach loop!
             if let selectedDate,
                let selectedMeal = getMealForDate(selectedDate)
@@ -217,10 +237,13 @@ struct MealStatsView: View {
 
             let columns = [GridItem(.adaptive(minimum: 65), spacing: 4)]
 
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 4) {
-                ForEach(legendItems, id: \.0) { item in
-                    StatChartUtils.legendItem(label: item.0, color: item.1)
+            VStack(alignment: .leading, spacing: 4) {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 4) {
+                    ForEach(legendItems, id: \.0) { item in
+                        StatChartUtils.legendItem(label: item.0, color: item.1)
+                    }
                 }
+                StatChartUtils.dashedLegendItem(label: String(localized: "Rolling average"), color: Color.primary)
             }
         }
         .chartYAxis {
