@@ -13,6 +13,9 @@ struct MealStatsView: View {
     /// The state model containing cached statistics data.
     let state: Stat.StateModel
 
+    /// Debug override for the rolling-average window (0 = automatic per-interval default).
+    @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+
     /// The current scroll position in the chart.
     @State private var scrollPosition = Date()
     /// The currently selected date in the chart.
@@ -171,7 +174,7 @@ struct MealStatsView: View {
                     for: mealStats,
                     date: { $0.date },
                     value: { state.useFPUconversion ? $0.carbs + $0.fat + $0.protein : $0.carbs },
-                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval),
+                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval, override: rollingAverageWindowOverride),
                     centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
                 )
             ) { point in

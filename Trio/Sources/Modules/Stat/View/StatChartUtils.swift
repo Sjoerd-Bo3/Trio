@@ -288,6 +288,27 @@ struct StatChartUtils {
         }
     }
 
+    /// `UserDefaults`/`@AppStorage` key for the debug rolling-average window override.
+    ///
+    /// A value of `0` means "use the automatic per-interval default"; any positive value
+    /// forces that fixed window across all intervals. Exposed via a debug slider on the
+    /// Statistics screen so the smoothing can be tuned on TestFlight builds.
+    static let rollingAverageWindowOverrideKey = "debugStatsRollingAverageWindow"
+
+    /// Returns the effective rolling-average window, honoring a debug override when set.
+    ///
+    /// - Parameters:
+    ///   - selectedInterval: The selected time interval, used for the automatic default.
+    ///   - override: The debug override value. `0` (or negative) uses the automatic default;
+    ///     any positive value is used directly (1 disables smoothing by averaging a single bar).
+    /// - Returns: The window size to pass to `rollingAverage(...)`.
+    static func rollingAverageWindow(
+        for selectedInterval: Stat.StateModel.StatsTimeInterval,
+        override: Int
+    ) -> Int {
+        override > 0 ? override : rollingAverageWindow(for: selectedInterval)
+    }
+
     /// Returns the offset, in seconds, from a bar's bin start to its center for the given interval.
     ///
     /// Bars are binned to the start of an hour (day view) or the start of a day (all other
