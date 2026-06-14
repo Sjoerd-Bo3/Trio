@@ -185,6 +185,26 @@ struct BolusStatsView: View {
                 )
             }
 
+            // Rolling-average trend line over the total bolus insulin
+            ForEach(
+                StatChartUtils.rollingAverage(
+                    for: bolusStats,
+                    date: { $0.date },
+                    value: { $0.manualBolus + $0.smb + $0.external },
+                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval),
+                    centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
+                )
+            ) { point in
+                LineMark(
+                    x: .value("Date", point.date),
+                    y: .value("Rolling Average", point.value),
+                    series: .value("Series", "Rolling Average")
+                )
+                .foregroundStyle(Color.primary)
+                .lineStyle(StatChartUtils.rollingAverageStrokeStyle)
+                .interpolationMethod(.catmullRom)
+            }
+
             // Dummy PointMark to force SwiftCharts to render a visible domain of 00:00-23:59
             // i.e. single day from midnight to midnight
             if selectedInterval == .day {
@@ -236,10 +256,13 @@ struct BolusStatsView: View {
 
             let columns = [GridItem(.adaptive(minimum: 65), spacing: 4)]
 
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 4) {
-                ForEach(legendItems, id: \.0) { item in
-                    StatChartUtils.legendItem(label: item.0, color: item.1)
+            VStack(alignment: .leading, spacing: 4) {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 4) {
+                    ForEach(legendItems, id: \.0) { item in
+                        StatChartUtils.legendItem(label: item.0, color: item.1)
+                    }
                 }
+                StatChartUtils.dashedLegendItem(label: String(localized: "Rolling average"), color: Color.primary)
             }
         }
         .chartYAxis {

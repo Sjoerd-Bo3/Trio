@@ -155,6 +155,26 @@ struct TotalDailyDoseChart: View {
                 )
             }
 
+            // Rolling-average trend line overlaying the bars
+            ForEach(
+                StatChartUtils.rollingAverage(
+                    for: tddStats,
+                    date: { $0.date },
+                    value: { $0.amount },
+                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval),
+                    centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
+                )
+            ) { point in
+                LineMark(
+                    x: .value("Date", point.date),
+                    y: .value("Rolling Average", point.value),
+                    series: .value("Series", "Rolling Average")
+                )
+                .foregroundStyle(Color.primary)
+                .lineStyle(StatChartUtils.rollingAverageStrokeStyle)
+                .interpolationMethod(.catmullRom)
+            }
+
             // Selection popover outside of the ForEach loop!
             if let selectedDate,
                let selectedTDD = getTDDForDate(selectedDate)
@@ -191,6 +211,9 @@ struct TotalDailyDoseChart: View {
                 )
                 .opacity(0) // ensures dummy ChartContent is hidden
             }
+        }
+        .chartLegend(position: .bottom, alignment: .leading, spacing: 12) {
+            StatChartUtils.dashedLegendItem(label: String(localized: "Rolling average"), color: Color.primary)
         }
         .chartYAxis {
             AxisMarks(position: .trailing) { value in
