@@ -21,6 +21,12 @@ extension Stat {
 
         /// Debug override for the chart rolling-average window (0 = automatic per-interval default).
         @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+        /// Debug: use a rolling median (robust to outliers) instead of the mean.
+        @AppStorage(StatChartUtils.rollingAverageUseMedianKey) private var rollingAverageUseMedian: Bool = false
+        /// Debug: count calendar days with no data as 0 (true per-day average).
+        @AppStorage(StatChartUtils.rollingAverageZeroFillKey) private var rollingAverageZeroFill: Bool = false
+        /// Debug: seed the oldest edge with the carry-over level of purged history.
+        @AppStorage(StatChartUtils.rollingAverageLeadInKey) private var rollingAverageLeadIn: Bool = false
 
         private var intervalOptions: [Stat.StateModel.StatsTimeIntervalWithToday] {
             state.selectedGlucoseChartType == .percentileByDay || state.selectedGlucoseChartType == .distributionByDay
@@ -259,7 +265,25 @@ extension Stat {
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                    Divider()
+
+                    Toggle("Median (robust to outliers)", isOn: $rollingAverageUseMedian)
+                    Text("Use the rolling median instead of the mean so a single big day pulls the line less.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Toggle("Count empty days as zero", isOn: $rollingAverageZeroFill)
+                    Text("Days with no bolus/meal count as 0 (a true per-day average) instead of being skipped.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Toggle("Carry-over lead-in", isOn: $rollingAverageLeadIn)
+                    Text("Pad the oldest edge with a saved summary of history before the 90-day cutoff so it isn't one-sided.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+                .font(.subheadline)
             }
         }
 
