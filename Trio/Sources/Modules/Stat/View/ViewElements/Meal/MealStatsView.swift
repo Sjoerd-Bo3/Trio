@@ -15,6 +15,12 @@ struct MealStatsView: View {
 
     /// Debug override for the rolling-average window (0 = automatic per-interval default).
     @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+    /// Debug: use a rolling median (robust to outliers) instead of the mean.
+    @AppStorage(StatChartUtils.rollingAverageUseMedianKey) private var rollingAverageUseMedian: Bool = false
+    /// Debug: count calendar days with no data as 0 (true per-day average).
+    @AppStorage(StatChartUtils.rollingAverageZeroFillKey) private var rollingAverageZeroFill: Bool = false
+    /// Debug: seed the oldest edge with the carry-over level of purged history.
+    @AppStorage(StatChartUtils.rollingAverageLeadInKey) private var rollingAverageLeadIn: Bool = false
 
     /// The current scroll position in the chart.
     @State private var scrollPosition = Date()
@@ -175,6 +181,10 @@ struct MealStatsView: View {
                     date: { $0.date },
                     value: { state.useFPUconversion ? $0.carbs + $0.fat + $0.protein : $0.carbs },
                     window: StatChartUtils.rollingAverageWindow(for: selectedInterval, override: rollingAverageWindowOverride),
+                    unit: StatChartUtils.unitSeconds(for: selectedInterval),
+                    useMedian: rollingAverageUseMedian,
+                    zeroFillEmptySlots: rollingAverageZeroFill,
+                    carryOverValue: rollingAverageLeadIn ? state.mealCarryOverValue(for: selectedInterval) : nil,
                     centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
                 )
             ) { point in
@@ -185,7 +195,7 @@ struct MealStatsView: View {
                 )
                 .foregroundStyle(Color.primary)
                 .lineStyle(StatChartUtils.rollingAverageStrokeStyle)
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
             }
 
             // Selection popover outside of the ForEach loop!
