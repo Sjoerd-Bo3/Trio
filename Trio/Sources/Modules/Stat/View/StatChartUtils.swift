@@ -238,19 +238,26 @@ struct StatChartUtils {
         let value: Double
     }
 
-    /// Computes a centered rolling (moving) average over a series of dated values.
+    /// Computes a centered, time-windowed rolling average over a series of dated values.
     ///
-    /// A centered window is used so the trend line is not shifted relative to the bars it
-    /// overlays. Points near the edges use a partial (clamped) window so the line spans the
-    /// full data range. Each point's date is offset by half a bar width so the line aligns
-    /// with the center of the bars rather than their leading edge.
+    /// Unlike a naive index-based moving average, the window is defined in **calendar time**
+    /// (± half the window's worth of `unit` seconds around each point), so gaps in the data
+    /// (e.g. days with no bolus or no logged meal) do not distort the result. A centered
+    /// window keeps the trend line aligned with the bars it overlays, and each point's date
+    /// is offset by half a bar width so the line sits over the bar centers.
     ///
     /// - Parameters:
-    ///   - items: The source data, assumed sorted ascending by date.
+    ///   - items: The source data. Need not be pre-sorted.
     ///   - date: Closure returning the date (bin start) for an item.
     ///   - value: Closure returning the value to be averaged for an item.
-    ///   - window: The number of points to include in the averaging window. A window < 2
-    ///     disables smoothing and plots the raw values.
+    ///   - window: The window size in number of bars. A window < 2 disables smoothing.
+    ///   - unit: Seconds per bar (e.g. 3600 for hourly, 86400 for daily). Defines the window width.
+    ///   - useMedian: When `true`, uses the median of the window (robust to outliers) instead of the mean.
+    ///   - zeroFillEmptySlots: When `true`, calendar slots inside the window that have no data are
+    ///     counted as `0` (a true per-day average); when `false`, only days with data are averaged.
+    ///   - carryOverValue: Optional carry-over level (a summary of history just before the oldest
+    ///     retained data) used only to pad the average at the oldest edge so it is not one-sided.
+    ///     Synthesized into lead-in points before the first real point; never drawn as bars.
     ///   - centerOffset: Seconds added to each date so points align with bar centers.
     /// - Returns: An array of `RollingAveragePoint` aligned to the input dates.
     static func rollingAverage<T>(
@@ -258,21 +265,73 @@ struct StatChartUtils {
         date: (T) -> Date,
         value: (T) -> Double,
         window: Int,
+        unit: TimeInterval,
+        useMedian: Bool,
+        zeroFillEmptySlots: Bool,
+        carryOverValue: Double? = nil,
         centerOffset: TimeInterval
     ) -> [RollingAveragePoint] {
-        guard items.count > 1 else { return [] }
+        guard !items.isEmpty else { return [] }
 
-        let values = items.map(value)
-        let dates = items.map(date)
-        let halfWindow = max(0, window / 2)
-
-        return items.indices.map { index in
-            let lower = max(0, index - halfWindow)
-            let upper = min(items.count - 1, index + halfWindow)
-            let sum = values[lower ... upper].reduce(0, +)
-            let average = sum / Double(upper - lower + 1)
-            return RollingAveragePoint(date: dates[index].addingTimeInterval(centerOffset), value: average)
+        let points = items.map { (date: date($0), value: value($0)) }.sorted { $0.date < $1.date }
+        guard points.count > 1 else {
+            return points.map { RollingAveragePoint(date: $0.date.addingTimeInterval(centerOffset), value: $0.value) }
         }
+
+        let halfWindow = max(0, window / 2)
+        let halfWidth = Double(halfWindow) * unit
+        let epsilon = unit / 2 // tolerance so slot boundaries are included
+
+        // Synthesize lead-in points from the carry-over level so the oldest real points have a
+        // full (rather than one-sided) window. These pad the leading edge only and are never drawn.
+        var leadIn: [(date: Date, value: Double)] = []
+        if let carryOverValue, halfWindow > 0, let oldest = points.first?.date {
+            for step in 1 ... halfWindow {
+                leadIn.append((date: oldest.addingTimeInterval(-Double(step) * unit), value: carryOverValue))
+            }
+        }
+
+        // Neighbor candidates: synthetic lead-in points sort before the real data.
+        let neighbors = (leadIn + points).sorted { $0.date < $1.date }
+        // Bound zero-fill to the real data span (extended backwards by any lead-in) so we never
+        // invent slots in the future or before recorded history.
+        let fillStart = neighbors.first!.date
+        let fillEnd = points.last!.date
+
+        return points.map { point in
+            let lower = point.date.addingTimeInterval(-halfWidth)
+            let upper = point.date.addingTimeInterval(halfWidth)
+            var values = neighbors
+                .filter { $0.date >= lower - epsilon && $0.date <= upper + epsilon }
+                .map { $0.value }
+
+            if zeroFillEmptySlots {
+                let effectiveLower = max(lower, fillStart)
+                let effectiveUpper = min(upper, fillEnd)
+                let span = effectiveUpper.timeIntervalSince(effectiveLower)
+                let expectedSlots = span > 0 ? Int((span / unit).rounded()) + 1 : 1
+                let missing = max(0, expectedSlots - values.count)
+                if missing > 0 { values.append(contentsOf: repeatElement(0.0, count: missing)) }
+            }
+
+            let average: Double
+            if values.isEmpty {
+                average = point.value
+            } else if useMedian {
+                average = medianCalculationDouble(array: values)
+            } else {
+                average = values.reduce(0, +) / Double(values.count)
+            }
+            return RollingAveragePoint(date: point.date.addingTimeInterval(centerOffset), value: average)
+        }
+    }
+
+    /// Returns the number of seconds represented by one bar for the given interval.
+    ///
+    /// Used as the time-window unit for `rollingAverage(...)`: hourly bars in the day view,
+    /// daily bars otherwise.
+    static func unitSeconds(for selectedInterval: Stat.StateModel.StatsTimeInterval) -> TimeInterval {
+        selectedInterval == .day ? 3600 : 86400
     }
 
     /// Returns the rolling-average window size (in number of bars) for the given interval.
@@ -294,6 +353,18 @@ struct StatChartUtils {
     /// forces that fixed window across all intervals. Exposed via a debug slider on the
     /// Statistics screen so the smoothing can be tuned on TestFlight builds.
     static let rollingAverageWindowOverrideKey = "debugStatsRollingAverageWindow"
+
+    /// `@AppStorage` key: when `true`, the trend line uses a rolling **median** (robust to outliers)
+    /// instead of the mean.
+    static let rollingAverageUseMedianKey = "debugStatsRollingAverageUseMedian"
+
+    /// `@AppStorage` key: when `true`, calendar days inside the window with no data count as `0`
+    /// (a true per-day average) instead of being skipped.
+    static let rollingAverageZeroFillKey = "debugStatsRollingAverageZeroFill"
+
+    /// `@AppStorage` key: when `true`, a carry-over summary of purged history seeds the oldest edge
+    /// of the trend line.
+    static let rollingAverageLeadInKey = "debugStatsRollingAverageLeadIn"
 
     /// Returns the effective rolling-average window, honoring a debug override when set.
     ///

@@ -20,6 +20,7 @@ extension Stat.StateModel {
                 await MainActor.run {
                     self.hourlyTDDStats = hourly
                     self.dailyTDDStats = daily
+                    self.updateTDDCarryOver()
                 }
 
                 // Initially calculate and cache daily averages

@@ -29,6 +29,7 @@ extension Stat.StateModel {
                 await MainActor.run {
                     self.hourlyMealStats = hourly
                     self.dailyMealStats = daily
+                    self.updateMealCarryOver()
                 }
 
                 // Initially calculate and cache daily averages
