@@ -335,6 +335,8 @@ extension Stat.StateModel {
         case month = "M"
         /// Three month interval
         case total = "3 M"
+        /// One year interval
+        case year = "1 Y"
 
         var id: Self { self }
 
@@ -348,6 +350,8 @@ extension Stat.StateModel {
                 return String(localized: "M", comment: "Abbreviation for month")
             case .total:
                 return String(localized: "3 M", comment: "Abbreviation for three months")
+            case .year:
+                return String(localized: "1 Y", comment: "Abbreviation for one year")
             }
         }
     }
