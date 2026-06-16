@@ -52,4 +52,13 @@ final class PropertyPersistentFlags {
     // production constant in TelemetryClient. Surfaced as a hidden field in
     // App Diagnostics for local testing against a dev server.
     @PersistedProperty(key: "telemetryDebugServerURL") var telemetryDebugServerURL: String?
+
+    // MARK: - TDD History Backfill
+
+    // One-time, opt-in import of historical daily Total Daily Dose from Nightscout (see
+    // NightscoutManager.backfillTDDFromNightscout). `tddBackfillConsentDecisionMade` nil means the
+    // user has not yet been asked — used to surface the one-time prompt. `tddBackfillCompletedAt`
+    // records the last successful run.
+    @PersistedProperty(key: "tddBackfillConsentDecisionMade") var tddBackfillConsentDecisionMade: Bool?
+    @PersistedProperty(key: "tddBackfillCompletedAt") var tddBackfillCompletedAt: Date?
 }

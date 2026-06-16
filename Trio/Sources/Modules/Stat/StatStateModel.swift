@@ -7,6 +7,7 @@ import Swinject
 extension Stat {
     @Observable final class StateModel: BaseStateModel<Provider> {
         @ObservationIgnored @Injected() var settings: SettingsManager!
+        @ObservationIgnored @Injected() var fileStorage: FileStorage!
         var highLimit: Decimal = 180
         var lowLimit: Decimal = 70
         var eA1cDisplayUnit: EstimatedA1cDisplayUnit = .percent
