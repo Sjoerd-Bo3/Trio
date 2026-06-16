@@ -33,6 +33,20 @@ extension Stat {
                 ? [.week, .month, .total] : Stat.StateModel.StatsTimeIntervalWithToday.allCases
         }
 
+        /// Duration options for the insulin tab. The 1-year range is only offered for Total Daily
+        /// Dose, whose source data (`TDDStored`) is retained long-term; bolus data is purged at 90
+        /// days, so the year option is hidden there.
+        private var insulinIntervalOptions: [Stat.StateModel.StatsTimeInterval] {
+            state.selectedInsulinChartType == .totalDailyDose
+                ? Stat.StateModel.StatsTimeInterval.allCases
+                : Stat.StateModel.StatsTimeInterval.allCases.filter { $0 != .year }
+        }
+
+        /// Duration options for the meal tab. Meal data is purged at 90 days, so the year option is hidden.
+        private var mealIntervalOptions: [Stat.StateModel.StatsTimeInterval] {
+            Stat.StateModel.StatsTimeInterval.allCases.filter { $0 != .year }
+        }
+
         var body: some View {
             VStack {
                 Picker("View", selection: $selectedView) {
@@ -299,10 +313,16 @@ extension Stat {
                         Text(type.displayName)
                     }
                 }.pickerStyle(.menu)
+                .onChange(of: state.selectedInsulinChartType) { _, newValue in
+                    // The 1-year range only applies to TDD; fall back when switching to bolus.
+                    if newValue != .totalDailyDose, state.selectedIntervalForInsulinStats == .year {
+                        state.selectedIntervalForInsulinStats = .total
+                    }
+                }
             }.padding(.horizontal)
 
             Picker("Duration", selection: $state.selectedIntervalForInsulinStats) {
-                ForEach(StateModel.StatsTimeInterval.allCases) { timeInterval in
+                ForEach(insulinIntervalOptions) { timeInterval in
                     Text(timeInterval.displayName).tag(timeInterval)
                 }
             }
@@ -438,7 +458,7 @@ extension Stat {
             }.padding(.horizontal)
 
             Picker("Duration", selection: $state.selectedIntervalForMealStats) {
-                ForEach(StateModel.StatsTimeInterval.allCases, id: \.self) { timeInterval in
+                ForEach(mealIntervalOptions, id: \.self) { timeInterval in
                     Text(timeInterval.displayName)
                 }
             }

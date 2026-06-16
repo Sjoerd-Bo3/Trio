@@ -12,6 +12,7 @@ struct StatChartUtils {
         case .week: return 7 * 24 * 3600
         case .month: return 30 * 24 * 3600
         case .total: return 90 * 24 * 3600
+        case .year: return 365 * 24 * 3600
         }
     }
 
@@ -57,7 +58,8 @@ struct StatChartUtils {
         case .day: return .dateTime.hour()
         case .week: return .dateTime.weekday(.abbreviated)
         case .month: return .dateTime.day()
-        case .total: return .dateTime.month(.abbreviated)
+        case .total,
+             .year: return .dateTime.month(.abbreviated)
         }
     }
 
@@ -71,7 +73,8 @@ struct StatChartUtils {
             let calendar = Calendar.current
             return DateComponents(weekday: calendar.firstWeekday)
         case .month,
-             .total: return DateComponents(day: 1)
+             .total,
+             .year: return DateComponents(day: 1)
         }
     }
 
@@ -93,6 +96,8 @@ struct StatChartUtils {
             baseDate = calendar.date(byAdding: .day, value: -29, to: today)!
         case .total:
             baseDate = calendar.date(byAdding: .day, value: -89, to: today)!
+        case .year:
+            baseDate = calendar.date(byAdding: .day, value: -364, to: today)!
         }
 
         return calendar.date(byAdding: .second, value: 1, to: baseDate)!
@@ -370,7 +375,8 @@ struct StatChartUtils {
         // 3-week trend rather than reacting to single-day spikes.
         case .week,
              .month,
-             .total: return 21 // 21 days
+             .total,
+             .year: return 21 // 21 days
         }
     }
 

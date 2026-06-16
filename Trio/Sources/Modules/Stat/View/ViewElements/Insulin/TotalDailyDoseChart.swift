@@ -268,7 +268,8 @@ struct TotalDailyDoseChart: View {
                                 .font(.footnote)
                             AxisGridLine()
                         }
-                    case .total:
+                    case .total,
+                         .year:
                         // Show start of every month
                         if day == 1 {
                             AxisValueLabel(format: StatChartUtils.dateFormat(for: selectedInterval), centered: true)

@@ -77,11 +77,13 @@ extension Stat.StateModel {
 
     /// Fetches TDDStored records from CoreData for daily statistics
     /// - Returns: The results of the fetch request containing TDDStored records
-    /// - Note: Fetches records from the last 3 months for week, month, and total views
+    /// - Note: Fetches records from the last ~13 months so the 1-year view (and its rolling
+    ///   average, which needs a little headroom past the oldest visible day) has data. TDDStored
+    ///   is never purged, so older rows are available locally for users who have run Trio that long.
     private func fetchTDDStoredRecords() async throws -> Any {
-        // Create a predicate to fetch TDD records from the last 3 months
-        let threeMonthsAgo = Date().addingTimeInterval(-3.months.timeInterval)
-        let predicate = NSPredicate(format: "date >= %@", threeMonthsAgo as NSDate)
+        // Create a predicate to fetch TDD records covering the 1-year view plus rolling-window headroom
+        let historyStart = Date().addingTimeInterval(-13.months.timeInterval)
+        let predicate = NSPredicate(format: "date >= %@", historyStart as NSDate)
 
         // Fetch TDD records from CoreData
         return try await CoreDataStack.shared.fetchEntitiesAsync(
