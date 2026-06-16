@@ -232,6 +232,8 @@ struct StatChartUtils {
     /// A single point on a rolling-average trend line.
     struct RollingAveragePoint: Identifiable {
         let id = UUID()
+        /// The original bar (bin-start) date this point summarizes, before center alignment.
+        let originalDate: Date
         /// The date of the point, offset to align with the center of its corresponding bar.
         let date: Date
         /// The averaged value at this point.
@@ -275,7 +277,13 @@ struct StatChartUtils {
 
         let points = items.map { (date: date($0), value: value($0)) }.sorted { $0.date < $1.date }
         guard points.count > 1 else {
-            return points.map { RollingAveragePoint(date: $0.date.addingTimeInterval(centerOffset), value: $0.value) }
+            return points.map {
+                RollingAveragePoint(
+                    originalDate: $0.date,
+                    date: $0.date.addingTimeInterval(centerOffset),
+                    value: $0.value
+                )
+            }
         }
 
         let halfWindow = max(0, window / 2)
@@ -322,8 +330,24 @@ struct StatChartUtils {
             } else {
                 average = values.reduce(0, +) / Double(values.count)
             }
-            return RollingAveragePoint(date: point.date.addingTimeInterval(centerOffset), value: average)
+            return RollingAveragePoint(
+                originalDate: point.date,
+                date: point.date.addingTimeInterval(centerOffset),
+                value: average
+            )
         }
+    }
+
+    /// Returns the rolling-average value for the bar matching `date`, or `nil` if there is none.
+    ///
+    /// Used to surface the trend value in a chart's selection popover so the number shown matches
+    /// the dashed line at the scrubbed position.
+    static func rollingAverageValue(
+        at date: Date,
+        in points: [RollingAveragePoint],
+        selectedInterval: Stat.StateModel.StatsTimeInterval
+    ) -> Double? {
+        points.first { isSameTimeUnit($0.originalDate, date, for: selectedInterval) }?.value
     }
 
     /// Returns the number of seconds represented by one bar for the given interval.
@@ -340,10 +364,13 @@ struct StatChartUtils {
     /// following the longer trend across the visible range.
     static func rollingAverageWindow(for selectedInterval: Stat.StateModel.StatsTimeInterval) -> Int {
         switch selectedInterval {
-        case .day: return 3 // 3 hours
-        case .week: return 3 // 3 days
-        case .month: return 7 // 7 days
-        case .total: return 7 // 7 days
+        case .day: return 3 // 3 hours (hourly bars in the day view)
+        // Daily-bar views use a 21-day window. The average is computed over the full retained
+        // daily series (not just the visible range), so even the week view follows a smooth
+        // 3-week trend rather than reacting to single-day spikes.
+        case .week,
+             .month,
+             .total: return 21 // 21 days
         }
     }
 

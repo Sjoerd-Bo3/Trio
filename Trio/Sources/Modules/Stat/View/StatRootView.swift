@@ -257,7 +257,7 @@ extension Stat {
                             get: { Double(rollingAverageWindowOverride) },
                             set: { rollingAverageWindowOverride = Int($0.rounded()) }
                         ),
-                        in: 0 ... 21,
+                        in: 0 ... 60,
                         step: 1
                     )
                     Text(
