@@ -13,6 +13,15 @@ struct MealStatsView: View {
     /// The state model containing cached statistics data.
     let state: Stat.StateModel
 
+    /// Debug override for the rolling-average window (0 = automatic per-interval default).
+    @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+    /// Debug: use a rolling median (robust to outliers) instead of the mean.
+    @AppStorage(StatChartUtils.rollingAverageUseMedianKey) private var rollingAverageUseMedian: Bool = false
+    /// Debug: count calendar days with no data as 0 (true per-day average).
+    @AppStorage(StatChartUtils.rollingAverageZeroFillKey) private var rollingAverageZeroFill: Bool = false
+    /// Debug: seed the oldest edge with the carry-over level of purged history.
+    @AppStorage(StatChartUtils.rollingAverageLeadInKey) private var rollingAverageLeadIn: Bool = false
+
     /// The current scroll position in the chart.
     @State private var scrollPosition = Date()
     /// The currently selected date in the chart.
@@ -121,6 +130,22 @@ struct MealStatsView: View {
         }
     }
 
+    /// The rolling-average trend points (over the displayed macro total) for the current data and settings.
+    /// Shared by the overlaid line and the selection popover so both show the same value.
+    private var rollingAveragePoints: [StatChartUtils.RollingAveragePoint] {
+        StatChartUtils.rollingAverage(
+            for: mealStats,
+            date: { $0.date },
+            value: { state.useFPUconversion ? $0.carbs + $0.fat + $0.protein : $0.carbs },
+            window: StatChartUtils.rollingAverageWindow(for: selectedInterval, override: rollingAverageWindowOverride),
+            unit: StatChartUtils.unitSeconds(for: selectedInterval),
+            useMedian: rollingAverageUseMedian,
+            zeroFillEmptySlots: rollingAverageZeroFill,
+            carryOverValue: rollingAverageLeadIn ? state.mealCarryOverValue(for: selectedInterval) : nil,
+            centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
+        )
+    }
+
     /// A view displaying the bar chart for meal statistics.
     private var chartsView: some View {
         Chart {
@@ -165,6 +190,18 @@ struct MealStatsView: View {
                 }
             }
 
+            // Rolling-average trend line over total carbs (plus fat and protein when FPU conversion is enabled)
+            ForEach(rollingAveragePoints) { point in
+                LineMark(
+                    x: .value("Date", point.date),
+                    y: .value("Rolling Average", point.value),
+                    series: .value("Series", "Rolling Average")
+                )
+                .foregroundStyle(Color.primary)
+                .lineStyle(StatChartUtils.rollingAverageStrokeStyle)
+                .interpolationMethod(.monotone)
+            }
+
             // Selection popover outside of the ForEach loop!
             if let selectedDate,
                let selectedMeal = getMealForDate(selectedDate)
@@ -181,6 +218,11 @@ struct MealStatsView: View {
                     MealSelectionPopover(
                         selectedDate: selectedDate,
                         selectedMeal: selectedMeal,
+                        rollingAverage: StatChartUtils.rollingAverageValue(
+                            at: selectedDate,
+                            in: rollingAveragePoints,
+                            selectedInterval: selectedInterval
+                        ),
                         selectedInterval: selectedInterval,
                         isFpuEnabled: state.useFPUconversion,
                         domain: visibleDateRange,
@@ -217,10 +259,13 @@ struct MealStatsView: View {
 
             let columns = [GridItem(.adaptive(minimum: 65), spacing: 4)]
 
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 4) {
-                ForEach(legendItems, id: \.0) { item in
-                    StatChartUtils.legendItem(label: item.0, color: item.1)
+            VStack(alignment: .leading, spacing: 4) {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 4) {
+                    ForEach(legendItems, id: \.0) { item in
+                        StatChartUtils.legendItem(label: item.0, color: item.1)
+                    }
                 }
+                StatChartUtils.dashedLegendItem(label: String(localized: "Rolling average"), color: Color.primary)
             }
         }
         .chartYAxis {
@@ -297,6 +342,8 @@ private struct MealSelectionPopover: View {
     let selectedDate: Date
     // The meal statistics to display
     let selectedMeal: MealStats
+    /// The rolling-average (trend) value over the displayed macro total at the selected bar, or `nil`.
+    let rollingAverage: Double?
     // The selected duration in the time picker
     let selectedInterval: Stat.StateModel.StatsTimeInterval
     // Setting controlling whether to display fat and protein
@@ -382,6 +429,16 @@ private struct MealSelectionPopover: View {
                             .gridColumnAlignment(.trailing)
                         Text("g").foregroundStyle(Color.secondary)
                     }
+                }
+                if let rollingAverage {
+                    Divider()
+                    GridRow {
+                        Text("Rolling average")
+                        Text(rollingAverage.formatted(.number.precision(.fractionLength(1))))
+                            .gridColumnAlignment(.trailing)
+                        Text("g").foregroundStyle(Color.secondary)
+                    }
+                    .foregroundStyle(Color.secondary)
                 }
             }
             .font(.headline.bold())

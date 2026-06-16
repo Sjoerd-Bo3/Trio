@@ -13,6 +13,15 @@ struct BolusStatsView: View {
     /// The state model containing cached statistics data.
     let state: Stat.StateModel
 
+    /// Debug override for the rolling-average window (0 = automatic per-interval default).
+    @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+    /// Debug: use a rolling median (robust to outliers) instead of the mean.
+    @AppStorage(StatChartUtils.rollingAverageUseMedianKey) private var rollingAverageUseMedian: Bool = false
+    /// Debug: count calendar days with no data as 0 (true per-day average).
+    @AppStorage(StatChartUtils.rollingAverageZeroFillKey) private var rollingAverageZeroFill: Bool = false
+    /// Debug: seed the oldest edge with the carry-over level of purged history.
+    @AppStorage(StatChartUtils.rollingAverageLeadInKey) private var rollingAverageLeadIn: Bool = false
+
     /// The current scroll position in the chart.
     @State private var scrollPosition = Date()
     /// The currently selected date in the chart.
@@ -142,6 +151,22 @@ struct BolusStatsView: View {
         }
     }
 
+    /// The rolling-average trend points (over total bolus) for the current data and settings.
+    /// Shared by the overlaid line and the selection popover so both show the same value.
+    private var rollingAveragePoints: [StatChartUtils.RollingAveragePoint] {
+        StatChartUtils.rollingAverage(
+            for: bolusStats,
+            date: { $0.date },
+            value: { $0.manualBolus + $0.smb + $0.external },
+            window: StatChartUtils.rollingAverageWindow(for: selectedInterval, override: rollingAverageWindowOverride),
+            unit: StatChartUtils.unitSeconds(for: selectedInterval),
+            useMedian: rollingAverageUseMedian,
+            zeroFillEmptySlots: rollingAverageZeroFill,
+            carryOverValue: rollingAverageLeadIn ? state.bolusCarryOverValue(for: selectedInterval) : nil,
+            centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
+        )
+    }
+
     /// A view displaying the bar chart for bolus insulin statistics.
     private var chartsView: some View {
         Chart {
@@ -186,15 +211,7 @@ struct BolusStatsView: View {
             }
 
             // Rolling-average trend line over the total bolus insulin
-            ForEach(
-                StatChartUtils.rollingAverage(
-                    for: bolusStats,
-                    date: { $0.date },
-                    value: { $0.manualBolus + $0.smb + $0.external },
-                    window: StatChartUtils.rollingAverageWindow(for: selectedInterval),
-                    centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
-                )
-            ) { point in
+            ForEach(rollingAveragePoints) { point in
                 LineMark(
                     x: .value("Date", point.date),
                     y: .value("Rolling Average", point.value),
@@ -202,7 +219,7 @@ struct BolusStatsView: View {
                 )
                 .foregroundStyle(Color.primary)
                 .lineStyle(StatChartUtils.rollingAverageStrokeStyle)
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
             }
 
             // Dummy PointMark to force SwiftCharts to render a visible domain of 00:00-23:59
@@ -235,6 +252,11 @@ struct BolusStatsView: View {
                     BolusSelectionPopover(
                         selectedDate: selectedDate,
                         bolus: selectedBolus,
+                        rollingAverage: StatChartUtils.rollingAverageValue(
+                            at: selectedDate,
+                            in: rollingAveragePoints,
+                            selectedInterval: selectedInterval
+                        ),
                         selectedInterval: selectedInterval,
                         domain: visibleDateRange,
                         chartWidth: chartWidth
@@ -332,6 +354,8 @@ struct BolusStatsView: View {
 private struct BolusSelectionPopover: View {
     let selectedDate: Date
     let bolus: BolusStats
+    /// The rolling-average (trend) value over total bolus at the selected bar, or `nil` if unavailable.
+    let rollingAverage: Double?
     let selectedInterval: Stat.StateModel.StatsTimeInterval
     let domain: (start: Date, end: Date)
     let chartWidth: CGFloat
@@ -415,6 +439,15 @@ private struct BolusSelectionPopover: View {
                         (bolus.manualBolus + bolus.smb + bolus.external).formatted(.number.precision(.fractionLength(1)))
                     ).bold()
                     Text("U").foregroundStyle(Color.secondary)
+                }
+                if let rollingAverage {
+                    GridRow {
+                        Text("Rolling average")
+                        Text(rollingAverage.formatted(.number.precision(.fractionLength(1))))
+                            .gridColumnAlignment(.trailing)
+                        Text("U")
+                    }
+                    .foregroundStyle(Color.secondary)
                 }
             }
             .font(.headline)
