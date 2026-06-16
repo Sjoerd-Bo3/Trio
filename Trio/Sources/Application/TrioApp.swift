@@ -45,6 +45,11 @@ extension Notification.Name {
     @State private var showTelemetryMigrationSheet = false
     @State private var hasCheckedTelemetryMigration = false
 
+    // TDD history backfill: one-shot guard so the Nightscout import prompt is
+    // presented at most once per process even if the scene activates repeatedly.
+    @State private var showTDDBackfillSheet = false
+    @State private var hasCheckedTDDBackfill = false
+
     // Dependencies Assembler
     // contain all dependencies Assemblies
     // TODO: Remove static key after update "Use Dependencies" logic
@@ -349,6 +354,12 @@ extension Notification.Name {
                 TelemetryMigrationSheetView()
                     .interactiveDismissDisabled(true)
             }
+            .sheet(isPresented: $showTDDBackfillSheet) {
+                TDDBackfillConsentSheetView(runBackfill: { progress in
+                    guard let nightscout = resolver.resolve(NightscoutManager.self) else { return 0 }
+                    return await nightscout.backfillTDDFromNightscout(daysBack: 365, progress: progress)
+                })
+            }
         }
         .onChange(of: scenePhase) { _, newScenePhase in
             debug(.default, "APPLICATION PHASE: \(newScenePhase)")
@@ -368,6 +379,7 @@ extension Notification.Name {
                     performCleanupIfNecessary()
                 }
                 presentTelemetryMigrationSheetIfNeeded()
+                presentTDDBackfillSheetIfNeeded()
             }
         }
     }
@@ -389,6 +401,32 @@ extension Notification.Name {
         // view was just shown (loading screen, splash, main view).
         DispatchQueue.main.async {
             showTelemetryMigrationSheet = true
+        }
+    }
+
+    /// Presents the one-time TDD history backfill prompt for users on the update that introduced the
+    /// 1-year insulin view. Shown once per install (gated by `tddBackfillConsentDecisionMade`) and
+    /// only when Nightscout is configured, since the import reads from the user's own server. Yields
+    /// to the telemetry sheet if that is up, retrying on a later activation.
+    private func presentTDDBackfillSheetIfNeeded() {
+        guard !hasCheckedTDDBackfill else { return }
+
+        // Don't compete with the telemetry consent sheet; try again on a later activation.
+        guard !showTelemetryMigrationSheet else { return }
+
+        hasCheckedTDDBackfill = true
+
+        let onboarded = PropertyPersistentFlags.shared.onboardingCompleted == true
+        let decided = PropertyPersistentFlags.shared.tddBackfillConsentDecisionMade == true
+        guard onboarded, !decided else { return }
+
+        // Only meaningful when Nightscout is set up for this install.
+        guard let settingsManager = resolver.resolve(SettingsManager.self),
+              settingsManager.settings.isDownloadEnabled || settingsManager.settings.isUploadEnabled
+        else { return }
+
+        DispatchQueue.main.async {
+            showTDDBackfillSheet = true
         }
     }
 

@@ -301,6 +301,66 @@ extension NightscoutAPI {
         }
     }
 
+    /// Minimal decode shape for a Nightscout `devicestatus` document, extracting only the Total
+    /// Daily Dose that Trio (and oref) records under `openaps.enacted.tdd` / `openaps.suggested.tdd`.
+    /// All fields are optional so documents from other uploaders decode without throwing.
+    private struct NightscoutDeviceStatusTDD: Decodable {
+        struct OpenAPS: Decodable {
+            struct Holder: Decodable { let tdd: Decimal? }
+            let enacted: Holder?
+            let suggested: Holder?
+        }
+
+        let openaps: OpenAPS?
+    }
+
+    /// Fetches the most recent `devicestatus` document within `[dayStart, dayEnd]` and returns its
+    /// recorded Total Daily Dose, or `nil` if no document (or no TDD) exists for that window.
+    ///
+    /// Nightscout returns `devicestatus` sorted by `created_at` descending, so `count=1` with the
+    /// date window yields the last entry of that day — mirroring the stats view's "last TDD of the
+    /// day wins" rule. Used by the one-time TDD backfill, one request per calendar day.
+    func fetchDeviceStatusTDD(dayStart: Date, dayEnd: Date) async throws -> Decimal? {
+        var components = URLComponents()
+        components.scheme = url.scheme
+        components.host = url.host
+        components.port = url.port
+        components.path = Config.statusPath
+        components.queryItems = [
+            URLQueryItem(name: "count", value: "1"),
+            URLQueryItem(
+                name: "find[created_at][$gte]",
+                value: Formatter.iso8601withFractionalSeconds.string(from: dayStart)
+            ),
+            URLQueryItem(
+                name: "find[created_at][$lte]",
+                value: Formatter.iso8601withFractionalSeconds.string(from: dayEnd)
+            )
+        ]
+
+        guard let requestURL = components.url else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: requestURL)
+        request.allowsConstrainedNetworkAccess = false
+        request.timeoutInterval = Config.timeout
+
+        if let secret = secret {
+            request.addValue(secret.sha1(), forHTTPHeaderField: "api-secret")
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, (200 ... 299).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+
+        let statuses = try JSONCoding.decoder.decode([NightscoutDeviceStatusTDD].self, from: data)
+        guard let openaps = statuses.first?.openaps else { return nil }
+        return openaps.enacted?.tdd ?? openaps.suggested?.tdd
+    }
+
     func uploadTreatments(_ treatments: [NightscoutTreatment]) async throws {
         var components = URLComponents()
         components.scheme = url.scheme

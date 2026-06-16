@@ -35,10 +35,18 @@ extension Stat.StateModel {
     /// - Returns: A tuple containing hourly and daily TDD statistics arrays
     /// - Note: Processes both hourly statistics for the last 10 days and complete daily statistics
     private func fetchTDDStats() async throws -> (hourly: [TDDStats], daily: [TDDStats]) {
+        // MARK: - Load Archive
+
+        // The daily-TDD archive (see TDDArchive.swift) holds previously cached local days plus any
+        // Nightscout backfill. When it is already populated we only need to refresh recent days from
+        // Core Data; on a first run (or if the archive is lost) we seed it from a wide fetch.
+        var archive = await fileStorage.retrieveAsync(TDDArchiveStore.fileName, as: TDDArchive.self) ?? TDDArchive()
+        let daysBack = archive.days.isEmpty ? TDDArchiveStore.retentionDays : 60
+
         // MARK: - Fetch Required Data
 
-        // Fetch data for daily statistics (TDDStored for week, month, total views)
-        let tddResults = try await fetchTDDStoredRecords()
+        // Fetch data for daily statistics (TDDStored for week, month, total, and year views)
+        let tddResults = try await fetchTDDStoredRecords(daysBack: daysBack)
 
         // Fetch data for hourly statistics (BolusStored and TempBasalStored for day view)
         let (bolusResults, tempBasalResults, suspendEvents, resumeEvents) = try await fetchHourlyInsulinRecords()
@@ -46,14 +54,14 @@ extension Stat.StateModel {
         // MARK: - Process Data on Background Context
 
         var hourlyStats: [TDDStats] = []
-        var dailyStats: [TDDStats] = []
+        var localDailyStats: [TDDStats] = []
 
         await tddTaskContext.perform {
             let calendar = Calendar.current
 
             // Process daily statistics from TDDStored
             if let fetchedTDDs = tddResults as? [TDDStored] {
-                dailyStats = self.processDailyTDDs(fetchedTDDs, calendar: calendar)
+                localDailyStats = self.processDailyTDDs(fetchedTDDs, calendar: calendar)
             }
 
             // Process hourly statistics from BolusStored and TempBasalStored
@@ -72,17 +80,39 @@ extension Stat.StateModel {
             }
         }
 
+        // MARK: - Merge With Archive
+
+        // Local Core Data is authoritative, so upsert the freshly-fetched days over the archive,
+        // then persist the union (bounded to the retention window). This both keeps the on-disk
+        // archive fresh for fast subsequent opens and lets the Nightscout backfill skip days we
+        // already have. The chart series is then built from the merged archive so that backfilled
+        // days (which local Core Data may not have) are included.
+        let calendar = Calendar.current
+        for stat in localDailyStats {
+            archive.days[TDDArchiveStore.dayKey(for: stat.date, calendar: calendar)] = stat.amount
+        }
+        archive.days = TDDArchiveStore.pruned(archive.days)
+        await fileStorage.saveAsync(archive, as: TDDArchiveStore.fileName)
+
+        let dailyStats = archive.days.compactMap { key, amount -> TDDStats? in
+            guard let date = TDDArchiveStore.date(fromKey: key, calendar: calendar) else { return nil }
+            return TDDStats(date: date, amount: amount)
+        }
+        .sorted { $0.date < $1.date }
+
         return (hourlyStats, dailyStats)
     }
 
     /// Fetches TDDStored records from CoreData for daily statistics
+    /// - Parameter daysBack: How many days of history to fetch. A wide window is used to seed the
+    ///   archive on first run; a short window refreshes recent days thereafter.
     /// - Returns: The results of the fetch request containing TDDStored records
-    /// - Note: Fetches records from the last ~13 months so the 1-year view (and its rolling
-    ///   average, which needs a little headroom past the oldest visible day) has data. TDDStored
-    ///   is never purged, so older rows are available locally for users who have run Trio that long.
-    private func fetchTDDStoredRecords() async throws -> Any {
-        // Create a predicate to fetch TDD records covering the 1-year view plus rolling-window headroom
-        let historyStart = Date().addingTimeInterval(-13.months.timeInterval)
+    /// - Note: TDDStored is never purged, so older rows remain available locally for users who have
+    ///   run Trio long enough; the archive caches the collapsed daily values so we don't re-group a
+    ///   year of per-loop rows on every open.
+    private func fetchTDDStoredRecords(daysBack: Int) async throws -> Any {
+        // Create a predicate to fetch TDD records covering the requested window
+        let historyStart = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date()) ?? Date()
         let predicate = NSPredicate(format: "date >= %@", historyStart as NSDate)
 
         // Fetch TDD records from CoreData
