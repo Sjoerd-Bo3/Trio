@@ -52,6 +52,7 @@
 		19F95FF529F10FCF00314DDC /* StatProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F95FF429F10FCF00314DDC /* StatProvider.swift */; };
 		19F95FF729F10FEE00314DDC /* StatStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F95FF629F10FEE00314DDC /* StatStateModel.swift */; };
 		19F95FFA29F1102A00314DDC /* StatRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F95FF929F1102A00314DDC /* StatRootView.swift */; };
+		BD249DA02D42FD1000412222 /* TDDBackfillConsentSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD249DA02D42FD1000412221 /* TDDBackfillConsentSheetView.swift */; };
 		1BBB001DAD60F3B8CEA4B1C7 /* ISFEditorStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505E09DC17A0C3D0AF4B66FE /* ISFEditorStateModel.swift */; };
 		1D845DF2E3324130E1D95E67 /* HistoryProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60744C3E9BB3652895C908CC /* HistoryProvider.swift */; };
 		23888883D4EA091C88480FF2 /* TreatmentsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19984D62EFC0035A9E9644D /* TreatmentsProvider.swift */; };
@@ -505,6 +506,7 @@
 		BD249D9D2D42FCF500412DEB /* MealStatsSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD249D9C2D42FCF300412DEB /* MealStatsSetup.swift */; };
 		BD249D9F2D42FD0600412DEB /* StackedChartSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD249D9E2D42FD0200412DEB /* StackedChartSetup.swift */; };
 		BD249DA12D42FD1200412DEB /* TDDSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD249DA02D42FD1000412DEB /* TDDSetup.swift */; };
+		BD249DA02D42FD1000411112 /* TDDArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD249DA02D42FD1000411111 /* TDDArchive.swift */; };
 		BD249DA72D42FE4600412DEB /* Calendar+GlucoseStatsChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD249DA62D42FE3800412DEB /* Calendar+GlucoseStatsChart.swift */; };
 		BD2B464E0745FBE7B79913F4 /* NightscoutConfigProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF768BD6264FF7D71D66767 /* NightscoutConfigProvider.swift */; };
 		BD2FF1A02AE29D43005D1C5D /* ToggleStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2FF19F2AE29D43005D1C5D /* ToggleStyles.swift */; };
@@ -1060,6 +1062,7 @@
 		19F95FF429F10FCF00314DDC /* StatProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatProvider.swift; sourceTree = "<group>"; };
 		19F95FF629F10FEE00314DDC /* StatStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatStateModel.swift; sourceTree = "<group>"; };
 		19F95FF929F1102A00314DDC /* StatRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatRootView.swift; sourceTree = "<group>"; };
+		BD249DA02D42FD1000412221 /* TDDBackfillConsentSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TDDBackfillConsentSheetView.swift; sourceTree = "<group>"; };
 		1CAE81192B118804DCD23034 /* SnoozeProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoozeProvider.swift; sourceTree = "<group>"; };
 		223EC0494F55A91E3EA69EF4 /* TreatmentsStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TreatmentsStateModel.swift; sourceTree = "<group>"; };
 		2AD22C985B79A2F0D2EA3D9D /* PumpConfigRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PumpConfigRootView.swift; sourceTree = "<group>"; };
@@ -1510,6 +1513,7 @@
 		BD249D9C2D42FCF300412DEB /* MealStatsSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealStatsSetup.swift; sourceTree = "<group>"; };
 		BD249D9E2D42FD0200412DEB /* StackedChartSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackedChartSetup.swift; sourceTree = "<group>"; };
 		BD249DA02D42FD1000412DEB /* TDDSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TDDSetup.swift; sourceTree = "<group>"; };
+		BD249DA02D42FD1000411111 /* TDDArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TDDArchive.swift; sourceTree = "<group>"; };
 		BD249DA62D42FE3800412DEB /* Calendar+GlucoseStatsChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Calendar+GlucoseStatsChart.swift"; sourceTree = "<group>"; };
 		BD2FF19F2AE29D43005D1C5D /* ToggleStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleStyles.swift; sourceTree = "<group>"; };
 		BD3CC0712B0B89D50013189E /* MainChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChartView.swift; sourceTree = "<group>"; };
@@ -2216,6 +2220,7 @@
 			children = (
 				BD249D842D42FBD200412DEB /* ViewElements */,
 				19F95FF929F1102A00314DDC /* StatRootView.swift */,
+				BD249DA02D42FD1000412221 /* TDDBackfillConsentSheetView.swift */,
 				DD98ACBF2D71013200C0778F /* StatChartUtils.swift */,
 			);
 			path = View;
@@ -3458,6 +3463,7 @@
 			children = (
 				C2A6D1E32DB1581D0036DB66 /* GlucoseStatsSetup.swift */,
 				BD249DA02D42FD1000412DEB /* TDDSetup.swift */,
+				BD249DA02D42FD1000411111 /* TDDArchive.swift */,
 				BD249D9C2D42FCF300412DEB /* MealStatsSetup.swift */,
 				BD249D982D42FCCA00412DEB /* BolusStatsSetup.swift */,
 				BD249D962D42FCBD00412DEB /* AreaChartSetup.swift */,
@@ -5045,6 +5051,7 @@
 				E00EEC0627368630002FF094 /* UIAssembly.swift in Sources */,
 				3811DE1825C9D40400A708ED /* Router.swift in Sources */,
 				BD249DA12D42FD1200412DEB /* TDDSetup.swift in Sources */,
+				BD249DA02D42FD1000411112 /* TDDArchive.swift in Sources */,
 				CE7950262998056D00FA576E /* CGMSetupView.swift in Sources */,
 				582FAE432C05102C00D1C13F /* CoreDataError.swift in Sources */,
 				C29E268A2DADFD2A00F87E75 /* GlucoseDailyPercentileChart.swift in Sources */,
@@ -5502,6 +5509,7 @@
 				1D845DF2E3324130E1D95E67 /* HistoryProvider.swift in Sources */,
 				DDCE790F2D6F97FC000A4D7A /* SubmodulesView.swift in Sources */,
 				19F95FFA29F1102A00314DDC /* StatRootView.swift in Sources */,
+				BD249DA02D42FD1000412222 /* TDDBackfillConsentSheetView.swift in Sources */,
 				0D9A5E34A899219C5C4CDFAF /* HistoryStateModel.swift in Sources */,
 				6BCF84DD2B16843A003AD46E /* LiveActitiyAttributes.swift in Sources */,
 				195D80B92AF697F700D25097 /* DynamicSettingsProvider.swift in Sources */,

@@ -298,7 +298,8 @@ struct MealStatsView: View {
                                 .font(.footnote)
                             AxisGridLine()
                         }
-                    case .total:
+                    case .total,
+                         .year:
                         // Show start of every month
                         let day = Calendar.current.component(.day, from: date)
                         if day == 1 {

@@ -22,6 +22,7 @@ protocol NightscoutManager: GlucoseSource {
     func uploadProfiles() async throws
     func uploadNoteTreatment(note: String) async
     func importSettings() async -> ScheduledNightscoutProfile?
+    func backfillTDDFromNightscout(daysBack: Int, progress: @escaping @Sendable (Double) -> Void) async -> Int
     var cgmURL: URL? { get }
 }
 
@@ -456,6 +457,97 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             debug(.nightscout, "Error fetching temp targets: \(error)")
             return []
         }
+    }
+
+    /// One-time import of historical daily Total Daily Dose from Nightscout.
+    ///
+    /// For each calendar day in the last `daysBack` days that the local archive does not already
+    /// cover, this fetches the last `devicestatus` document of that day and reads its TDD
+    /// (`openaps.enacted.tdd`, falling back to `suggested.tdd`). Results are written to the shared
+    /// daily-TDD archive, which the 1-year insulin stats view merges in for days local Core Data
+    /// lacks (e.g. before this install, or after a reinstall).
+    ///
+    /// Days already present in the archive are skipped, so a re-run is cheap and the common
+    /// reinstall case fetches only what's missing. Requests are issued in small concurrent batches
+    /// with progress reported as a 0...1 fraction.
+    ///
+    /// - Returns: The number of days actually imported (had a usable TDD on Nightscout).
+    func backfillTDDFromNightscout(daysBack: Int, progress: @escaping @Sendable (Double) -> Void) async -> Int {
+        guard isNetworkReachable,
+              let urlString = keychain.getValue(String.self, forKey: NightscoutConfig.Config.urlKey),
+              let url = URL(string: urlString)
+        else {
+            await MainActor.run { progress(1.0) }
+            return 0
+        }
+        let secret = keychain.getValue(String.self, forKey: NightscoutConfig.Config.secretKey)
+
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        var archive = await storage.retrieveAsync(TDDArchiveStore.fileName, as: TDDArchive.self) ?? TDDArchive()
+
+        // Oldest first; only days the archive does not already cover.
+        var targetDays: [Date] = []
+        for offset in stride(from: daysBack, through: 0, by: -1) {
+            guard let dayStart = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
+            let key = TDDArchiveStore.dayKey(for: dayStart, calendar: calendar)
+            if archive.days[key] == nil {
+                targetDays.append(dayStart)
+            }
+        }
+
+        guard !targetDays.isEmpty else {
+            await MainActor.run { progress(1.0) }
+            return 0
+        }
+
+        let total = targetDays.count
+        let chunkSize = 6
+        var imported = 0
+        var index = 0
+
+        while index < total {
+            let end = min(index + chunkSize, total)
+            let chunk = Array(targetDays[index ..< end])
+
+            let results: [(String, Double)] = await withTaskGroup(of: (String, Double?).self) { group in
+                for dayStart in chunk {
+                    let dayEnd = (calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart)
+                        .addingTimeInterval(-1)
+                    let key = TDDArchiveStore.dayKey(for: dayStart, calendar: calendar)
+                    group.addTask {
+                        // Build a fresh API per task from Sendable url/secret to avoid sharing state.
+                        let api = NightscoutAPI(url: url, secret: secret)
+                        let tdd = try? await api.fetchDeviceStatusTDD(dayStart: dayStart, dayEnd: dayEnd)
+                        return (key, tdd.map { NSDecimalNumber(decimal: $0).doubleValue })
+                    }
+                }
+
+                var collected: [(String, Double)] = []
+                for await (key, value) in group {
+                    if let value = value, value > 0 {
+                        collected.append((key, value))
+                    }
+                }
+                return collected
+            }
+
+            for (key, value) in results {
+                archive.days[key] = value
+                imported += 1
+            }
+
+            index = end
+            let fraction = Double(index) / Double(total)
+            await MainActor.run { progress(fraction) }
+        }
+
+        archive.days = TDDArchiveStore.pruned(archive.days)
+        await storage.saveAsync(archive, as: TDDArchiveStore.fileName)
+
+        debug(.nightscout, "TDD backfill complete: imported \(imported) of \(total) missing day(s)")
+        return imported
     }
 
     func deleteCarbs(withID id: String) async {
