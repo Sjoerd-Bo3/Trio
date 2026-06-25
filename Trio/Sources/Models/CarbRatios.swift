@@ -9,10 +9,6 @@ struct CarbRatios: JSON {
     let schedule: [CarbRatioEntry]
 }
 
-protocol CarbRatiosObserver {
-    func carbRatiosDidChange(_ carbRatios: CarbRatios)
-}
-
 struct CarbRatioEntry: JSON, Equatable {
     let start: String
     let offset: Int
