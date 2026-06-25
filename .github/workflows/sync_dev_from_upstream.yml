@@ -1,0 +1,40 @@
+name: Sync dev from upstream
+
+# Standalone, sync-only mirror of build_trio's "Sync upstream changes" step.
+# Pulls nightscout/Trio:dev into this fork's dev branch WITHOUT running a build.
+# Trigger manually (workflow_dispatch) when upstream dev has advanced.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    name: Sync fork dev from nightscout/Trio dev
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Sync upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.2
+        with:
+          target_sync_branch: dev
+          shallow_since: 6 months ago
+          target_repo_token: ${{ secrets.GH_PAT }}
+          upstream_sync_branch: dev
+          upstream_sync_repo: nightscout/Trio
+
+      - name: Report result
+        run: |
+          echo "has_new_commits = ${{ steps.sync.outputs.has_new_commits }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.sync.outputs.has_new_commits }}" = "true" ]; then
+            echo "✅ New upstream commits synced into fork dev." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ℹ️ Fork dev already up to date with upstream." >> "$GITHUB_STEP_SUMMARY"
+          fi
