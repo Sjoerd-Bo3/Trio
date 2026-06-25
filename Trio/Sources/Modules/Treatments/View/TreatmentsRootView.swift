@@ -222,9 +222,15 @@ extension Treatments {
             // Delay slightly so the keyboard's presentation animation has begun and the List has
             // resized its scrollable area before we scroll, otherwise the target can land back
             // underneath the keyboard.
+            //
+            // Anchor `.bottom`: the List shrinks its scrollable area to avoid the keyboard, so a
+            // bottom anchor parks the focused input row just above the keyboard. For the Bolus field
+            // this intentionally leaves the "Enact Bolus" button hidden behind the keyboard, so the
+            // user has to dismiss the keyboard and take a second look at the entered amount before
+            // they can tap it — a deliberate safety nudge (see issue #1115 discussion).
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 withAnimation {
-                    proxy.scrollTo(targetID, anchor: .center)
+                    proxy.scrollTo(targetID, anchor: .bottom)
                 }
             }
         }
