@@ -18,7 +18,7 @@ extension InsulinSensitivities {
     }
 }
 
-struct InsulinSensitivityEntry: JSON {
+struct InsulinSensitivityEntry: JSON, Equatable {
     let sensitivity: Decimal
     let offset: Int
     let start: String
