@@ -62,29 +62,56 @@ struct LiveActivityView: View {
                 LiveActivityChartView(context: context, additionalState: context.state.detailedViewState)
                     .frame(maxWidth: UIScreen.main.bounds.width * 0.9)
                     .frame(height: 80)
-                    .overlay(alignment: .topLeading) {
-                        HStack(spacing: 4) {
+                    .overlay(alignment: .topTrailing) {
+                        VStack(alignment: .trailing, spacing: 4) {
                             if context.state.detailedViewState.isOverrideActive {
-                                Text(context.state.detailedViewState.overrideName)
-                                    .font(.footnote)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                    .padding(6)
-                                    .background {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color.purple.opacity(colorScheme == .dark ? 0.6 : 0.8))
-                                    }
+                                HStack {
+                                    Text("\(context.state.detailedViewState.overrideName)")
+                                        .font(.footnote)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                }
+                                .padding(6)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.purple.opacity(colorScheme == .dark ? 0.6 : 0.8))
+                                }
                             }
                             if context.state.detailedViewState.isTempTargetActive {
-                                Text(context.state.detailedViewState.tempTargetName)
-                                    .font(.footnote)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                    .padding(6)
-                                    .background {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color("LoopGreen").opacity(colorScheme == .dark ? 0.6 : 0.8))
+                                HStack {
+                                    Text(context.state.detailedViewState.tempTargetName)
+                                        .font(.footnote)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                }
+                                .padding(6)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color("LoopGreen").opacity(colorScheme == .dark ? 0.6 : 0.8))
+                                }
+                            }
+                            if context.state.detailedViewState.isProfilePresetActive {
+                                let presetName = context.state.detailedViewState.profilePresetName
+                                let isDiverted = context.state.detailedViewState.isProfilePresetDiverted
+                                HStack(spacing: 4) {
+                                    if isDiverted {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.caption2)
                                     }
+                                    Text(presetName)
+                                        .font(.footnote)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                }
+                                .padding(6)
+                                .background {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(
+                                            isDiverted
+                                                ? Color.orange.opacity(colorScheme == .dark ? 0.7 : 0.85)
+                                                : Color.teal.opacity(colorScheme == .dark ? 0.7 : 0.85)
+                                        )
+                                }
                             }
                         }
                     }
