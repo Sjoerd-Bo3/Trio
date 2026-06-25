@@ -166,6 +166,8 @@ extension LiveActivityManager {
     }
 
     func fetchAndMapProfilePreset() async throws -> ProfilePresetData? {
+        let context = CoreDataStack.shared.newTaskContext()
+        context.name = "fetchAndMapProfilePreset"
         let results = try await CoreDataStack.shared.fetchEntitiesAsync(
             ofType: ProfilePresetRunStored.self,
             onContext: context,

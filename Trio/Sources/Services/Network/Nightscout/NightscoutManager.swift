@@ -1446,19 +1446,20 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     }
 
     private func updateProfilePresetRunsAsUploaded(_ profilePresetRuns: [NightscoutTreatment]) async {
-        await backgroundContext.perform {
+        let context = CoreDataStack.shared.newTaskContext()
+        await context.perform {
             let ids = profilePresetRuns.compactMap { UUID(uuidString: $0.id ?? "") } as NSArray
             let fetchRequest: NSFetchRequest<ProfilePresetRunStored> = ProfilePresetRunStored.fetchRequest()
             fetchRequest.predicate = NSPredicate(format: "id IN %@", ids)
 
             do {
-                let results = try self.backgroundContext.fetch(fetchRequest)
+                let results = try context.fetch(fetchRequest)
                 for result in results {
                     result.isUploadedToNS = true
                 }
 
-                guard self.backgroundContext.hasChanges else { return }
-                try self.backgroundContext.save()
+                guard context.hasChanges else { return }
+                try context.save()
             } catch let error as NSError {
                 debugPrint(
                     "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to update isUploadedToNS for ProfilePresetRunStored: \(error.userInfo)"
