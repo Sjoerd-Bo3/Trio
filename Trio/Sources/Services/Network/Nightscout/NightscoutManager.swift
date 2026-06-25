@@ -19,7 +19,6 @@ protocol NightscoutManager: GlucoseSource {
     func uploadOverrides() async
     func uploadTempTargets() async
     func uploadProfilePresets() async
-    func uploadManualGlucose() async
     func uploadProfiles() async throws
     func uploadNoteTreatment(note: String) async
     func importSettings() async -> ScheduledNightscoutProfile?
@@ -56,7 +55,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     /// coalesce into a single upload run for that pipeline.
     let uploadPipelineInterval: [NightscoutUploadPipeline: TimeInterval] = [
         .carbs: 2, .pumpHistory: 2, .overrides: 2, .tempTargets: 2, .profilePresets: 2,
-        .glucose: 2, .manualGlucose: 2, .deviceStatus: 2
+        .glucose: 2, .deviceStatus: 2
     ]
 
     /// Subjects used to request an upload pipeline. The pipeline applies a throttle so
