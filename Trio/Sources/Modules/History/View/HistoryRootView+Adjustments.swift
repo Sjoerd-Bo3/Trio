@@ -45,7 +45,19 @@ extension History.RootView {
             )
         }
 
-        let combined = overrides + tempTargets
+        let profilePresets = profilePresetRunStored.map { preset -> AdjustmentItem in
+            AdjustmentItem(
+                id: preset.objectID,
+                name: preset.name ?? String(localized: "Profile"),
+                startDate: preset.startDate ?? Date(),
+                endDate: preset.endDate ?? Date(),
+                target: nil,
+                type: .profilePreset,
+                isDiverted: preset.isDiverted
+            )
+        }
+
+        let combined = overrides + tempTargets + profilePresets
         return combined.sorted {
             if $0.startDate == $1.startDate {
                 return $0.endDate > $1.endDate
@@ -61,11 +73,13 @@ extension History.RootView {
         let endDate: Date
         let target: Decimal?
         let type: AdjustmentType
+        var isDiverted: Bool = false
     }
 
     fileprivate enum AdjustmentType {
         case override
         case tempTarget
+        case profilePreset
 
         var symbolName: String {
             switch self {
@@ -73,6 +87,8 @@ extension History.RootView {
                 return "clock.arrow.2.circlepath"
             case .tempTarget:
                 return "target"
+            case .profilePreset:
+                return "person.crop.circle"
             }
         }
 
@@ -82,6 +98,21 @@ extension History.RootView {
                 return .orange
             case .tempTarget:
                 return .blue
+            case .profilePreset:
+                return .teal
+            }
+        }
+
+        /// Color used for the row's leading icon (kept distinct from `symbolColor`
+        /// to preserve the existing override/temp-target appearance).
+        var iconColor: Color {
+            switch self {
+            case .override:
+                return .purple
+            case .tempTarget:
+                return .green
+            case .profilePreset:
+                return .teal
             }
         }
     }
@@ -107,9 +138,14 @@ extension History.RootView {
                 VStack(alignment: .leading) {
                     HStack {
                         Image(systemName: item.type.symbolName)
-                            .foregroundStyle(item.type == .override ? Color.purple : Color.green)
+                            .foregroundStyle(item.type.iconColor)
                         Text(item.name)
                             .font(.headline)
+                        if item.isDiverted {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
                         Spacer()
                     }
                     HStack(spacing: 5) {
