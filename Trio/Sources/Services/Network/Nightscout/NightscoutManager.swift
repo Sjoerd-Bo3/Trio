@@ -19,6 +19,7 @@ protocol NightscoutManager: GlucoseSource {
     func uploadPumpHistory() async
     func uploadOverrides() async
     func uploadTempTargets() async
+    func uploadProfilePresets() async
     func uploadProfiles() async throws
     func uploadNoteTreatment(note: String) async
     func importSettings() async -> ScheduledNightscoutProfile?
@@ -34,6 +35,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     @Injected() private var overridesStorage: OverrideStorage!
     @Injected() private var carbsStorage: CarbsStorage!
     @Injected() private var pumpHistoryStorage: PumpHistoryStorage!
+    @Injected() private var profilePresetStorage: ProfilePresetStorage!
     @Injected() private var storage: FileStorage!
     @Injected() private var settingsManager: SettingsManager!
     @Injected() private var broadcaster: Broadcaster!
@@ -51,7 +53,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     /// Throttle window (seconds) per upload pipeline. Any requests inside this window
     /// coalesce into a single upload run for that pipeline.
     let uploadPipelineInterval: [NightscoutUploadPipeline: TimeInterval] = [
-        .carbs: 2, .pumpHistory: 2, .overrides: 2, .tempTargets: 2,
+        .carbs: 2, .pumpHistory: 2, .overrides: 2, .tempTargets: 2, .profilePresets: 2,
         .glucose: 2, .deviceStatus: 2
     ]
 
@@ -92,6 +94,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         case .pumpHistory: await uploadPumpHistory()
         case .overrides: await uploadOverrides()
         case .tempTargets: await uploadTempTargets()
+        case .profilePresets: await uploadProfilePresets()
         case .glucose: await uploadGlucose()
         case .deviceStatus:
             do { try await uploadDeviceStatus() }
@@ -1065,6 +1068,17 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         }
     }
 
+    func uploadProfilePresets() async {
+        do {
+            try await uploadProfilePresetRuns(profilePresetStorage.getProfilePresetRunsNotYetUploadedToNightscout())
+        } catch {
+            debug(
+                .nightscout,
+                "\(DebuggingIdentifiers.failed) failed to upload profile preset runs with error: \(error)"
+            )
+        }
+    }
+
     private func uploadGlucose(_ glucose: [BloodGlucose]) async {
         guard !glucose.isEmpty, let nightscout = nightscoutAPI, isUploadEnabled, isUploadGlucoseEnabled else {
             return
@@ -1412,6 +1426,42 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             } catch let error as NSError {
                 debugPrint(
                     "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to update isUploadedToNS for TempTargetRunStored: \(error.userInfo)"
+                )
+            }
+        }
+    }
+
+    private func uploadProfilePresetRuns(_ profilePresetRuns: [NightscoutTreatment]) async throws {
+        guard !profilePresetRuns.isEmpty, let nightscout = nightscoutAPI, isUploadEnabled else {
+            return
+        }
+
+        for chunk in profilePresetRuns.chunks(ofCount: 100) {
+            try await nightscout.uploadTreatments(Array(chunk))
+        }
+
+        await updateProfilePresetRunsAsUploaded(profilePresetRuns)
+
+        debug(.nightscout, "Profile Preset Runs uploaded")
+    }
+
+    private func updateProfilePresetRunsAsUploaded(_ profilePresetRuns: [NightscoutTreatment]) async {
+        await backgroundContext.perform {
+            let ids = profilePresetRuns.compactMap { UUID(uuidString: $0.id ?? "") } as NSArray
+            let fetchRequest: NSFetchRequest<ProfilePresetRunStored> = ProfilePresetRunStored.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id IN %@", ids)
+
+            do {
+                let results = try self.backgroundContext.fetch(fetchRequest)
+                for result in results {
+                    result.isUploadedToNS = true
+                }
+
+                guard self.backgroundContext.hasChanges else { return }
+                try self.backgroundContext.save()
+            } catch let error as NSError {
+                debugPrint(
+                    "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to update isUploadedToNS for ProfilePresetRunStored: \(error.userInfo)"
                 )
             }
         }

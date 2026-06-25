@@ -76,6 +76,16 @@ extension Adjustments {
         var isHelpSheetPresented: Bool = false
         var helpSheetDetent = PresentationDetent.large
 
+        // Profile Presets
+        @ObservationIgnored @Injected() var profilePresetStorage: ProfilePresetStorage!
+        var profilePresets: [ProfilePreset] = []
+        var activeProfilePreset: ProfilePreset?
+        var isProfileDiverged: Bool = false
+        var showingProfileActivateConfirmation: Bool = false
+        var selectedProfilePreset: ProfilePreset?
+        let presetSwitchCoordinator = PresetSwitchCoordinator()
+        var showingSaveNewPresetSheet: Bool = false
+
         // Combine
         private var cancellables = Set<AnyCancellable>()
 
@@ -96,6 +106,78 @@ extension Adjustments {
                     group.addTask { self.updateLatestTempTargetConfiguration() }
                 }
             }
+
+            profilePresets = profilePresetStorage.presets()
+            activeProfilePreset = profilePresetStorage.activePreset()
+            refreshProfileDivergence()
+            configurePresetSwitchCoordinator()
+        }
+
+        // MARK: - Profile Presets
+
+        /// Wires the shared `PresetSwitchCoordinator` callbacks to this state model's logic.
+        private func configurePresetSwitchCoordinator() {
+            presetSwitchCoordinator.onProceedWithSwitch = { [weak self] preset in
+                self?.selectedProfilePreset = preset
+                self?.showingProfileActivateConfirmation = true
+            }
+            presetSwitchCoordinator.onUpdateCurrentPreset = { [weak self] in
+                guard let self, let active = self.activeProfilePreset else { return }
+                self.updateProfilePresetToCurrentSettings(active)
+            }
+            presetSwitchCoordinator.onSaveAsNewPreset = { [weak self] in
+                self?.showingSaveNewPresetSheet = true
+            }
+        }
+
+        /// Initiates a profile preset switch via the shared coordinator.
+        func requestProfilePresetSwitch(_ preset: ProfilePreset) {
+            presetSwitchCoordinator.requestSwitch(
+                to: preset,
+                isDiverged: isProfileDiverged,
+                hasActivePreset: activeProfilePreset != nil
+            )
+        }
+
+        func activateProfilePreset(_ preset: ProfilePreset) {
+            if profilePresetStorage.activatePreset(preset) {
+                activeProfilePreset = preset
+                isProfileDiverged = false
+            }
+        }
+
+        func refreshProfileDivergence() {
+            guard let preset = activeProfilePreset else {
+                isProfileDiverged = false
+                return
+            }
+            isProfileDiverged = !profilePresetStorage.settingsMatchPreset(preset)
+        }
+
+        func reorderProfilePresets(from source: IndexSet, to destination: Int) {
+            profilePresets.move(fromOffsets: source, toOffset: destination)
+            profilePresetStorage.savePresets(profilePresets)
+        }
+
+        func updateProfilePresetToCurrentSettings(_ preset: ProfilePreset) {
+            guard let updated = profilePresetStorage.updatePresetToCurrentSettings(id: preset.id) else { return }
+            if let index = profilePresets.firstIndex(where: { $0.id == preset.id }) {
+                profilePresets[index] = updated
+            }
+            if activeProfilePreset?.id == preset.id {
+                activeProfilePreset = updated
+                isProfileDiverged = false
+            }
+        }
+
+        func saveCurrentAsNewPreset(name: String, icon: String) {
+            guard let preset = profilePresetStorage.saveCurrentProfileAsPreset(
+                name: name,
+                icon: icon,
+                includeSMB: true,
+                includeDynamic: true
+            ) else { return }
+            profilePresets.append(preset)
         }
 
         /// Retrieves the current glucose target based on the time of day.

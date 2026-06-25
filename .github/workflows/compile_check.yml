@@ -1,0 +1,77 @@
+name: Compile Check (profiles rebase)
+
+# Lightweight compile-only check so we can iterate on the profiles port via
+# GitHub Actions without Xcode Cloud. Builds the app for the iOS Simulator
+# (no code signing required) and surfaces compiler errors in the job summary.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/profiles-rebased
+      - merge/profiles-into-build-experiment
+    paths-ignore:
+      - '**.md'
+      - '**/README'
+      - '**.txt'
+
+concurrency:
+  group: compile-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build for Simulator
+    runs-on: macos-26
+
+    steps:
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - name: Restore cache
+        id: cache-restore
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            /Users/runner/Library/Developer/Xcode/DerivedData
+            .build
+          key: ${{ runner.os }}-trio-compile-${{ hashFiles('**/*.swift', '**/*.xcodeproj', '**/*.xcworkspace') }}
+          restore-keys: |
+            ${{ runner.os }}-trio-compile-
+            ${{ runner.os }}-trio-
+
+      - name: Build for testing (compile only)
+        run: |
+          set -o pipefail
+          time xcodebuild build-for-testing \
+            -workspace Trio.xcworkspace \
+            -scheme "Trio Tests" \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee xcodebuild.log
+
+      - name: Surface compiler errors
+        if: failure()
+        run: |
+          echo "## ❌ Compile failed" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          # Show error/warning lines and a little context
+          grep -nE "error:|warning:|Undefined symbol|cannot find|has no member" xcodebuild.log \
+            | sed 's#'"$PWD"'/##g' \
+            | head -200 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save cache
+        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            /Users/runner/Library/Developer/Xcode/DerivedData
+            .build
+          key: ${{ runner.os }}-trio-compile-${{ hashFiles('**/*.swift', '**/*.xcodeproj', '**/*.xcworkspace') }}

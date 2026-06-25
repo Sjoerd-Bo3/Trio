@@ -56,6 +56,13 @@ extension History {
             animation: .bouncy
         ) var tempTargetRunStored: FetchedResults<TempTargetRunStored>
 
+        @FetchRequest(
+            entity: ProfilePresetRunStored.entity(),
+            sortDescriptors: [NSSortDescriptor(keyPath: \ProfilePresetRunStored.startDate, ascending: false)],
+            predicate: NSPredicate.profilePresetRunStoredFromOneDayAgo,
+            animation: .bouncy
+        ) var profilePresetRunStored: FetchedResults<ProfilePresetRunStored>
+
         var body: some View {
             historyConfirmations(
                 ZStack(alignment: .center, content: {

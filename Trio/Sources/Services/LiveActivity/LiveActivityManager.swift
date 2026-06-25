@@ -38,6 +38,8 @@ final class LiveActivityData: ObservableObject {
     @Published var override: OverrideData?
     /// The current temp target data (if any).
     @Published var tempTarget: TempTargetData?
+    /// The current profile preset data (if any).
+    @Published var profilePreset: ProfilePresetData?
     /// The widget items displayed within the live activity.
     @Published var widgetItems: [LiveActivityAttributes.LiveActivityItem]?
 }
@@ -144,6 +146,10 @@ final class LiveActivityData: ObservableObject {
             Task { await self?.loadTempTarget() }
         }.store(in: &subscriptions)
 
+        coreDataPublisher?.filteredByEntityName("ProfilePresetRunStored").sink { [weak self] _ in
+            Task { await self?.loadProfilePreset() }
+        }.store(in: &subscriptions)
+
         coreDataPublisher?.filteredByEntityName("GlucoseStored").sink { [weak self] _ in
             Task { await self?.loadGlucose() }
         }.store(in: &subscriptions)
@@ -191,6 +197,18 @@ final class LiveActivityData: ObservableObject {
         }
     }
 
+    /// Fetches and maps active profile preset data and updates the live activity content state.
+    private func loadProfilePreset() async {
+        do {
+            data.profilePreset = try await fetchAndMapProfilePreset()
+        } catch {
+            debug(
+                .default,
+                "[LiveActivityManager] \(DebuggingIdentifiers.failed) failed to fetch and map profile preset: \(error)"
+            )
+        }
+    }
+
     /// Handles changes to the live activity order.
     ///
     /// Loads widget items from user defaults and triggers an update to the live activity order.
@@ -216,6 +234,7 @@ final class LiveActivityData: ObservableObject {
             await self.loadGlucose()
             await self.loadOverrides()
             await self.loadTempTarget()
+            await self.loadProfilePreset()
             await self.loadDetermination()
             self.loadWidgetItems()
         }
@@ -319,6 +338,9 @@ final class LiveActivityData: ObservableObject {
                                 tempTargetDate: Date.now,
                                 tempTargetDuration: 0,
                                 tempTargetTarget: 0,
+                                isProfilePresetActive: false,
+                                profilePresetName: "",
+                                isProfilePresetDiverted: false,
                                 widgetItems: [],
                                 minForecast: [],
                                 maxForecast: [],
@@ -422,6 +444,7 @@ final class LiveActivityData: ObservableObject {
             iob: data.iob,
             override: data.override,
             tempTarget: data.tempTarget,
+            profilePreset: data.profilePreset,
             widgetItems: data.widgetItems
         )
 

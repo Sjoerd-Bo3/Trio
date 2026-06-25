@@ -164,4 +164,31 @@ extension LiveActivityManager {
             return rows.first.map(map)
         }
     }
+
+    func fetchAndMapProfilePreset() async throws -> ProfilePresetData? {
+        let results = try await CoreDataStack.shared.fetchEntitiesAsync(
+            ofType: ProfilePresetRunStored.self,
+            onContext: context,
+            predicate: NSPredicate.activeProfilePresetRun,
+            key: "startDate",
+            ascending: false,
+            fetchLimit: 1
+        )
+
+        return try await context.perform {
+            guard let runResults = results as? [ProfilePresetRunStored] else {
+                throw CoreDataError.fetchError(function: #function, file: #file)
+            }
+
+            return runResults.first.map {
+                ProfilePresetData(
+                    isActive: true,
+                    presetName: $0.name ?? "",
+                    icon: $0.icon ?? "person.crop.circle",
+                    startDate: $0.startDate ?? Date(),
+                    isDiverted: $0.isDiverted
+                )
+            }
+        }
+    }
 }

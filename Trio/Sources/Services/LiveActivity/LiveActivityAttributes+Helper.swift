@@ -70,6 +70,7 @@ extension LiveActivityAttributes.ContentState {
         iob: Decimal?,
         override: OverrideData?,
         tempTarget: TempTargetData?,
+        profilePreset: ProfilePresetData?,
         widgetItems: [LiveActivityAttributes.LiveActivityItem]?
     ) {
         let glucose = bg.glucose
@@ -118,6 +119,9 @@ extension LiveActivityAttributes.ContentState {
             tempTargetDate: tempTarget?.date ?? Date(),
             tempTargetDuration: tempTarget?.duration ?? 0,
             tempTargetTarget: tempTarget?.target ?? 0,
+            isProfilePresetActive: profilePreset?.isActive ?? false,
+            profilePresetName: profilePreset?.presetName ?? "",
+            isProfilePresetDiverted: profilePreset?.isDiverted ?? false,
             widgetItems: widgetItems ?? [], // set empty array here to silence compiler; this can never be nil
             minForecast: settings.displayGlucoseForecasts && settings.forecastDisplayType == .cone
                 ? (determination?.minForecast ?? []) : [],
