@@ -294,7 +294,7 @@ final class BaseAPSManager: APSManager, Injectable {
             do {
                 try await executeLoop(loopStatRecord: &loopStatRecord)
                 requestNightscoutUpload(
-                    [.carbs, .pumpHistory, .overrides, .tempTargets],
+                    [.carbs, .pumpHistory, .overrides, .tempTargets, .profilePresets],
                     source: "APSManager"
                 )
                 await finalizeLoop(loopStatRecord: loopStatRecord)

@@ -488,6 +488,39 @@ extension Home {
             }
         }
 
+        @ViewBuilder var activeProfileIndicator: some View {
+            if let activePreset = state.activeProfilePreset {
+                HStack(spacing: 6) {
+                    Image(systemName: state.isProfileDiverged ? "exclamationmark.triangle.fill" : activePreset.icon)
+                        .font(.caption)
+                        .foregroundColor(state.isProfileDiverged ? .orange : .accentColor)
+                    Text(activePreset.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(state.isProfileDiverged ? .orange : .accentColor)
+                    if state.isProfileDiverged {
+                        Text(
+                            "modified",
+                            comment: "Home: label indicating active preset settings have been modified"
+                        )
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    state.isProfileDiverged
+                        ? Color.orange.opacity(0.1)
+                        : Color.accentColor.opacity(0.1)
+                )
+                .clipShape(Capsule())
+                .onTapGesture {
+                    selectedTab = 2
+                }
+            }
+        }
+
         @ViewBuilder func mealPanel(_: GeometryProxy) -> some View {
             HStack {
                 HStack {
@@ -948,6 +981,9 @@ extension Home {
                         action: { state.isLegendPresented.toggle() }
                     )
                 }.padding([.horizontal, .bottom])
+
+                activeProfileIndicator
+                    .padding(.bottom)
 
                 if let progress = state.bolusProgress {
                     bolusView(geo: geo, progress)
