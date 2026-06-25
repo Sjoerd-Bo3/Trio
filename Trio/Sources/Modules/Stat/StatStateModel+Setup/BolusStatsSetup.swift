@@ -29,6 +29,7 @@ extension Stat.StateModel {
                 await MainActor.run {
                     self.hourlyBolusStats = hourly
                     self.dailyBolusStats = daily
+                    self.updateBolusCarryOver()
                 }
 
                 // Initially calculate and cache daily averages

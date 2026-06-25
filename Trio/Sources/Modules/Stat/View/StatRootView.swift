@@ -19,9 +19,32 @@ extension Stat {
         @State private var selectedView: StateModel.StatisticViewType = .glucose
         @State private var isGlucoseDaySelected: Bool = false
 
+        /// Debug override for the chart rolling-average window (0 = automatic per-interval default).
+        @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+        /// Debug: use a rolling median (robust to outliers) instead of the mean.
+        @AppStorage(StatChartUtils.rollingAverageUseMedianKey) private var rollingAverageUseMedian: Bool = false
+        /// Debug: count calendar days with no data as 0 (true per-day average).
+        @AppStorage(StatChartUtils.rollingAverageZeroFillKey) private var rollingAverageZeroFill: Bool = false
+        /// Debug: seed the oldest edge with the carry-over level of purged history.
+        @AppStorage(StatChartUtils.rollingAverageLeadInKey) private var rollingAverageLeadIn: Bool = false
+
         private var intervalOptions: [Stat.StateModel.StatsTimeIntervalWithToday] {
             state.selectedGlucoseChartType == .percentileByDay || state.selectedGlucoseChartType == .distributionByDay
                 ? [.week, .month, .total] : Stat.StateModel.StatsTimeIntervalWithToday.allCases
+        }
+
+        /// Duration options for the insulin tab. The 1-year range is only offered for Total Daily
+        /// Dose, whose source data (`TDDStored`) is retained long-term; bolus data is purged at 90
+        /// days, so the year option is hidden there.
+        private var insulinIntervalOptions: [Stat.StateModel.StatsTimeInterval] {
+            state.selectedInsulinChartType == .totalDailyDose
+                ? Stat.StateModel.StatsTimeInterval.allCases
+                : Stat.StateModel.StatsTimeInterval.allCases.filter { $0 != .year }
+        }
+
+        /// Duration options for the meal tab. Meal data is purged at 90 days, so the year option is hidden.
+        private var mealIntervalOptions: [Stat.StateModel.StatsTimeInterval] {
+            Stat.StateModel.StatsTimeInterval.allCases.filter { $0 != .year }
         }
 
         var body: some View {
@@ -225,6 +248,59 @@ extension Stat {
             }
         }
 
+        /// A debug-only control to tune the rolling-average smoothing window live on TestFlight builds.
+        ///
+        /// `0` keeps the automatic per-interval default; `1` disables smoothing (raw values); higher
+        /// values produce a smoother trend line. The value is shared with the chart views via
+        /// `@AppStorage` so changes apply immediately. Intended for testing — gate or remove before
+        /// shipping to the release branch.
+        private var rollingAverageDebugCard: some View {
+            StatCard {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "ladybug.fill").foregroundStyle(.orange)
+                        Text("Debug: Smoothing Window")
+                            .font(.headline)
+                        Spacer()
+                        Text(rollingAverageWindowOverride == 0 ? "Auto" : "\(rollingAverageWindowOverride)")
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                    Slider(
+                        value: Binding(
+                            get: { Double(rollingAverageWindowOverride) },
+                            set: { rollingAverageWindowOverride = Int($0.rounded()) }
+                        ),
+                        in: 0 ... 60,
+                        step: 1
+                    )
+                    Text(
+                        "Rolling-average window for the trend line. 0 = automatic per-interval default, 1 = no smoothing, higher = smoother. Applies to the insulin and meal charts."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                    Divider()
+
+                    Toggle("Median (robust to outliers)", isOn: $rollingAverageUseMedian)
+                    Text("Use the rolling median instead of the mean so a single big day pulls the line less.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Toggle("Count empty days as zero", isOn: $rollingAverageZeroFill)
+                    Text("Days with no bolus/meal count as 0 (a true per-day average) instead of being skipped.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Toggle("Carry-over lead-in", isOn: $rollingAverageLeadIn)
+                    Text("Pad the oldest edge with a saved summary of history before the 90-day cutoff so it isn't one-sided.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
+            }
+        }
+
         @ViewBuilder var insulinView: some View {
             HStack {
                 Text("Chart Type")
@@ -237,10 +313,16 @@ extension Stat {
                         Text(type.displayName)
                     }
                 }.pickerStyle(.menu)
+                .onChange(of: state.selectedInsulinChartType) { _, newValue in
+                    // The 1-year range only applies to TDD; fall back when switching to bolus.
+                    if newValue != .totalDailyDose, state.selectedIntervalForInsulinStats == .year {
+                        state.selectedIntervalForInsulinStats = .total
+                    }
+                }
             }.padding(.horizontal)
 
             Picker("Duration", selection: $state.selectedIntervalForInsulinStats) {
-                ForEach(StateModel.StatsTimeInterval.allCases) { timeInterval in
+                ForEach(insulinIntervalOptions) { timeInterval in
                     Text(timeInterval.displayName).tag(timeInterval)
                 }
             }
@@ -293,6 +375,8 @@ extension Stat {
                     Text("Tap and hold a bar to reveal more details.")
                 }.foregroundStyle(Color.secondary)
             }.font(.footnote)
+
+            rollingAverageDebugCard
         }
 
         @ViewBuilder var loopingView: some View {
@@ -374,7 +458,7 @@ extension Stat {
             }.padding(.horizontal)
 
             Picker("Duration", selection: $state.selectedIntervalForMealStats) {
-                ForEach(StateModel.StatsTimeInterval.allCases, id: \.self) { timeInterval in
+                ForEach(mealIntervalOptions, id: \.self) { timeInterval in
                     Text(timeInterval.displayName)
                 }
             }
@@ -418,6 +502,8 @@ extension Stat {
                     Text("Tap and hold a bar to reveal more details.")
                 }.foregroundStyle(Color.secondary)
             }.font(.footnote)
+
+            rollingAverageDebugCard
         }
     }
 }

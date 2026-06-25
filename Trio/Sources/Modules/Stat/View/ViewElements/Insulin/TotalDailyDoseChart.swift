@@ -13,6 +13,15 @@ struct TotalDailyDoseChart: View {
     /// The state model containing cached statistics data.
     let state: Stat.StateModel
 
+    /// Debug override for the rolling-average window (0 = automatic per-interval default).
+    @AppStorage(StatChartUtils.rollingAverageWindowOverrideKey) private var rollingAverageWindowOverride: Int = 0
+    /// Debug: use a rolling median (robust to outliers) instead of the mean.
+    @AppStorage(StatChartUtils.rollingAverageUseMedianKey) private var rollingAverageUseMedian: Bool = false
+    /// Debug: count calendar days with no data as 0 (true per-day average).
+    @AppStorage(StatChartUtils.rollingAverageZeroFillKey) private var rollingAverageZeroFill: Bool = false
+    /// Debug: seed the oldest edge with the carry-over level of purged history.
+    @AppStorage(StatChartUtils.rollingAverageLeadInKey) private var rollingAverageLeadIn: Bool = false
+
     /// The current scroll position in the chart.
     @State private var scrollPosition = Date()
     /// The currently selected date in the chart.
@@ -139,6 +148,22 @@ struct TotalDailyDoseChart: View {
         }
     }
 
+    /// The rolling-average trend points for the current data and settings.
+    /// Shared by the overlaid line and the selection popover so both show the same value.
+    private var rollingAveragePoints: [StatChartUtils.RollingAveragePoint] {
+        StatChartUtils.rollingAverage(
+            for: tddStats,
+            date: { $0.date },
+            value: { $0.amount },
+            window: StatChartUtils.rollingAverageWindow(for: selectedInterval, override: rollingAverageWindowOverride),
+            unit: StatChartUtils.unitSeconds(for: selectedInterval),
+            useMedian: rollingAverageUseMedian,
+            zeroFillEmptySlots: rollingAverageZeroFill,
+            carryOverValue: rollingAverageLeadIn ? state.tddCarryOverValue(for: selectedInterval) : nil,
+            centerOffset: StatChartUtils.barCenterOffset(for: selectedInterval)
+        )
+    }
+
     /// A view displaying the bar chart for TDD statistics.
     private var chartsView: some View {
         Chart {
@@ -153,6 +178,18 @@ struct TotalDailyDoseChart: View {
                         StatChartUtils.isSameTimeUnit(stat.date, date, for: selectedInterval) ? 1 : 0.3
                     } ?? 1
                 )
+            }
+
+            // Rolling-average trend line overlaying the bars
+            ForEach(rollingAveragePoints) { point in
+                LineMark(
+                    x: .value("Date", point.date),
+                    y: .value("Rolling Average", point.value),
+                    series: .value("Series", "Rolling Average")
+                )
+                .foregroundStyle(Color.primary)
+                .lineStyle(StatChartUtils.rollingAverageStrokeStyle)
+                .interpolationMethod(.monotone)
             }
 
             // Selection popover outside of the ForEach loop!
@@ -171,6 +208,11 @@ struct TotalDailyDoseChart: View {
                     TDDSelectionPopover(
                         selectedDate: selectedDate,
                         tdd: selectedTDD,
+                        rollingAverage: StatChartUtils.rollingAverageValue(
+                            at: selectedDate,
+                            in: rollingAveragePoints,
+                            selectedInterval: selectedInterval
+                        ),
                         selectedInterval: selectedInterval,
                         domain: visibleDateRange,
                         chartWidth: chartWidth
@@ -191,6 +233,9 @@ struct TotalDailyDoseChart: View {
                 )
                 .opacity(0) // ensures dummy ChartContent is hidden
             }
+        }
+        .chartLegend(position: .bottom, alignment: .leading, spacing: 12) {
+            StatChartUtils.dashedLegendItem(label: String(localized: "Rolling average"), color: Color.primary)
         }
         .chartYAxis {
             AxisMarks(position: .trailing) { value in
@@ -223,7 +268,8 @@ struct TotalDailyDoseChart: View {
                                 .font(.footnote)
                             AxisGridLine()
                         }
-                    case .total:
+                    case .total,
+                         .year:
                         // Show start of every month
                         if day == 1 {
                             AxisValueLabel(format: StatChartUtils.dateFormat(for: selectedInterval), centered: true)
@@ -264,6 +310,8 @@ struct TotalDailyDoseChart: View {
 private struct TDDSelectionPopover: View {
     let selectedDate: Date
     let tdd: TDDStats
+    /// The rolling-average (trend) value at the selected bar, or `nil` if unavailable.
+    let rollingAverage: Double?
     let selectedInterval: Stat.StateModel.StatsTimeInterval
     let domain: (start: Date, end: Date)
     let chartWidth: CGFloat
@@ -327,6 +375,18 @@ private struct TDDSelectionPopover: View {
                 Text("U").foregroundStyle(Color.secondary)
             }
             .font(.headline)
+
+            if let rollingAverage {
+                Divider()
+                HStack(spacing: 4) {
+                    Text("Rolling average")
+                    Spacer()
+                    Text(rollingAverage.formatted(.number.precision(.fractionLength(1))))
+                    Text("U")
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color.secondary)
+            }
         }
         .padding(20)
         .background {
