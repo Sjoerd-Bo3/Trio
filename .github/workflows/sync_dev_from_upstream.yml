@@ -6,6 +6,11 @@ name: Sync dev from upstream
 
 on:
   workflow_dispatch:
+  # Push to this dedicated branch triggers the sync (API dispatch is blocked
+  # for the integration token, so a push is how we kick it off).
+  push:
+    branches:
+      - ci/sync-dev-from-upstream
 
 jobs:
   sync:
