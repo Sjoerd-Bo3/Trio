@@ -10,10 +10,6 @@ struct InsulinSensitivities: JSON {
     var sensitivities: [InsulinSensitivityEntry]
 }
 
-protocol InsulinSensitivitiesObserver {
-    func insulinSensitivitiesDidChange(_ insulinSensitivities: InsulinSensitivities)
-}
-
 extension InsulinSensitivities {
     private enum CodingKeys: String, CodingKey {
         case units
@@ -22,7 +18,7 @@ extension InsulinSensitivities {
     }
 }
 
-struct InsulinSensitivityEntry: JSON, Equatable {
+struct InsulinSensitivityEntry: JSON {
     let sensitivity: Decimal
     let offset: Int
     let start: String

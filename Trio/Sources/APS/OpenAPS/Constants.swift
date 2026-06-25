@@ -94,7 +94,5 @@ extension OpenAPS {
         static let settings = "freeaps/freeaps_settings.json"
         static let tempTargetsPresets = "freeaps/temptargets_presets.json"
         static let calibrations = "freeaps/calibrations.json"
-        static let profilePresets = "freeaps/profile_presets.json"
-        static let activeProfilePresetId = "freeaps/active_profile_preset_id.json"
     }
 }

@@ -25,7 +25,6 @@ extension Home {
         @ObservationIgnored @Injected() var overrideStorage: OverrideStorage!
         @ObservationIgnored @Injected() var bluetoothManager: BluetoothStateManager!
         @ObservationIgnored @Injected() var iobService: IOBService!
-        @ObservationIgnored @Injected() var profilePresetStorage: ProfilePresetStorage!
 
         var cgmStateModel: CGMSettings.StateModel {
             CGMSettings.StateModel.shared
@@ -105,7 +104,6 @@ extension Home {
         var overrideRunStored: [OverrideRunStored] = []
         var tempTargetStored: [TempTargetStored] = []
         var tempTargetRunStored: [TempTargetRunStored] = []
-        var profilePresetRunStored: [ProfilePresetRunStored] = []
         var isOverrideCancelled: Bool = false
         var preprocessedData: [(id: UUID, forecast: Forecast, forecastValue: ForecastValue)] = []
         var pumpStatusHighlightMessage: String?
@@ -127,10 +125,6 @@ extension Home {
         var maxForecast: [Int] = []
         var minCount: Int = 12 // count of Forecasts drawn in 5 min distances, i.e. 12 means a min of 1 hour
         var forecastDisplayType: ForecastDisplayType = .cone
-        var activeProfilePreset: ProfilePreset?
-        var isProfileDiverged: Bool = false
-        /// Tracks the previous divergence state to detect transitions
-        private var wasDivergedBeforeRefresh: Bool = false
 
         var minYAxisValue: Decimal = 39
         var maxYAxisValue: Decimal = 200
@@ -141,17 +135,6 @@ extension Home {
         var minValueIobChart: Decimal = 0
         var maxValueIobChart: Decimal = 5
 
-        let taskContext = CoreDataStack.shared.newTaskContext()
-        let glucoseFetchContext = CoreDataStack.shared.newTaskContext()
-        let carbsFetchContext = CoreDataStack.shared.newTaskContext()
-        let fpuFetchContext = CoreDataStack.shared.newTaskContext()
-        let determinationFetchContext = CoreDataStack.shared.newTaskContext()
-        let tddFetchContext = CoreDataStack.shared.newTaskContext()
-        let pumpHistoryFetchContext = CoreDataStack.shared.newTaskContext()
-        let overrideFetchContext = CoreDataStack.shared.newTaskContext()
-        let tempTargetFetchContext = CoreDataStack.shared.newTaskContext()
-        let profilePresetFetchContext = CoreDataStack.shared.newTaskContext()
-        let batteryFetchContext = CoreDataStack.shared.newTaskContext()
         let viewContext = CoreDataStack.shared.persistentContainer.viewContext
 
         // MARK: - NSFetchedResultsControllers
@@ -367,7 +350,6 @@ extension Home {
         }()
 
         private var subscriptions = Set<AnyCancellable>()
-        private var profilePresetObserver: NSObjectProtocol?
 
         typealias PumpEvent = PumpEventStored.EventType
 
@@ -375,70 +357,11 @@ extension Home {
             super.init()
         }
 
-        deinit {
-            if let observer = profilePresetObserver {
-                Foundation.NotificationCenter.default.removeObserver(observer)
-            }
-        }
-
         override func subscribe() {
             registerSubscribers()
 
             // Parallelize Setup functions
             setupHomeViewConcurrently()
-
-            // Cold-start recovery: close any stale open runs left from a previous session,
-            // then re-open a fresh run for the persisted active preset (if any).
-            profilePresetStorage.closeStaleRuns()
-            activeProfilePreset = profilePresetStorage.activePreset()
-            if let preset = activeProfilePreset {
-                let isDiverged = !profilePresetStorage.settingsMatchPreset(preset)
-                wasDivergedBeforeRefresh = isDiverged
-                isProfileDiverged = isDiverged
-                if isDiverged {
-                    profilePresetStorage.openDivertedRun(for: preset)
-                } else {
-                    profilePresetStorage.closeDivertedRun(for: preset)
-                }
-            }
-
-            profilePresetObserver = Foundation.NotificationCenter.default.addObserver(
-                forName: BaseProfilePresetStorage.profilePresetActivatedNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] notification in
-                if let preset = notification.object as? ProfilePreset {
-                    self?.activeProfilePreset = preset
-                    self?.isProfileDiverged = false
-                    self?.wasDivergedBeforeRefresh = false
-                } else {
-                    self?.activeProfilePreset = self?.profilePresetStorage.activePreset()
-                    self?.refreshProfileDivergence()
-                }
-            }
-        }
-
-        func refreshProfileDivergence() {
-            guard let preset = activeProfilePreset else {
-                if isProfileDiverged {
-                    isProfileDiverged = false
-                    wasDivergedBeforeRefresh = false
-                }
-                return
-            }
-            let nowDiverged = !profilePresetStorage.settingsMatchPreset(preset)
-
-            // Detect state transition and write CoreData run entries
-            if !wasDivergedBeforeRefresh, nowDiverged {
-                // Transition: matching → diverged
-                profilePresetStorage.openDivertedRun(for: preset)
-            } else if wasDivergedBeforeRefresh, !nowDiverged {
-                // Transition: diverged → matching again
-                profilePresetStorage.closeDivertedRun(for: preset)
-            }
-
-            wasDivergedBeforeRefresh = nowDiverged
-            isProfileDiverged = nowDiverged
         }
 
         private func setupHomeViewConcurrently() {
@@ -477,21 +400,6 @@ extension Home {
                         self.setupReservoir()
                     }
                     group.addTask {
-                        self.setupOverrides()
-                    }
-                    group.addTask {
-                        self.setupOverrideRunStored()
-                    }
-                    group.addTask {
-                        self.setupTempTargetsStored()
-                    }
-                    group.addTask {
-                        self.setupTempTargetsRunStored()
-                    }
-                    group.addTask {
-                        self.setupProfilePresetRunStored()
-                    }
-                    group.addTask {
                         self.iobService.updateIOB()
                     }
                 }
@@ -506,82 +414,6 @@ extension Home {
                     self.currentIOB = self.iobService.currentIOB ?? 0
                 }
                 .store(in: &subscriptions)
-
-            glucoseStorage.updatePublisher
-                .receive(on: queue)
-                .sink { [weak self] _ in
-                    guard let self = self else { return }
-                    self.setupGlucoseArray()
-                }
-                .store(in: &subscriptions)
-
-            carbsStorage.updatePublisher
-                .receive(on: queue)
-                .sink { [weak self] _ in
-                    guard let self = self else { return }
-                    self.setupFPUsArray()
-                }
-                .store(in: &subscriptions)
-        }
-
-        private func registerHandlers() {
-            coreDataPublisher?.filteredByEntityName("OrefDetermination").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupDeterminationsArray()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("TDDStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupTDDArray()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("GlucoseStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupGlucoseArray()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("CarbEntryStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupCarbsArray()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("PumpEventStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupInsulinArray()
-                self.setupLastBolus()
-                self.displayPumpStatusHighlightMessage()
-                self.displayPumpStatusBadge()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("OpenAPS_Battery").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupBatteryArray()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("OverrideStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupOverrides()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("OverrideRunStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupOverrideRunStored()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("TempTargetStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupTempTargetsStored()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("TempTargetRunStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupTempTargetsRunStored()
-            }.store(in: &subscriptions)
-
-            coreDataPublisher?.filteredByEntityName("ProfilePresetRunStored").sink { [weak self] _ in
-                guard let self = self else { return }
-                self.setupProfilePresetRunStored()
-            }.store(in: &subscriptions)
         }
 
         private func registerObservers() {
@@ -591,8 +423,6 @@ extension Home {
             broadcaster.register(PumpSettingsObserver.self, observer: self)
             broadcaster.register(BasalProfileObserver.self, observer: self)
             broadcaster.register(BGTargetsObserver.self, observer: self)
-            broadcaster.register(InsulinSensitivitiesObserver.self, observer: self)
-            broadcaster.register(CarbRatiosObserver.self, observer: self)
             broadcaster.register(PumpReservoirObserver.self, observer: self)
             broadcaster.register(PumpDeactivatedObserver.self, observer: self)
 
@@ -1024,8 +854,6 @@ extension Home.StateModel:
     PumpSettingsObserver,
     BasalProfileObserver,
     BGTargetsObserver,
-    InsulinSensitivitiesObserver,
-    CarbRatiosObserver,
     PumpReservoirObserver,
     PumpDeactivatedObserver
 {
@@ -1071,7 +899,6 @@ extension Home.StateModel:
         } else {
             shouldRunDeleteOnSettingsChange = true
         }
-        refreshProfileDivergence()
     }
 
     func preferencesDidChange(_: Preferences) {
@@ -1081,7 +908,6 @@ extension Home.StateModel:
         isExerciseModeActive = settingsManager.preferences.exerciseMode
         lowTTlowersSens = settingsManager.preferences.lowTemptargetLowersSensitivity
         maxIOB = settingsManager.preferences.maxIOB
-        refreshProfileDivergence()
     }
 
     func pumpSettingsDidChange(_: PumpSettings) {
@@ -1095,22 +921,12 @@ extension Home.StateModel:
         Task {
             await setupBasalProfile()
         }
-        refreshProfileDivergence()
     }
 
     func bgTargetsDidChange(_: BGTargets) {
         Task {
             await setupGlucoseTargets()
         }
-        refreshProfileDivergence()
-    }
-
-    func insulinSensitivitiesDidChange(_: InsulinSensitivities) {
-        refreshProfileDivergence()
-    }
-
-    func carbRatiosDidChange(_: CarbRatios) {
-        refreshProfileDivergence()
     }
 
     func pumpReservoirDidChange(_: Decimal) {

@@ -24,9 +24,6 @@ extension Adjustments {
         @State var showCancelOverrideConfirmDialog = false
         @State var showCancelTempTargetConfirmDialog = false
         @State var pendingPresetActivation: PendingPresetActivation?
-        @State var showProfileCheckmark: Bool = false
-        @State var selectedProfilePresetID: String?
-        @State var newPresetName: String = ""
 
         private var shouldDisplayStickyOverrideStopButton: Bool {
             state.isOverrideEnabled && state.activeOverrideName.isNotEmpty
@@ -64,9 +61,7 @@ extension Adjustments {
                     List {
                         switch state.selectedTab {
                         case .overrides: overrides()
-                        case .tempTargets: tempTargets()
-                        case .profiles: profilesTab()
-                        }
+                        case .tempTargets: tempTargets() }
                     }
                     .scrollContentBackground(.hidden)
                     .background(appState.trioBackgroundColor(for: colorScheme))
@@ -110,8 +105,6 @@ extension Adjustments {
                                     Image(systemName: "plus")
                                 }
                             })
-                        case .profiles:
-                            EmptyView()
                         }
                     }
                 }
@@ -198,71 +191,6 @@ extension Adjustments {
                         Text(activation.confirmationMessage)
                     }
                 }
-                .alert(
-                    Text("Activate Profile", comment: "Adjustments: profile activation alert title"),
-                    isPresented: $state.showingProfileActivateConfirmation
-                ) {
-                    Button(String(localized: "Activate", comment: "Adjustments: activate button")) {
-                        if let preset = state.selectedProfilePreset {
-                            state.activateProfilePreset(preset)
-                            selectedProfilePresetID = preset.id
-                            showProfileCheckmark = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                showProfileCheckmark = false
-                            }
-                        }
-                        state.selectedProfilePreset = nil
-                    }
-                    Button(String(localized: "Cancel", comment: "Adjustments: cancel button"), role: .cancel) {
-                        state.selectedProfilePreset = nil
-                    }
-                } message: {
-                    if let preset = state.selectedProfilePreset {
-                        Text(
-                            "This will overwrite your current therapy settings with the settings from '\(preset.name)'. Are you sure?",
-                            comment: "Adjustments: profile activation confirmation message"
-                        )
-                    }
-                }
-                .divergenceSavePrompt(
-                    coordinator: state.presetSwitchCoordinator,
-                    activePresetName: state.activeProfilePreset?.name
-                )
-                .alert(
-                    Text(
-                        "Save as New Preset",
-                        comment: "Adjustments: title for save as new preset alert"
-                    ),
-                    isPresented: $state.showingSaveNewPresetSheet
-                ) {
-                    TextField(
-                        String(
-                            localized: "Preset Name",
-                            comment: "Adjustments: placeholder for new preset name"
-                        ),
-                        text: $newPresetName
-                    )
-                    Button(String(
-                        localized: "Save",
-                        comment: "Adjustments: save button for new preset"
-                    )) {
-                        let trimmed = newPresetName.trimmingCharacters(in: .whitespaces)
-                        guard !trimmed.isEmpty else { return }
-                        state.saveCurrentAsNewPreset(name: trimmed, icon: ProfilePreset.defaultIcon)
-                        newPresetName = ""
-                    }
-                    Button(String(
-                        localized: "Cancel",
-                        comment: "Adjustments: cancel save new preset"
-                    ), role: .cancel) {
-                        newPresetName = ""
-                    }
-                } message: {
-                    Text(
-                        "Enter a name for the new profile preset.",
-                        comment: "Adjustments: message for save as new preset alert"
-                    )
-                }
             }).background(appState.trioBackgroundColor(for: colorScheme))
         }
 
@@ -282,18 +210,10 @@ extension Adjustments {
                     .textCase(nil)
                     .foregroundStyle(.secondary)
                 }
-            case .profiles:
-                Section {} header: {
-                    Text(
-                        "Manage profile presets in Settings > Profile Presets."
-                    )
-                    .textCase(nil)
-                    .foregroundStyle(.secondary)
-                }
             }
         }
 
-        @ViewBuilder var currentActiveAdjustment: some View {
+        var currentActiveAdjustment: some View {
             switch state.selectedTab {
             case .overrides:
                 Section {
@@ -345,40 +265,10 @@ extension Adjustments {
                     }
                 }
                 .listRowBackground(Color.loopGreen.opacity(0.8))
-            case .profiles:
-                if let active = state.activeProfilePreset {
-                    Section {
-                        HStack {
-                            Image(systemName: active.icon)
-                                .foregroundStyle(Color.primary)
-                            if state.isProfileDiverged {
-                                Text(
-                                    "'\(active.name)' (modified)",
-                                    comment: "Adjustments: active profile preset diverged indicator"
-                                )
-                            } else {
-                                Text(
-                                    "'\(active.name)' is active",
-                                    comment: "Adjustments: active profile preset indicator"
-                                )
-                            }
-                            Spacer()
-                            if state.isProfileDiverged {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(Color.orange)
-                            }
-                        }
-                    }
-                    .listRowBackground(
-                        state.isProfileDiverged
-                            ? Color.orange.opacity(0.6)
-                            : Color.accentColor.opacity(0.8)
-                    )
-                }
             }
         }
 
-        @ViewBuilder var cancelAdjustmentButton: some View {
+        var cancelAdjustmentButton: some View {
             switch state.selectedTab {
             case .overrides:
                 Button(action: {
@@ -402,8 +292,6 @@ extension Adjustments {
                     .disabled(!state.isTempTargetEnabled)
                     .listRowBackground(!state.isTempTargetEnabled ? Color(.systemGray4) : Color(.systemRed))
                     .tint(.white)
-            case .profiles:
-                EmptyView()
             }
         }
 
@@ -420,132 +308,6 @@ extension Adjustments {
             } else {
                 return "<1m"
             }
-        }
-
-        // MARK: - Profiles Tab
-
-        @ViewBuilder func profilesTab() -> some View {
-            if state.activeProfilePreset != nil {
-                currentActiveAdjustment
-            }
-
-            if state.profilePresets.isEmpty {
-                Section {} header: {
-                    Text(
-                        "No profile presets saved. Create presets in Settings > Profile Presets.",
-                        comment: "Adjustments: empty profile presets message"
-                    )
-                    .textCase(nil)
-                    .foregroundStyle(.secondary)
-                }
-            } else {
-                Section(
-                    header: Text(
-                        "Profile Presets",
-                        comment: "Adjustments: section header for profile preset list"
-                    )
-                ) {
-                    ForEach(state.profilePresets) { preset in
-                        profilePresetView(for: preset)
-                    }
-                    .onMove(perform: state.reorderProfilePresets)
-                }
-                .listRowBackground(Color.chart)
-                .onAppear {
-                    state.refreshProfileDivergence()
-                }
-            }
-        }
-
-        @ViewBuilder private func profilePresetView(for preset: ProfilePreset) -> some View {
-            let isSelected = preset.id == selectedProfilePresetID
-            let isActive = preset.id == state.activeProfilePreset?.id
-
-            ZStack(alignment: .trailing) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Image(systemName: preset.icon)
-                                .foregroundColor(.accentColor)
-                                .font(.title3)
-                            Text(preset.name)
-                                .font(.subheadline)
-                            if isActive, state.isProfileDiverged {
-                                Text(
-                                    "modified",
-                                    comment: "Adjustments: label indicating active preset has been modified"
-                                )
-                                .font(.caption2)
-                                .foregroundColor(.orange)
-                            }
-                            Spacer()
-                        }
-                        adjustmentPresetPills(preset)
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        guard !isActive else { return }
-                        state.requestProfilePresetSwitch(preset)
-                    }
-                }
-
-                if showProfileCheckmark, isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .imageScale(.large)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.green)
-                } else if isActive {
-                    if state.isProfileDiverged {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.accentColor)
-                    }
-                }
-            }
-            .contextMenu {
-                if isActive, state.isProfileDiverged {
-                    Button {
-                        state.updateProfilePresetToCurrentSettings(preset)
-                    } label: {
-                        Label(
-                            String(
-                                localized: "Update to Current Settings",
-                                comment: "Adjustments: context menu option to update preset with current therapy settings"
-                            ),
-                            systemImage: "arrow.triangle.2.circlepath"
-                        )
-                    }
-                }
-            }
-        }
-
-        @ViewBuilder private func adjustmentPresetPills(_ preset: ProfilePreset) -> some View {
-            HStack(spacing: 4) {
-                if preset.smbSettings != nil {
-                    adjustmentPill(
-                        text: String(localized: "SMB", comment: "Adjustments: SMB pill"),
-                        color: .orange
-                    )
-                }
-                if preset.dynamicSettings != nil {
-                    adjustmentPill(
-                        text: String(localized: "Dynamic", comment: "Adjustments: Dynamic ISF pill"),
-                        color: .purple
-                    )
-                }
-            }
-        }
-
-        private func adjustmentPill(text: String, color: Color) -> some View {
-            Text(text)
-                .font(.system(size: 9))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(color.opacity(0.15))
-                .foregroundColor(color)
-                .clipShape(Capsule())
         }
     }
 }

@@ -48,9 +48,6 @@ struct LiveActivityAttributes: ActivityAttributes {
         let tempTargetDate: Date
         let tempTargetDuration: Decimal
         let tempTargetTarget: Decimal
-        let isProfilePresetActive: Bool
-        let profilePresetName: String
-        let isProfilePresetDiverted: Bool
         let widgetItems: [LiveActivityItem]
         let minForecast: [Int]
         let maxForecast: [Int]

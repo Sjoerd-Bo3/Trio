@@ -7,7 +7,6 @@ enum Adjustments {
     enum Tab: String, Hashable, Identifiable, CaseIterable {
         case overrides
         case tempTargets
-        case profiles
 
         var id: String { rawValue }
 
@@ -17,8 +16,6 @@ enum Adjustments {
                 return String(localized: "Overrides", comment: "Selected Tab")
             case .tempTargets:
                 return String(localized: "Temp Targets", comment: "Selected Tab")
-            case .profiles:
-                return String(localized: "Profiles", comment: "Selected Tab")
             }
         }
     }

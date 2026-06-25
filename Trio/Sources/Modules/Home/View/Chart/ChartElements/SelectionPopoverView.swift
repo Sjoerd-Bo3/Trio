@@ -12,20 +12,9 @@ struct SelectionPopoverView: ChartContent {
     let currentGlucoseTarget: Decimal
     let glucoseColorScheme: GlucoseColorScheme
     let isSmoothingEnabled: Bool
-    let profilePresetRunStored: [ProfilePresetRunStored]
 
     private var glucoseToDisplay: Decimal {
         units == .mgdL ? Decimal(selectedGlucose.glucose) : Decimal(selectedGlucose.glucose).asMmolL
-    }
-
-    /// Returns the profile preset run active at the selected glucose timestamp, if any.
-    private var activePresetAtSelection: ProfilePresetRunStored? {
-        guard let glucoseDate = selectedGlucose.date else { return nil }
-        return profilePresetRunStored.first { run in
-            let start = run.startDate ?? .distantPast
-            let end = run.endDate ?? Date()
-            return glucoseDate >= start && glucoseDate < end
-        }
     }
 
     private var pointMarkColor: Color {
@@ -115,23 +104,6 @@ struct SelectionPopoverView: ChartContent {
                         + Text(String(localized: " g", comment: "gram of carbs"))
                 }
                 .foregroundStyle(Color.orange).font(.body)
-            }
-
-            if let presetRun = activePresetAtSelection {
-                let name = presetRun.name ?? String(localized: "Profile")
-                let isDiverted = presetRun.isDiverted
-                HStack {
-                    Image(systemName: presetRun.icon ?? ProfilePreset.defaultIcon).frame(width: 15)
-                    Text(name).bold()
-                    if isDiverted {
-                        Text(String(
-                            localized: "(modified)",
-                            comment: "SelectionPopover: profile preset diverted indicator"
-                        ))
-                            .foregroundStyle(Color.orange)
-                    }
-                }
-                .foregroundStyle(isDiverted ? Color.orange : Color.teal).font(.body)
             }
         }
         .padding(.horizontal)

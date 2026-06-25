@@ -113,20 +113,7 @@ enum SettingItems {
         SettingItem(title: "ISF", view: .isfEditor, path: ["Therapy Settings"]),
         SettingItem(title: "Carb Ratios", view: .crEditor, path: ["Therapy Settings"]),
         SettingItem(title: "CR", view: .crEditor, path: ["Therapy Settings"]),
-        SettingItem(title: "Glucose Targets", view: .targetsEditor, path: ["Therapy Settings"]),
-        SettingItem(
-            title: "Profile Presets",
-            view: .profilePresets,
-            searchContents: [
-                "Save Profile",
-                "Activate Preset",
-                "Sport Profile",
-                "Basal Rates Preset",
-                "ISF Preset",
-                "CR Preset"
-            ],
-            path: ["Therapy Settings", "Profile Presets"]
-        )
+        SettingItem(title: "Glucose Targets", view: .targetsEditor, path: ["Therapy Settings"])
     ]
 
     static let algorithmItems = [
