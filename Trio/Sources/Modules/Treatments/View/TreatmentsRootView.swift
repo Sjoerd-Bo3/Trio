@@ -223,14 +223,13 @@ extension Treatments {
             // resized its scrollable area before we scroll, otherwise the target can land back
             // underneath the keyboard.
             //
-            // Anchor `.bottom`: the List shrinks its scrollable area to avoid the keyboard, so a
-            // bottom anchor parks the focused input row just above the keyboard. For the Bolus field
-            // this intentionally leaves the "Enact Bolus" button hidden behind the keyboard, so the
-            // user has to dismiss the keyboard and take a second look at the entered amount before
-            // they can tap it — a deliberate safety nudge (see issue #1115 discussion).
+            // Anchor `.center`: a `.bottom` anchor tucks the row behind the keyboard's accessory
+            // toolbar (the trash / chevron / done bar), because the List's keyboard inset doesn't
+            // account for that bar's height. Centring the focused row in the remaining visible area
+            // reliably keeps the whole input clear of both the keyboard and its toolbar. See #1115.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 withAnimation {
-                    proxy.scrollTo(targetID, anchor: .bottom)
+                    proxy.scrollTo(targetID, anchor: .center)
                 }
             }
         }
