@@ -11,6 +11,7 @@ on:
       - feat/profiles-rebased
       - merge/profiles-into-build-experiment
       - feat/quick-bolus-1248
+      - sync/dev-into-build-experiment
     paths-ignore:
       - '**.md'
       - '**/README'
