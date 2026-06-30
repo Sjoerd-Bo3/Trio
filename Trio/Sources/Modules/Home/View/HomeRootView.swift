@@ -166,7 +166,8 @@ extension Home {
                 activatedAtDate: state.pumpActivatedAtDate,
                 timerDate: state.timerDate,
                 pumpStatusHighlightMessage: state.pumpStatusHighlightMessage,
-                battery: state.batteryFromPersistence
+                battery: state.batteryFromPersistence,
+                isBolusing: state.bolusProgress != nil
             )
             .onTapGesture {
                 if state.pumpDisplayState == nil {
@@ -838,6 +839,7 @@ extension Home {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 15))
                         .frame(height: geo.size.height * 0.08)
+                        .spinningRoundedBorder(isActive: true, color: .insulin, cornerRadius: 15)
                         .shadow(
                             color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
                                 Color.black.opacity(0.33),
