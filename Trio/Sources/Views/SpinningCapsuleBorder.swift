@@ -31,7 +31,9 @@ final class DashedSpinnerBorderView: UIView {
         layer.addSublayer(shape)
         applyColor()
         // CoreAnimation strips animations when the app backgrounds; re-add on return.
-        NotificationCenter.default.addObserver(
+        // Fully qualified: Trio defines its own `NotificationCenter` protocol that
+        // otherwise shadows Foundation's inside the Trio module.
+        Foundation.NotificationCenter.default.addObserver(
             self,
             selector: #selector(reapplyAnimation),
             name: UIApplication.didBecomeActiveNotification,
@@ -41,7 +43,7 @@ final class DashedSpinnerBorderView: UIView {
 
     @available(*, unavailable) required init?(coder _: NSCoder) { fatalError("init(coder:) unavailable") }
 
-    deinit { NotificationCenter.default.removeObserver(self) }
+    deinit { Foundation.NotificationCenter.default.removeObserver(self) }
 
     private func applyColor() { shape.strokeColor = strokeColor.withAlphaComponent(0.4).cgColor }
 
