@@ -12,6 +12,7 @@ on:
       - merge/profiles-into-build-experiment
       - feat/quick-bolus-1248
       - sync/dev-into-build-experiment
+      - feat/loop-spinner-border
     paths-ignore:
       - '**.md'
       - '**/README'
