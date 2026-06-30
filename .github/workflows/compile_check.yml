@@ -17,6 +17,7 @@ on:
       - feat/spinner-pump-bolus
       - fix/spinner-notificationcenter
       - feat/quick-bolus-update
+      - feat/bolus-progress-ring
     paths-ignore:
       - '**.md'
       - '**/README'

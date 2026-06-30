@@ -819,6 +819,7 @@ extension Home {
             /// - TRUE:  show the pump bolus
             /// - FALSE:  do not show a progress bar at all
             if let bolusTotal = state.lastPumpBolus?.bolus?.amount {
+                let progressValue = (progress as NSDecimalNumber).doubleValue
                 let bolusFraction = progress * (bolusTotal as Decimal)
                 let bolusString =
                     (bolusProgressFormatter.string(from: bolusFraction as NSNumber) ?? "0")
@@ -836,7 +837,9 @@ extension Home {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 15))
                         .frame(height: geo.size.height * 0.08)
-                        .spinningRoundedBorder(isActive: true, color: .insulin, cornerRadius: 15)
+                        // Variant B: the card's full-width border doubles as the progress
+                        // meter — the gap closes as the bolus completes.
+                        .progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15)
                         .shadow(
                             color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
                                 Color.black.opacity(0.33),
@@ -865,19 +868,19 @@ extension Home {
                             state.showProgressView()
                             state.cancelBolus()
                         } label: {
+                            // Variant A: a progress ring wraps the cancel button — its gap
+                            // closes around the perimeter as the bolus completes.
                             Image(systemName: "xmark.app")
                                 .font(.system(size: 25))
+                                .frame(width: 38, height: 38)
+                                .progressCapsuleBorder(progress: progressValue, color: .insulin)
                         }
                     }.padding(.horizontal, 10)
                         .padding(.trailing, 8)
                 }
                 .padding(.horizontal, 10)
                 .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 10))
-                .overlay(alignment: .bottom) {
-                    BolusProgressBar(progress: progress)
-                        .padding(.horizontal, 18)
-                        .padding(.bottom, 9)
-                }.clipShape(RoundedRectangle(cornerRadius: 15))
+                .clipShape(RoundedRectangle(cornerRadius: 15))
             }
         }
 
