@@ -15,6 +15,7 @@ on:
       - feat/loop-spinner-border
       - feat/spinner-pill-perf-and-pump
       - feat/spinner-pump-bolus
+      - fix/spinner-notificationcenter
     paths-ignore:
       - '**.md'
       - '**/README'
