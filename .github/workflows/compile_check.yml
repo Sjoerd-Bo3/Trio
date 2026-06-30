@@ -14,6 +14,7 @@ on:
       - sync/dev-into-build-experiment
       - feat/loop-spinner-border
       - feat/spinner-pill-perf-and-pump
+      - feat/spinner-pump-bolus
     paths-ignore:
       - '**.md'
       - '**/README'

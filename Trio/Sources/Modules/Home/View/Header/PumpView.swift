@@ -9,6 +9,8 @@ struct PumpView: View {
     let timerDate: Date
     let pumpStatusHighlightMessage: String?
     let battery: [OpenAPS_Battery]
+    /// True while a bolus/SMB is being delivered; animates the reservoir pill border.
+    var isBolusing: Bool = false
     @Environment(\.colorScheme) var colorScheme
 
     let NORMAL_PATCH_AGE = TimeInterval.hours(80)
@@ -83,10 +85,7 @@ struct PumpView: View {
                     .padding(.vertical, 5)
                     .padding(.horizontal, 10)
                     .foregroundStyle(reservoirColor)
-                    .overlay(
-                        Capsule()
-                            .stroke(reservoirColor.opacity(0.4), lineWidth: 2)
-                    )
+                    .spinningCapsuleBorder(isActive: isBolusing, color: reservoirColor)
                 }
 
                 if (battery.first?.display) != nil, let shouldBatteryDisplay = battery.first?.display, shouldBatteryDisplay {
