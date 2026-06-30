@@ -16,6 +16,7 @@ on:
       - feat/spinner-pill-perf-and-pump
       - feat/spinner-pump-bolus
       - fix/spinner-notificationcenter
+      - feat/quick-bolus-update
     paths-ignore:
       - '**.md'
       - '**/README'

@@ -127,6 +127,7 @@ extension Home {
         var shouldRunDeleteOnSettingsChange = true
 
         var showCarbsRequiredBadge: Bool = true
+        var enableQuickBolus: Bool = false
         var quickBolusHistory: [Decimal] = []
         private(set) var setupPumpType: PumpConfig.PumpType = .minimed
         var minForecast: [Int] = []
@@ -664,6 +665,7 @@ extension Home {
             bolusDisplayThreshold = settingsManager.settings.bolusDisplayThreshold
             thresholdLines = settingsManager.settings.rulerMarks
             showCarbsRequiredBadge = settingsManager.settings.showCarbsRequiredBadge
+            enableQuickBolus = settingsManager.settings.enableQuickBolus
             forecastDisplayType = settingsManager.settings.forecastDisplayType
             isExerciseModeActive = settingsManager.preferences.exerciseMode
             highTTraisesSens = settingsManager.preferences.highTemptargetRaisesSensitivity
@@ -721,6 +723,7 @@ extension Home {
         }
 
         func loadQuickBolusSuggestions() async {
+            guard enableQuickBolus else { return }
             let context = CoreDataStack.shared.newTaskContext()
             let cutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date()) ?? Date()
             let predicate = NSPredicate(
@@ -793,8 +796,8 @@ extension Home {
             }
         }
 
-        func enactQuickBolus(amount: Decimal) async {
-            guard amount > 0 else { return }
+        func enactQuickBolus(amount: Decimal) async -> Bool {
+            guard amount > 0 else { return false }
             let delivery = min(
                 Double(truncating: amount as NSDecimalNumber),
                 pumpInitialSettings.maxBolusUnits
@@ -803,9 +806,12 @@ extension Home {
                 let authenticated = try await unlockmanager.unlock()
                 if authenticated {
                     await apsManager.enactBolus(amount: delivery, isSMB: false, callback: nil)
+                    return true
                 }
+                return false
             } catch {
                 debug(.bolusState, "Quick bolus authentication error: \(error)")
+                return false
             }
         }
 
@@ -1081,6 +1087,7 @@ extension Home.StateModel:
         thresholdLines = settingsManager.settings.rulerMarks
         bolusDisplayThreshold = settingsManager.settings.bolusDisplayThreshold
         showCarbsRequiredBadge = settingsManager.settings.showCarbsRequiredBadge
+        enableQuickBolus = settingsManager.settings.enableQuickBolus
         forecastDisplayType = settingsManager.settings.forecastDisplayType
         cgmAvailable = (fetchGlucoseManager.cgmGlucoseSourceType != CGMType.none)
         displayPumpStatusHighlightMessage()
