@@ -20,26 +20,34 @@ struct LoopView: View {
 
     private let rect = CGRect(x: 0, y: 0, width: 18, height: 18)
 
+    /// `isLooping` with a short linger so the label and border stay "active" for a
+    /// beat after a loop cycle finishes, rather than flickering off instantly.
+    @State private var showLooping = false
+
     var body: some View {
         loopStatusWithMinutes
             .padding(.vertical, 5)
             .padding(.horizontal, 10)
-            .overlay(
-                Capsule()
-                    .stroke(color.opacity(0.4), lineWidth: 2)
-            )
+            .spinningCapsuleBorder(isActive: showLooping, color: color)
+            .task(id: isLooping) {
+                if isLooping {
+                    showLooping = true
+                } else {
+                    try? await Task.sleep(for: .seconds(2))
+                    if !Task.isCancelled { showLooping = false }
+                }
+            }
     }
 
     private var loopStatusWithMinutes: some View {
         HStack(alignment: .center) {
             ZStack {
                 Image(systemName: (!closedLoop || manualTempBasal) ? "circle.and.line.horizontal" : "circle")
-                if isLooping {
-                    ProgressView()
-                }
+                    .symbolEffect(.pulse, options: .repeating, isActive: showLooping)
             }
-            if isLooping {
-                Text("looping")
+            if showLooping {
+                // 'looping' is DIY-loop jargon; keep it verbatim (not localized).
+                Text(verbatim: "looping")
             } else if manualTempBasal {
                 Text("Manual")
             } else if determination.first?

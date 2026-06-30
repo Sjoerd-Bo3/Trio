@@ -78,6 +78,7 @@
 		3811DE5F25C9D4D500A708ED /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5725C9D4D500A708ED /* ProgressBar.swift */; };
 		5BD4EAB56D214E8B9856C82D /* PresetSwitchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444D7FF319E24E5ABB3EA85F /* PresetSwitchCoordinator.swift */; };
 468C3F851FE245DCBD1E6E19 /* DivergenceSavePromptModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */; };
+		5A1C0B0E0D0C0B0A09080701 /* SpinningCapsuleBorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1C0B0E0D0C0B0A09080702 /* SpinningCapsuleBorder.swift */; };
 3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */; };
 		3811DE8F25C9D80400A708ED /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE8E25C9D80400A708ED /* User.swift */; };
 		3811DEA925C9D88300A708ED /* AppearanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE9325C9D88200A708ED /* AppearanceManager.swift */; };
@@ -1106,6 +1107,7 @@
 		3811DE5725C9D4D500A708ED /* ProgressBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
 		444D7FF319E24E5ABB3EA85F /* PresetSwitchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetSwitchCoordinator.swift; sourceTree = "<group>"; };
 4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivergenceSavePromptModifier.swift; sourceTree = "<group>"; };
+		5A1C0B0E0D0C0B0A09080702 /* SpinningCapsuleBorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpinningCapsuleBorder.swift; sourceTree = "<group>"; };
 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
 		3811DE8E25C9D80400A708ED /* User.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		3811DE9325C9D88200A708ED /* AppearanceManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppearanceManager.swift; sourceTree = "<group>"; };
@@ -2721,6 +2723,7 @@
 			children = (
 				DD6A4E072DBD95F1008C4B26 /* BluetoothRequiredView.swift */,
 				4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */,
+				5A1C0B0E0D0C0B0A09080702 /* SpinningCapsuleBorder.swift */,
 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */,
 				3883581B25EE79BB00E024B2 /* TextFieldWithToolBar.swift */,
 				383420D825FFEB3F002D46C1 /* Popup.swift */,
@@ -5224,6 +5227,7 @@ ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */,
 				38EA05DA261F6E7C0064E39B /* SimpleLogReporter.swift in Sources */,
 				5BD4EAB56D214E8B9856C82D /* PresetSwitchCoordinator.swift in Sources */,
 468C3F851FE245DCBD1E6E19 /* DivergenceSavePromptModifier.swift in Sources */,
+				5A1C0B0E0D0C0B0A09080701 /* SpinningCapsuleBorder.swift in Sources */,
 3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */,
 				3811DEAC25C9D88300A708ED /* NightscoutManager.swift in Sources */,
 				BD793CB22CE8033500D669AC /* TempTargetRunStored.swift in Sources */,
