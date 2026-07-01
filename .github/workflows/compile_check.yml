@@ -18,6 +18,7 @@ on:
       - fix/spinner-notificationcenter
       - feat/quick-bolus-update
       - feat/bolus-progress-ring
+      - feat/quick-bolus-haptic
     paths-ignore:
       - '**.md'
       - '**/README'
