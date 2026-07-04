@@ -9,12 +9,15 @@ import UIKit
 /// `StrokeStyle.dashPhase`, which re-rasterises the path every frame on the
 /// main thread and causes micro-stutter on a busy screen.
 final class DashedSpinnerBorderView: UIView {
+    /// Faint full-perimeter track, shown behind `shape` in determinate progress mode
+    /// so the filled vs. unfilled portion reads at a glance.
+    private let track = CAShapeLayer()
     private let shape = CAShapeLayer()
     private var spinning = false
     private var perimeter: CGFloat = 0
 
-    var strokeColor: UIColor = .systemGray { didSet { applyColor() } }
-    var lineWidth: CGFloat = 2 { didSet { shape.lineWidth = lineWidth; setNeedsLayout() } }
+    var strokeColor: UIColor = .systemGray { didSet { applyColors() } }
+    var lineWidth: CGFloat = 2 { didSet { shape.lineWidth = lineWidth; track.lineWidth = lineWidth; setNeedsLayout() } }
     /// `nil` → capsule (corner radius = half the shorter side).
     var cornerRadius: CGFloat? { didSet { setNeedsLayout() } }
     /// Share of the perimeter occupied by the moving gap (0...1).
@@ -29,11 +32,16 @@ final class DashedSpinnerBorderView: UIView {
         super.init(frame: frame)
         isUserInteractionEnabled = false
         backgroundColor = .clear
+        track.fillColor = UIColor.clear.cgColor
+        track.lineCap = .round
+        track.lineWidth = lineWidth
+        track.isHidden = true
+        layer.addSublayer(track)
         shape.fillColor = UIColor.clear.cgColor
         shape.lineCap = .round
         shape.lineWidth = lineWidth
         layer.addSublayer(shape)
-        applyColor()
+        applyColors()
         // CoreAnimation strips animations when the app backgrounds; re-add on return.
         // Fully qualified: Trio defines its own `NotificationCenter` protocol that
         // otherwise shadows Foundation's inside the Trio module.
@@ -49,16 +57,44 @@ final class DashedSpinnerBorderView: UIView {
 
     deinit { Foundation.NotificationCenter.default.removeObserver(self) }
 
-    private func applyColor() { shape.strokeColor = strokeColor.withAlphaComponent(0.4).cgColor }
+    private func applyColors() {
+        if progress != nil {
+            // Determinate progress: a bright fill over a faint full-perimeter track.
+            shape.strokeColor = strokeColor.cgColor
+            track.strokeColor = strokeColor.withAlphaComponent(0.18).cgColor
+        } else {
+            shape.strokeColor = strokeColor.withAlphaComponent(0.4).cgColor
+        }
+    }
+
+    /// Rounded-rect path starting at the top-left corner and running **clockwise**, so a
+    /// determinate stroke fills left → right along the top edge first.
+    private func roundedRectPath(in rect: CGRect, radius r: CGFloat) -> CGPath {
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: rect.minX + r, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
+        path.addArc(withCenter: CGPoint(x: rect.maxX - r, y: rect.minY + r), radius: r, startAngle: -.pi / 2, endAngle: 0, clockwise: true)
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
+        path.addArc(withCenter: CGPoint(x: rect.maxX - r, y: rect.maxY - r), radius: r, startAngle: 0, endAngle: .pi / 2, clockwise: true)
+        path.addLine(to: CGPoint(x: rect.minX + r, y: rect.maxY))
+        path.addArc(withCenter: CGPoint(x: rect.minX + r, y: rect.maxY - r), radius: r, startAngle: .pi / 2, endAngle: .pi, clockwise: true)
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
+        path.addArc(withCenter: CGPoint(x: rect.minX + r, y: rect.minY + r), radius: r, startAngle: .pi, endAngle: 3 * .pi / 2, clockwise: true)
+        path.close()
+        return path.cgPath
+    }
 
     override func layoutSubviews() {
         super.layoutSubviews()
         shape.frame = bounds
+        track.frame = bounds
         let inset = lineWidth / 2
         let rect = bounds.insetBy(dx: inset, dy: inset)
         guard rect.width > 0, rect.height > 0 else { return }
         let radius = min(cornerRadius ?? min(rect.width, rect.height) / 2, min(rect.width, rect.height) / 2)
-        shape.path = UIBezierPath(roundedRect: rect, cornerRadius: radius).cgPath
+        let path = roundedRectPath(in: rect, radius: radius)
+        shape.path = path
+        track.path = path
         // Rounded-rect perimeter: the straight segments + the four quarter-circle corners.
         perimeter = 2 * (rect.width - 2 * radius) + 2 * (rect.height - 2 * radius) + 2 * .pi * radius
         applyMode()
@@ -74,8 +110,10 @@ final class DashedSpinnerBorderView: UIView {
     /// when `progress` is set, otherwise the indeterminate spin / solid border.
     private func applyMode() {
         guard perimeter > 0 else { return }
+        applyColors()
         if let progress = progress {
-            // Determinate: solid stroke trimmed to `progress`; the gap closes as it nears 1.
+            // Determinate: bright stroke trimmed to `progress` over the faint track.
+            track.isHidden = false
             shape.removeAnimation(forKey: "spin")
             shape.lineDashPattern = nil
             shape.lineDashPhase = 0
@@ -87,12 +125,14 @@ final class DashedSpinnerBorderView: UIView {
             shape.strokeEnd = max(0, min(1, progress))
             CATransaction.commit()
         } else if spinning {
+            track.isHidden = true
             shape.strokeStart = 0
             shape.strokeEnd = 1
             let gap = perimeter * gapFraction
             shape.lineDashPattern = [NSNumber(value: Double(perimeter - gap)), NSNumber(value: Double(gap))]
             reapplyAnimation()
         } else {
+            track.isHidden = true
             shape.removeAnimation(forKey: "spin")
             shape.lineDashPattern = nil
             shape.lineDashPhase = 0

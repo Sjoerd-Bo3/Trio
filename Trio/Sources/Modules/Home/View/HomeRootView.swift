@@ -837,9 +837,10 @@ extension Home {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 15))
                         .frame(height: geo.size.height * 0.08)
-                        // Variant B: the card's full-width border doubles as the progress
-                        // meter — the gap closes as the bolus completes.
-                        .progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15)
+                        // The card's full-width border is the progress meter: a bright fill
+                        // runs left → right around the perimeter (over a faint track) as the
+                        // bolus completes.
+                        .progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15, lineWidth: 3)
                         .shadow(
                             color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
                                 Color.black.opacity(0.33),
@@ -868,12 +869,8 @@ extension Home {
                             state.showProgressView()
                             state.cancelBolus()
                         } label: {
-                            // Variant A: a progress ring wraps the cancel button — its gap
-                            // closes around the perimeter as the bolus completes.
                             Image(systemName: "xmark.app")
                                 .font(.system(size: 25))
-                                .frame(width: 38, height: 38)
-                                .progressCapsuleBorder(progress: progressValue, color: .insulin)
                         }
                     }.padding(.horizontal, 10)
                         .padding(.trailing, 8)
