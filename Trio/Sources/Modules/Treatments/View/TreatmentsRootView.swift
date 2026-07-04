@@ -610,21 +610,27 @@ extension Treatments {
             }()
             let bolusLabel = state.bolusStatus == .inProgress ? String(localized: "Bolusing") : String(localized: "Initiating…")
 
+            let backgroundCard = RoundedRectangle(cornerRadius: 15)
+                .fill(
+                    colorScheme == .dark
+                        ? Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745)
+                        : Color.insulin.opacity(0.2)
+                )
+                .frame(height: 56)
+                .shadow(
+                    color: colorScheme == .dark
+                        ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706)
+                        : Color.black.opacity(0.33),
+                    radius: 3
+                )
+
             ZStack {
-                // background card
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(
-                        colorScheme == .dark
-                            ? Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745)
-                            : Color.insulin.opacity(0.2)
-                    )
-                    .frame(height: 56)
-                    .shadow(
-                        color: colorScheme == .dark
-                            ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706)
-                            : Color.black.opacity(0.33),
-                        radius: 3
-                    )
+                // background card — spinning border while initiating, in place of a spinner
+                if state.bolusStatus == .initiating {
+                    backgroundCard.spinningRoundedBorder(isActive: true, color: .insulin, cornerRadius: 15, lineWidth: 3)
+                } else {
+                    backgroundCard
+                }
 
                 // bolus content
                 HStack {
@@ -645,6 +651,8 @@ extension Treatments {
 
                     Spacer()
 
+                    // During `.initiating` the spinning border conveys the state; the cancel
+                    // button appears once delivery is actually running.
                     if state.bolusStatus == .inProgress {
                         Button { state.cancelBolus() } label: {
                             Image(systemName: "xmark.app")
@@ -652,8 +660,6 @@ extension Treatments {
                         }.tint(Color.tabBar)
                             .buttonStyle(.borderless)
                             .accessibilityLabel("Cancel bolus")
-                    } else if state.bolusStatus == .initiating {
-                        ProgressView()
                     }
                 }
                 .padding(.horizontal, 10)

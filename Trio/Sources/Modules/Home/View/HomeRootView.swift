@@ -841,14 +841,23 @@ extension Home {
                     .frame(height: geo.size.height * 0.08)
 
                 ZStack {
-                    /// rectangle as background + progress border (empty during initiating)
-                    card
-                        .progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15, lineWidth: 3)
-                        .shadow(
-                            color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
-                                Color.black.opacity(0.33),
-                            radius: 3
-                        )
+                    /// rectangle as background + border
+                    Group {
+                        if isInitiating {
+                            // Delivery hasn't started: indeterminate spinning border, matching
+                            // the pump reservoir and loop pills — no ProgressView spinner.
+                            card.spinningRoundedBorder(isActive: true, color: .insulin, cornerRadius: 15, lineWidth: 3)
+                        } else {
+                            // Delivering: the border is the progress meter — a bright fill runs
+                            // left → right along the top and bottom edges equally over a faint track.
+                            card.progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15, lineWidth: 3)
+                        }
+                    }
+                    .shadow(
+                        color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
+                            Color.black.opacity(0.33),
+                        radius: 3
+                    )
 
                     /// actual bolus view
                     HStack {
@@ -871,7 +880,7 @@ extension Home {
                         Spacer()
 
                         // The cancel button only makes sense once delivery is actually running;
-                        // during `.initiating` a spinner stands in for it.
+                        // during `.initiating` the spinning border conveys the state.
                         if state.bolusStatus == .inProgress {
                             Button {
                                 state.showProgressView()
@@ -880,8 +889,6 @@ extension Home {
                                 Image(systemName: "xmark.app")
                                     .font(.system(size: 25))
                             }
-                        } else if isInitiating {
-                            ProgressView()
                         }
                     }.padding(.horizontal, 10)
                         .padding(.trailing, 8)
