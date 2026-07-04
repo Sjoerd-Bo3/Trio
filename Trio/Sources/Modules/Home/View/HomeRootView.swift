@@ -815,37 +815,49 @@ extension Home {
         }
 
         @ViewBuilder func bolusView(geo: GeometryProxy, _ progress: Decimal) -> some View {
-            /// ensure that state.lastPumpBolus has a value, i.e. there is a last bolus done by the pump and not an external bolus
-            /// - TRUE:  show the pump bolus
-            /// - FALSE:  do not show a progress bar at all
-            if let bolusTotal = state.lastPumpBolus?.bolus?.amount {
+            let isInitiating = state.bolusStatus == .initiating
+            let bolusTotal = state.lastPumpBolus?.bolus?.amount
+            /// Show the card for a real pump bolus (we have a total) or during the brief
+            /// `.initiating` window (bolus requested, pump not yet delivering).
+            if bolusTotal != nil || isInitiating {
                 let progressValue = (progress as NSDecimalNumber).doubleValue
-                let bolusFraction = progress * (bolusTotal as Decimal)
-                let bolusString =
-                    (bolusProgressFormatter.string(from: bolusFraction as NSNumber) ?? "0")
-                        + String(localized: " of ", comment: "Bolus string partial message: 'x U of y U' in home view") +
-                        (Formatter.decimalFormatterWithThreeFractionDigits.string(from: bolusTotal as NSNumber) ?? "0")
+                // The "x of y U" string is only meaningful once we're actually delivering.
+                let bolusString: String? = {
+                    guard !isInitiating, let bolusTotal = bolusTotal else { return nil }
+                    let bolusFraction = progress * (bolusTotal as Decimal)
+                    return (bolusProgressFormatter.string(from: bolusFraction as NSNumber) ?? "0")
+                        + String(localized: " of ", comment: "Bolus string partial message: 'x U of y U' in home view")
+                        + (Formatter.decimalFormatterWithThreeFractionDigits.string(from: bolusTotal as NSNumber) ?? "0")
                         + String(localized: " U", comment: "Insulin unit")
+                }()
+
+                let card = RoundedRectangle(cornerRadius: 15)
+                    .fill(
+                        colorScheme == .dark ? Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745) : Color
+                            .insulin
+                            .opacity(0.2)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 15))
+                    .frame(height: geo.size.height * 0.08)
 
                 ZStack {
-                    /// rectangle as background
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(
-                            colorScheme == .dark ? Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745) : Color
-                                .insulin
-                                .opacity(0.2)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 15))
-                        .frame(height: geo.size.height * 0.08)
-                        // The card's full-width border is the progress meter: a bright fill
-                        // runs left → right along the top and bottom edges equally (over a
-                        // faint track) as the bolus completes.
-                        .progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15, lineWidth: 3)
-                        .shadow(
-                            color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
-                                Color.black.opacity(0.33),
-                            radius: 3
-                        )
+                    /// rectangle as background + border
+                    Group {
+                        if isInitiating {
+                            // Delivery hasn't started: indeterminate spinning border, matching
+                            // the pump reservoir and loop pills — no ProgressView spinner.
+                            card.spinningRoundedBorder(isActive: true, color: .insulin, cornerRadius: 15, lineWidth: 3)
+                        } else {
+                            // Delivering: the border is the progress meter — a bright fill runs
+                            // left → right along the top and bottom edges equally over a faint track.
+                            card.progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15, lineWidth: 3)
+                        }
+                    }
+                    .shadow(
+                        color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
+                            Color.black.opacity(0.33),
+                        radius: 3
+                    )
 
                     /// actual bolus view
                     HStack {
@@ -855,22 +867,28 @@ extension Home {
                         Spacer()
 
                         VStack {
-                            Text("Bolusing")
+                            Text(isInitiating ? "Initiating…" : "Bolusing")
                                 .font(.subheadline)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(bolusString)
-                                .font(.caption)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            if let bolusString = bolusString {
+                                Text(bolusString)
+                                    .font(.caption)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }.padding(.leading, 5)
 
                         Spacer()
 
-                        Button {
-                            state.showProgressView()
-                            state.cancelBolus()
-                        } label: {
-                            Image(systemName: "xmark.app")
-                                .font(.system(size: 25))
+                        // The cancel button only makes sense once delivery is actually running;
+                        // during `.initiating` the spinning border conveys the state.
+                        if state.bolusStatus == .inProgress {
+                            Button {
+                                state.showProgressView()
+                                state.cancelBolus()
+                            } label: {
+                                Image(systemName: "xmark.app")
+                                    .font(.system(size: 25))
+                            }
                         }
                     }.padding(.horizontal, 10)
                         .padding(.trailing, 8)
@@ -993,8 +1011,10 @@ extension Home {
                 activeProfileIndicator
                     .padding(.bottom)
 
-                if let progress = state.bolusProgress {
-                    bolusView(geo: geo, progress)
+                if state.bolusStatus != .noBolus {
+                    // Covers both `.initiating` (no progress yet → spinning border) and
+                    // `.inProgress` (determinate progress fill).
+                    bolusView(geo: geo, state.bolusProgress ?? 0)
                         .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 40))
                 } else {
                     adjustmentView(geo: geo).padding(.bottom, UIDevice.adjustPadding(min: nil, max: 40))

@@ -532,7 +532,7 @@ extension Treatments {
         }
 
         var treatmentButton: some View {
-            let shouldDisplayBolusProgress = state.isBolusInProgress && state.amount > 0 &&
+            let shouldDisplayBolusProgress = (state.bolusStatus != .noBolus) && state.amount > 0 &&
                 !state.externalInsulin && (state.carbs == 0 || state.fat == 0 || state.protein == 0)
 
             var treatmentButtonBackground = Color(.systemBlue)
@@ -608,22 +608,29 @@ extension Treatments {
                     + (Formatter.decimalFormatterWithThreeFractionDigits.string(from: bolusTotal as NSNumber) ?? "0")
                     + String(localized: " U", comment: "Insulin unit")
             }()
+            let bolusLabel = state.bolusStatus == .inProgress ? String(localized: "Bolusing") : String(localized: "Initiating…")
+
+            let backgroundCard = RoundedRectangle(cornerRadius: 15)
+                .fill(
+                    colorScheme == .dark
+                        ? Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745)
+                        : Color.insulin.opacity(0.2)
+                )
+                .frame(height: 56)
+                .shadow(
+                    color: colorScheme == .dark
+                        ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706)
+                        : Color.black.opacity(0.33),
+                    radius: 3
+                )
 
             ZStack {
-                // background card
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(
-                        colorScheme == .dark
-                            ? Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745)
-                            : Color.insulin.opacity(0.2)
-                    )
-                    .frame(height: 56)
-                    .shadow(
-                        color: colorScheme == .dark
-                            ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706)
-                            : Color.black.opacity(0.33),
-                        radius: 3
-                    )
+                // background card — spinning border while initiating, in place of a spinner
+                if state.bolusStatus == .initiating {
+                    backgroundCard.spinningRoundedBorder(isActive: true, color: .insulin, cornerRadius: 15, lineWidth: 3)
+                } else {
+                    backgroundCard
+                }
 
                 // bolus content
                 HStack {
@@ -633,7 +640,7 @@ extension Treatments {
                     Spacer()
 
                     VStack {
-                        Text("Bolusing")
+                        Text(bolusLabel)
                             .font(.subheadline)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text(bolusString)
@@ -644,12 +651,16 @@ extension Treatments {
 
                     Spacer()
 
-                    Button { state.cancelBolus() } label: {
-                        Image(systemName: "xmark.app")
-                            .font(.system(size: 25))
-                    }.tint(Color.tabBar)
-                        .buttonStyle(.borderless)
-                        .accessibilityLabel("Cancel bolus")
+                    // During `.initiating` the spinning border conveys the state; the cancel
+                    // button appears once delivery is actually running.
+                    if state.bolusStatus == .inProgress {
+                        Button { state.cancelBolus() } label: {
+                            Image(systemName: "xmark.app")
+                                .font(.system(size: 25))
+                        }.tint(Color.tabBar)
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Cancel bolus")
+                    }
                 }
                 .padding(.horizontal, 10)
                 .padding(.trailing, 8)
@@ -730,7 +741,7 @@ extension Treatments {
 
         private var disableTaskButton: Bool {
             (
-                state.isBolusInProgress && state
+                (state.bolusStatus != .noBolus) && state
                     .amount > 0 && !state.externalInsulin && (state.carbs == 0 || state.fat == 0 || state.protein == 0)
             ) || state
                 .addButtonPressed || limitExceeded
