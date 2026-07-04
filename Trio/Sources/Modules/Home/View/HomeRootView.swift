@@ -838,8 +838,8 @@ extension Home {
                         .clipShape(RoundedRectangle(cornerRadius: 15))
                         .frame(height: geo.size.height * 0.08)
                         // The card's full-width border is the progress meter: a bright fill
-                        // runs left → right around the perimeter (over a faint track) as the
-                        // bolus completes.
+                        // runs left → right along the top and bottom edges equally (over a
+                        // faint track) as the bolus completes.
                         .progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15, lineWidth: 3)
                         .shadow(
                             color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
