@@ -21,6 +21,7 @@ on:
       - feat/quick-bolus-haptic
       - chore/release-0.8.4
       - feat/bolus-progress-clearer
+      - feat/bolus-initiating-border
     paths-ignore:
       - '**.md'
       - '**/README'

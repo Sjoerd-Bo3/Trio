@@ -211,10 +211,12 @@ final class BaseAPSManager: APSManager, Injectable {
 
         deviceDataManager.bolusTrigger
             .receive(on: processQueue)
-            .sink { [weak self] bolusing in
-                if bolusing {
+            .sink { [weak self] bolusStatus in
+                switch bolusStatus {
+                case .initiating,
+                     .inProgress:
                     self?.createBolusReporter()
-                } else {
+                case .noBolus:
                     self?.clearBolusReporter()
                 }
             }
