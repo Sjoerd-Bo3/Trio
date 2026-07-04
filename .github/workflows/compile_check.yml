@@ -20,6 +20,7 @@ on:
       - feat/bolus-progress-ring
       - feat/quick-bolus-haptic
       - chore/release-0.8.4
+      - feat/bolus-progress-clearer
     paths-ignore:
       - '**.md'
       - '**/README'
