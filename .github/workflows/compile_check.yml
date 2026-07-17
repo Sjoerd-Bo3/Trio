@@ -12,6 +12,7 @@ on:
       - merge/profiles-into-build-experiment
       - feat/quick-bolus-1248
       - sync/dev-into-build-experiment
+      - feat/liquid-glass-chart
       - feat/loop-spinner-border
       - feat/spinner-pill-perf-and-pump
       - feat/spinner-pump-bolus
