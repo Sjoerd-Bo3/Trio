@@ -68,6 +68,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         case .pumpHistory: await performUploadPumpHistory()
         case .overrides: await performUploadOverrides()
         case .tempTargets: await performUploadTempTargets()
+        case .profilePresets: await performUploadProfilePresets()
         case .glucose: await performUploadGlucose()
         case .deviceStatus:
             do { try await performUploadDeviceStatus() }
@@ -1057,6 +1058,10 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     }
 
     func uploadProfilePresets() async {
+        await uploadSerializer.run(.profilePresets)
+    }
+
+    private func performUploadProfilePresets() async {
         do {
             try await uploadProfilePresetRuns(profilePresetStorage.getProfilePresetRunsNotYetUploadedToNightscout())
         } catch {
