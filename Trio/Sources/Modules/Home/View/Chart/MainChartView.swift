@@ -408,7 +408,8 @@ extension MainChartView {
                         lowGlucose: lowGlucose,
                         currentGlucoseTarget: currentGlucoseTarget,
                         glucoseColorScheme: glucoseColorScheme,
-                        isSmoothingEnabled: state.settingsManager.settings.smoothGlucose
+                        isSmoothingEnabled: state.settingsManager.settings.smoothGlucose,
+                        profilePresetRunStored: state.profilePresetRunStored
                     )
                     Spacer(minLength: 0)
                 }
