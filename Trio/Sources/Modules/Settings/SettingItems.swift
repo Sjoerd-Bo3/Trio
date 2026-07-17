@@ -236,7 +236,13 @@ enum SettingItems {
                 "Enable Super Bolus": "Enable Super Bolus Option",
                 "Super Bolus Factor": "Enable Super Bolus Option"
             ],
-            path: ["Features", "Bolus Calculator"]
+            path: ["Features", "Treatments", "Bolus Calculator"]
+        ),
+        SettingItem(
+            title: "Quick-Pick Boluses",
+            view: .quickBolusConfig,
+            searchContents: ["Enable Quick-Pick Boluses"],
+            path: ["Features", "Treatments", "Quick-Pick Boluses"]
         ),
         SettingItem(
             title: "Meal Settings",
@@ -260,7 +266,7 @@ enum SettingItems {
                 "Fat and Protein Percentage": "Enable Fat and Protein Entries",
                 "FPU": "Enable Fat and Protein Entries"
             ],
-            path: ["Features", "Meal Settings"]
+            path: ["Features", "Treatments", "Meal Settings"]
         ),
         SettingItem(
             title: "Shortcuts",
@@ -364,9 +370,14 @@ enum SettingItems {
                 "Bolus Failed",
                 "Pod",
                 "Sensor Failure",
-                "Device Expired"
+                "Sensor Stopped",
+                "Calibration",
+                "Signal Loss",
+                "Device Expired",
+                "Not Looping",
+                "Algorithm"
             ],
-            path: ["Notifications", "Pump Alarms"]
+            path: ["Notifications", "Device Alarms"]
         ),
         SettingItem(
             title: "Day & Night Windows",

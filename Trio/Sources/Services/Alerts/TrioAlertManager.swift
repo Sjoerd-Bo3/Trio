@@ -2,6 +2,7 @@ import Combine
 import Foundation
 import LoopKit
 import Swinject
+import UIKit
 import UserNotifications
 
 protocol TrioAlertManager: AnyObject {
@@ -83,6 +84,39 @@ final class BaseTrioAlertManager: TrioAlertManager, Injectable {
             .object(forKey: "UserNotificationsManager.snoozeUntilDate") as? Date
         if let until = persistedSnoozeUntil, until > Date() {
             muter.mute(for: until.timeIntervalSinceNow)
+        }
+
+        // iOS doesn't fire `didReceive` on swipe for critical UNs, so we
+        // can't rely on the callback for alerts that override Silence & DnD.
+        // On foreground, mirror iOS: any banner whose UN is no longer in the
+        // delivered list gets hidden.
+        Foundation.NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reconcileBannersWithDeliveredNotifications),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    @objc private func reconcileBannersWithDeliveredNotifications() {
+        UNUserNotificationCenter.current().getDeliveredNotifications { [weak self] delivered in
+            guard let self else { return }
+            let deliveredIDs = Set(delivered.compactMap { note -> Alert.Identifier? in
+                let userInfo = note.request.content.userInfo
+                guard
+                    let managerId = userInfo[AlertUserInfoKey.managerIdentifier.rawValue] as? String,
+                    let alertId = userInfo[AlertUserInfoKey.alertIdentifier.rawValue] as? String
+                else { return nil }
+                return Alert.Identifier(managerIdentifier: managerId, alertIdentifier: alertId)
+            })
+            DispatchQueue.main.async {
+                let stale = self.modalScheduler.active
+                    .map(\.identifier)
+                    .filter { !deliveredIDs.contains($0) }
+                for identifier in stale {
+                    self.modalScheduler.unschedule(identifier: identifier)
+                }
+            }
         }
     }
 
@@ -192,8 +226,18 @@ final class BaseTrioAlertManager: TrioAlertManager, Injectable {
         queue.async {
             self.liveAlerts.removeValue(forKey: identifier)
         }
-        let responder = queue.sync { responders[identifier.managerIdentifier]?.ref as? AlertResponder }
-        responder?.acknowledgeAlert(alertIdentifier: identifier.alertIdentifier) { error in
+        acknowledgeOnDevice(identifier: identifier)
+    }
+
+    /// Forwards the user's response to the issuing device manager — pump alerts
+    /// need this to also clear the alert on the device itself (e.g. pod beeps).
+    /// Only device managers register as responders (currently just the pump
+    /// manager), so Trio-internal alerts (glucose, not-looping, algorithm)
+    /// never match and bail out here.
+    private func acknowledgeOnDevice(identifier: Alert.Identifier) {
+        guard let responder = queue.sync(execute: { responders[identifier.managerIdentifier]?.ref as? AlertResponder })
+        else { return }
+        responder.acknowledgeAlert(alertIdentifier: identifier.alertIdentifier) { error in
             if let error = error {
                 debug(.service, "AlertManager ack failed for \(identifier.value): \(error)")
             }
@@ -207,6 +251,15 @@ final class BaseTrioAlertManager: TrioAlertManager, Injectable {
             let alertId = userInfo[AlertUserInfoKey.alertIdentifier.rawValue] as? String
         else { return }
         let identifier = Alert.Identifier(managerIdentifier: managerId, alertIdentifier: alertId)
+
+        // Swipe = 15-min snooze (mirrors the in-app banner's swipe-up).
+        // Tap and action buttons keep the full-ack path.
+        if response.actionIdentifier == UNNotificationDismissActionIdentifier {
+            modalScheduler.snooze(identifier: identifier, duration: 15 * 60)
+            userNotificationScheduler.unschedule(identifier: identifier)
+            return
+        }
+
         handleAcknowledgement(identifier: identifier)
     }
 
@@ -321,6 +374,8 @@ final class BaseTrioAlertManager: TrioAlertManager, Injectable {
 
 extension BaseTrioAlertManager: TrioModalAlertResponder, TrioUserNotificationAlertResponder {
     func requestSnooze(identifier: Alert.Identifier, duration: TimeInterval) {
+        // Dismissal is the user's response — ack device-issued alerts at the PM layer too.
+        acknowledgeOnDevice(identifier: identifier)
         let untilDate = duration > 0 ? Date().addingTimeInterval(duration) : .distantPast
         if let glucoseType = GlucoseAlertType(slug: identifier.alertIdentifier) {
             broadcaster.notify(GlucoseSnoozeObserver.self, on: .main) { (observer: GlucoseSnoozeObserver) in

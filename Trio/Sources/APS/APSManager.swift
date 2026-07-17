@@ -100,6 +100,7 @@ final class BaseAPSManager: APSManager, Injectable {
     @Injected() private var alertHistoryStorage: AlertHistoryStorage!
     @Injected() private var tempTargetsStorage: TempTargetsStorage!
     @Injected() private var carbsStorage: CarbsStorage!
+    @Injected() private var glucoseStorage: GlucoseStorage!
     @Injected() private var determinationStorage: DeterminationStorage!
     @Injected() private var deviceDataManager: DeviceDataManager!
     @Injected() private var settingsManager: SettingsManager!
@@ -167,7 +168,7 @@ final class BaseAPSManager: APSManager, Injectable {
 
     init(resolver: Resolver) {
         injectServices(resolver)
-        openAPS = OpenAPS(storage: storage, tddStorage: tddStorage)
+        openAPS = OpenAPS(storage: storage, tddStorage: tddStorage, glucoseStorage: glucoseStorage, carbsStorage: carbsStorage)
         subscribe()
         lastLoopDateSubject.send(lastLoopDate)
 
@@ -182,7 +183,7 @@ final class BaseAPSManager: APSManager, Injectable {
             if wasParsed {
                 Task {
                     do {
-                        try await openAPS.createProfiles(useSwiftOref: settings.useSwiftOref)
+                        try await openAPS.createProfiles()
                     } catch {
                         debug(
                             .apsManager,
@@ -211,10 +212,12 @@ final class BaseAPSManager: APSManager, Injectable {
 
         deviceDataManager.bolusTrigger
             .receive(on: processQueue)
-            .sink { [weak self] bolusing in
-                if bolusing {
+            .sink { [weak self] bolusState in
+                switch bolusState {
+                case .initiating,
+                     .inProgress:
                     self?.createBolusReporter()
-                } else {
+                case .noBolus:
                     self?.clearBolusReporter()
                 }
             }
@@ -261,6 +264,24 @@ final class BaseAPSManager: APSManager, Injectable {
         Task { [weak self] in
             guard let self else { return }
 
+            // Consume the user-initiated flag unconditionally — it was set
+            // for the loop the user just triggered. If the guards below block
+            // (suspended, too-soon, no pump), the next scheduled tick must
+            // not inherit it and bypass dwell suppression for an error the
+            // user didn't request.
+            let userInitiated = self.nextLoopUserInitiated
+            self.nextLoopUserInitiated = false
+
+            // Don't try to run a loop while pump setup / pod pairing is in
+            // progress — `verifyStatus` would throw `invalidPumpState("Pump
+            // not set")` and surface a modal banner on top of the pod
+            // activation sheet, closing the sheet (reported by tester during
+            // O5 pairing).
+            guard self.pumpManager != nil else {
+                debug(.apsManager, "No pump manager — skipping loop attempt")
+                return
+            }
+
             // Atomic check-and-set via actor — eliminates the race between
             // checking isLooping.value and sending isLooping(true).
             guard await loopGuard.tryStart(
@@ -272,11 +293,9 @@ final class BaseAPSManager: APSManager, Injectable {
                 return
             }
 
-            // Consume the user-initiated flag for the duration of this loop —
-            // affects whether transient errors surface immediately instead of
+            // Affects whether transient errors surface immediately instead of
             // dwell-suppressed (see `surfaceErrorIfNeeded`).
-            self.currentLoopUserInitiated = self.nextLoopUserInitiated
-            self.nextLoopUserInitiated = false
+            self.currentLoopUserInitiated = userInitiated
             defer { self.currentLoopUserInitiated = false }
 
             // Start background task
@@ -417,8 +436,7 @@ final class BaseAPSManager: APSManager, Injectable {
               (autosense.timestamp ?? .distantPast).addingTimeInterval(30.minutes.timeInterval) > Date()
         else {
             let result = try await openAPS.autosense(
-                shouldSmoothGlucose: settingsManager.settings.smoothGlucose,
-                useSwiftOref: settings.useSwiftOref
+                shouldSmoothGlucose: settingsManager.settings.smoothGlucose
             )
             return result != nil
         }
@@ -497,14 +515,13 @@ final class BaseAPSManager: APSManager, Injectable {
             let now = Date()
 
             // put profile creation up front since autosens needs it
-            try await openAPS.createProfiles(useSwiftOref: settings.useSwiftOref)
+            try await openAPS.createProfiles()
             let currentTemp = try await fetchCurrentTempBasal(date: now)
             _ = try await autosense()
 
             let determination = try await openAPS.determineBasal(
                 currentTemp: currentTemp,
                 shouldSmoothGlucose: settingsManager.settings.smoothGlucose,
-                useSwiftOref: settings.useSwiftOref,
                 clock: now
             )
             iobFileDidUpdate.send(())
@@ -551,7 +568,6 @@ final class BaseAPSManager: APSManager, Injectable {
             return try await openAPS.determineBasal(
                 currentTemp: temp,
                 shouldSmoothGlucose: settingsManager.settings.smoothGlucose,
-                useSwiftOref: settings.useSwiftOref,
                 clock: Date(),
                 simulatedCarbsAmount: simulatedCarbsAmount,
                 simulatedBolusAmount: simulatedBolusAmount,
@@ -1369,6 +1385,10 @@ final class BaseAPSManager: APSManager, Injectable {
     /// Mutations are dispatched onto the queue regardless, so a future
     /// caller from another context (e.g. `cancelBolus`) stays safe.
     private func createBolusReporter() {
+        if bolusReporter != nil {
+            return
+        }
+
         processQueue.async {
             self.bolusReporter = self.pumpManager?.createBolusProgressReporter(reportingOn: self.processQueue)
             self.bolusReporter?.addObserver(self)

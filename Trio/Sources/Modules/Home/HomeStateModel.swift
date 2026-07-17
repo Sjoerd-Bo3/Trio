@@ -101,6 +101,7 @@ extension Home {
         var tempBasals: [PumpEventStored] = []
         var suspendAndResumeEvents: [PumpEventStored] = []
         var batteryFromPersistence: [OpenAPS_Battery] = []
+        var bolusStatus: BolusStatus = .noBolus
         var lastPumpBolus: PumpEventStored?
         var overrides: [OverrideStored] = []
         var overrideRunStored: [OverrideRunStored] = []
@@ -286,7 +287,7 @@ extension Home {
         @ObservationIgnored private(set) lazy var overrideRunController: NSFetchedResultsController<OverrideRunStored> = {
             let request = NSFetchRequest<OverrideRunStored>(entityName: "OverrideRunStored")
             request.sortDescriptors = [NSSortDescriptor(keyPath: \OverrideRunStored.startDate, ascending: false)]
-            request.predicate = NSPredicate(format: "startDate >= %@", Date.oneDayAgo as NSDate)
+            request.predicate = NSPredicate.predicateForStartDateOneDayAgo
             let controller = NSFetchedResultsController(
                 fetchRequest: request,
                 managedObjectContext: viewContext,
@@ -316,7 +317,7 @@ extension Home {
         @ObservationIgnored private(set) lazy var tempTargetRunController: NSFetchedResultsController<TempTargetRunStored> = {
             let request = NSFetchRequest<TempTargetRunStored>(entityName: "TempTargetRunStored")
             request.sortDescriptors = [NSSortDescriptor(keyPath: \TempTargetRunStored.startDate, ascending: false)]
-            request.predicate = NSPredicate(format: "startDate >= %@", Date.oneDayAgo as NSDate)
+            request.predicate = NSPredicate.predicateForStartDateOneDayAgo
             let controller = NSFetchedResultsController(
                 fetchRequest: request,
                 managedObjectContext: viewContext,
@@ -373,8 +374,58 @@ extension Home {
             return controller
         }()
 
+        // MARK: - Fetch window re-anchoring
+
+        //
+        // Window predicates freeze their anchor at build time, so the unbounded controllers
+        // are re-anchored to "now" on foreground. fetchLimit-1 and override controllers keep
+        // the launch anchor on purpose; temp targets must re-anchor ("date >= now" disjunct).
+
+        /// Called on `willEnterForegroundNotification`; idempotent at launch.
+        @MainActor func reanchorFetchWindows() {
+            reanchor(glucoseController, with: NSPredicate.glucose) {
+                self.updateGlucoseFromController()
+                // Re-sync the chart domain even if no new reading arrived while backgrounded.
+                self.updateStartEndMarkers()
+            }
+            reanchor(carbsController, with: NSPredicate.carbsForChart) { self.updateCarbsFromController() }
+            reanchor(fpuController, with: NSPredicate.fpusForChart) { self.updateFPUsFromController() }
+            reanchor(determinationController, with: NSPredicate.determinationsForCobIobCharts) {
+                self.updateDeterminationsFromController()
+            }
+            reanchor(insulinController, with: NSPredicate.pumpHistoryLast24h) { self.updateInsulinFromController() }
+            reanchor(overrideRunController, with: NSPredicate.predicateForStartDateOneDayAgo) {
+                self.updateOverrideRunsFromController()
+            }
+            reanchor(tempTargetController, with: NSPredicate.tempTargetsForMainChart) {
+                self.updateTempTargetsFromController()
+            }
+            reanchor(tempTargetRunController, with: NSPredicate.predicateForStartDateOneDayAgo) {
+                self.updateTempTargetRunsFromController()
+            }
+            reanchor(batteryController, with: NSPredicate.predicateFor30MinAgo) { self.updateBatteryFromController() }
+        }
+
+        @MainActor private func reanchor<T: NSFetchRequestResult>(
+            _ controller: NSFetchedResultsController<T>,
+            with predicate: NSPredicate,
+            republish: () -> Void
+        ) {
+            controller.fetchRequest.predicate = predicate
+            do {
+                try controller.performFetch()
+                republish()
+            } catch {
+                debug(.default, "\(DebuggingIdentifiers.failed) Failed to re-anchor fetch window for \(T.self): \(error)")
+            }
+        }
+
         private var subscriptions = Set<AnyCancellable>()
         private var profilePresetObserver: NSObjectProtocol?
+
+        /// Debounces the forecast recompute — the most expensive `onContentChange` callback,
+        /// which a manual re-determine fires twice in quick succession.
+        @ObservationIgnored var forecastUpdateTask: Task<Void, Never>?
 
         typealias PumpEvent = PumpEventStored.EventType
 
@@ -499,6 +550,15 @@ extension Home {
                     self.currentIOB = self.iobService.currentIOB ?? 0
                 }
                 .store(in: &subscriptions)
+
+            // core-data-fixes drives Core Data updates via NSFetchedResultsController delegates,
+            // so dev's glucose/carbs updatePublisher sinks and the coreDataPublisher-based
+            // registerHandlers() are obsolete here. Only the bolus-status subscription (a genuinely
+            // new feature, consumed by HomeRootView) is carried over, wired in our subscriber style.
+            provider.deviceManager.bolusTrigger
+                .receive(on: DispatchQueue.main)
+                .weakAssign(to: \.bolusStatus, on: self)
+                .store(in: &subscriptions)
         }
 
         private func registerObservers() {
@@ -556,6 +616,14 @@ extension Home {
                 }
             }
             timer.resume()
+
+            Foundation.NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+                .sink { [weak self] _ in
+                    Task { @MainActor in
+                        self?.reanchorFetchWindows()
+                    }
+                }
+                .store(in: &lifetime)
 
             fetchGlucoseManager.cgmDisplayState
                 .receive(on: DispatchQueue.main)
