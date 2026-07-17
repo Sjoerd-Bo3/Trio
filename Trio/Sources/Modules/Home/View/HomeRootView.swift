@@ -4,16 +4,9 @@ import SwiftDate
 import SwiftUI
 import Swinject
 
-struct TimePicker: Identifiable {
-    var active: Bool
-    let hours: Int16
-    var id: String { hours.description }
-}
-
 extension Home {
     struct RootView: BaseView {
         let resolver: Resolver
-        let safeAreaSize: CGFloat = 0.08
 
         @Environment(\.managedObjectContext) var moc
         @Environment(\.colorScheme) var colorScheme
@@ -32,18 +25,21 @@ extension Home {
         @State var isMenuPresented = false
         @State var showTreatments = false
         @State var selectedTab: Int = 0
+        static let treatmentTabTag = 4
+        // measured x-distance of the dead slot's center from screen center
+        @State var treatmentSlotOffsetX: CGFloat = 0
         @State var showQuickBolusPicker = false
         @State var showQuickBolusNoHistory = false
         @State var showPumpSelection: Bool = false
         @State var showCGMSelection: Bool = false
         @State var showSnoozeSheet: Bool = false
+        @State var showManualGlucose: Bool = false
+        @State var alarmsSnoozeUntil: Date = .distantPast
+        // Pull-down-to-force-loop (see HomeRootView+Refresh.swift)
+        @State var pullOffset: CGFloat = 0
+        @State var isRefreshArmed = false
+        @State var isForcingLoop = false
         @State var notificationsDisabled = false
-        @State var timeButtons: [TimePicker] = [
-            TimePicker(active: false, hours: 4),
-            TimePicker(active: false, hours: 6),
-            TimePicker(active: false, hours: 12),
-            TimePicker(active: false, hours: 24)
-        ]
 
         @FetchRequest(fetchRequest: OverrideStored.fetch(
             NSPredicate.lastActiveOverride,
@@ -57,33 +53,7 @@ extension Home {
             fetchLimit: 1
         )) var latestTempTarget: FetchedResults<TempTargetStored>
 
-        var bolusProgressFormatter: NumberFormatter {
-            let fractionDigits: Int = switch state.settingsManager.preferences.bolusIncrement {
-            case 0.1: 1
-            case 0.025: 3
-            default: 2
-            }
-
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .decimal
-            formatter.minimum = 0
-            formatter.maximumFractionDigits = fractionDigits
-            formatter.minimumFractionDigits = fractionDigits
-            formatter.allowsFloats = true
-            formatter.roundingIncrement = Double(state.settingsManager.preferences.bolusIncrement) as NSNumber
-            return formatter
-        }
-
-        private var fetchedTargetFormatter: NumberFormatter {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .decimal
-            if state.units == .mmolL {
-                formatter.maximumFractionDigits = 1
-            } else { formatter.maximumFractionDigits = 0 }
-            return formatter
-        }
-
-        private var historySFSymbol: String {
+        var historySFSymbol: String {
             if #available(iOS 17.0, *) {
                 return "book.pages"
             } else {
@@ -91,921 +61,95 @@ extension Home {
             }
         }
 
-        @ViewBuilder func pumpTimezoneView(_ badgeImage: UIImage, _ badgeColor: Color) -> some View {
-            HStack {
-                Image(uiImage: badgeImage.withRenderingMode(.alwaysTemplate))
-                    .font(.system(size: 14))
-                    .colorMultiply(badgeColor)
-                Text(String(localized: "Time Change Detected", comment: ""))
-                    .bold()
-                    .font(.system(size: 14))
-                    .foregroundStyle(badgeColor)
-            }
-            .onTapGesture {
-                if state.pumpDisplayState != nil {
-                    // sends user to pump settings
-                    state.shouldDisplayPumpSetupSheet.toggle()
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, 5)
-            .padding(.horizontal, 10)
-            .overlay(
-                Capsule()
-                    .stroke(badgeColor.opacity(0.4), lineWidth: 2)
-            )
-        }
-
-        var cgmSelectionButtons: some View {
-            ForEach(cgmOptions, id: \.name) { option in
-                if let cgm = state.listOfCGM.first(where: option.predicate) {
-                    Button(option.name) {
-                        state.addCGM(cgm: cgm)
-                    }
-                }
-            }
-        }
-
-        var glucoseView: some View {
-            CurrentGlucoseView(
-                timerDate: state.timerDate,
-                units: state.units,
-                alarm: state.alarm,
-                lowGlucose: state.lowGlucose,
-                highGlucose: state.highGlucose,
-                cgmAvailable: state.cgmAvailable,
-                currentGlucoseTarget: state.currentGlucoseTarget,
-                glucoseColorScheme: state.glucoseColorScheme,
-                glucose: state.latestTwoGlucoseValues,
-                cgmProgress: state.cgmProgressHighlight,
-                cgmStatus: state.cgmDisplayState,
-                cgmSensorExpiresAt: state.cgmSensorExpiresAt,
-                cgmWarmupEndsAt: state.cgmWarmupEndsAt
-            )
-            .onTapGesture {
-                if !state.cgmAvailable {
-                    showCGMSelection.toggle()
-                } else {
-                    state.shouldDisplayCGMSetupSheet.toggle()
-                }
-            }
-            .onLongPressGesture {
-                let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
-                impactHeavy.impactOccurred()
-                showSnoozeSheet = true
-            }
-        }
-
-        var pumpView: some View {
-            PumpView(
-                reservoir: state.reservoir,
-                name: state.pumpName,
-                expiresAtDate: state.pumpExpiresAtDate,
-                activatedAtDate: state.pumpActivatedAtDate,
-                timerDate: state.timerDate,
-                pumpStatusHighlightMessage: state.pumpStatusHighlightMessage,
-                battery: state.batteryFromPersistence,
-                isBolusing: state.bolusProgress != nil
-            )
-            .onTapGesture {
-                if state.pumpDisplayState == nil {
-                    // shows user confirmation dialog with pump model choices, then proceeds to setup
-                    showPumpSelection.toggle()
-                } else {
-                    // sends user to pump settings
-                    state.shouldDisplayPumpSetupSheet.toggle()
-                }
-            }
-        }
-
-        var basalString: String? {
-            var rate: NSNumber = 0
-            var manualBasalString = ""
-
-            guard let apsManager = state.apsManager else {
-                return nil
-            }
-
-            if apsManager.isScheduledBasal == true {
-                guard let scheduledRate = scheduledBasalDeliveryRate(at: Date()) else {
-                    return nil
-                }
-                rate = scheduledRate
-            } else {
-                guard let lastTempBasal = state.tempBasals.last?.tempBasal, let tempRate = lastTempBasal.rate else {
-                    return nil
-                }
-                if apsManager.isManualTempBasal {
-                    manualBasalString = String(
-                        localized: " - Manual Basal ⚠️",
-                        comment: "Manual Temp basal"
-                    )
-                }
-                rate = tempRate
-            }
-
-            let rateString = Formatter.decimalFormatterWithThreeFractionDigits.string(from: rate) ?? "0"
-            return rateString + String(localized: " U/hr", comment: "Unit per hour with space") +
-                manualBasalString
-        }
-
-        // Returns the scheduled basal rate for the current time based on the saved basal scheduled.
-        // Would be better if in the future BasalDeliveryStatus could be updated to include this info.
-        func scheduledBasalDeliveryRate(at when: Date) -> NSNumber? {
-            let calendar = Calendar(identifier: .gregorian)
-            // calendar.timeZone = timeZone /// should come from pumpManager in case it's different!
-
-            let hours = calendar.component(.hour, from: when)
-            let minutes = calendar.component(.minute, from: when)
-            let totalMinutes = hours * 60 + minutes
-
-            if let rate = findBasalRateForOffset(for: totalMinutes, in: state.basalProfile) {
-                return NSDecimalNumber(decimal: rate)
-            }
-            return nil
-        }
-
-        var overrideString: String? {
-            guard let latestOverride = latestOverride.first else {
-                return nil
-            }
-
-            guard let settingsManager = state.settingsManager else {
-                return nil
-            }
-
-            let percent = latestOverride.percentage
-            let percentString = percent == 100 ? "" : "\(percent.formatted(.number)) %"
-
-            let unit = state.units
-            var target = (latestOverride.target ?? 0) as Decimal
-            target = unit == .mmolL ? target.asMmolL : target
-
-            var targetString = target == 0 ? "" : (fetchedTargetFormatter.string(from: target as NSNumber) ?? "") + " " + unit
-                .rawValue
-            if tempTargetString != nil {
-                targetString = ""
-            }
-
-            let duration = latestOverride.duration ?? 0
-            let addedMinutes = Int(truncating: duration)
-            let date = latestOverride.date ?? Date()
-            let newDuration = max(
-                Decimal(Date().distance(to: date.addingTimeInterval(addedMinutes.minutes.timeInterval)).minutes),
-                0
-            )
-            let indefinite = latestOverride.indefinite
-            var durationString = ""
-
-            if !indefinite {
-                if newDuration >= 1 {
-                    durationString = formatHrMin(Int(newDuration))
-                } else if newDuration > 0 {
-                    durationString = "\(Int(newDuration * 60)) s"
-
-                } else {
-                    /// Do not show the Override anymore
-                    Task {
-                        guard let objectID = self.latestOverride.first?.objectID else { return }
-                        await state.cancelOverride(withID: objectID)
-                    }
-                }
-            }
-
-            let smbScheduleString = latestOverride
-                .smbIsScheduledOff && ((latestOverride.start?.stringValue ?? "") != (latestOverride.end?.stringValue ?? ""))
-                ? " \(formatTimeRange(start: latestOverride.start?.stringValue, end: latestOverride.end?.stringValue))"
-                : ""
-
-            let smbToggleString = latestOverride.smbIsOff || latestOverride
-                .smbIsScheduledOff ? String(localized: "SMBs Off\(smbScheduleString)") : ""
-
-            var smbMinuteString: String = ""
-            var uamMinuteString: String = ""
-
-            if !latestOverride.smbIsOff, latestOverride.advancedSettings {
-                if let smbMinutes = latestOverride.smbMinutes,
-                   smbMinutes.decimalValue != settingsManager.preferences.maxSMBBasalMinutes
-                {
-                    smbMinuteString = "SMB\u{00A0}\(smbMinutes)\u{00A0}" +
-                        String(localized: "m", comment: "Abbreviation for Minutes")
-                }
-
-                if let uamMinutes = latestOverride.uamMinutes,
-                   uamMinutes.decimalValue != settingsManager.preferences.maxUAMSMBBasalMinutes
-                {
-                    uamMinuteString = "UAM\u{00A0}\(uamMinutes)\u{00A0}" +
-                        String(localized: "m", comment: "Abbreviation for Minutes")
-                }
-            }
-
-            let components = [durationString, percentString, targetString, smbToggleString, smbMinuteString, uamMinuteString]
-                .filter { !$0.isEmpty }
-            return components.isEmpty ? nil : components.joined(separator: ", ")
-        }
-
-        var tempTargetString: String? {
-            guard let latestTempTarget = latestTempTarget.first else {
-                return nil
-            }
-            let duration = latestTempTarget.duration
-            let addedMinutes = Int(truncating: duration ?? 0)
-            let date = latestTempTarget.date ?? Date()
-            let newDuration = max(
-                Decimal(Date().distance(to: date.addingTimeInterval(addedMinutes.minutes.timeInterval)).minutes),
-                0
-            )
-            var durationString = ""
-            var percentageString = ""
-            var target = (latestTempTarget.target ?? 100) as Decimal
-            // Use TempTargetCalculations to get effective HBT (handles both custom and auto-adjusted standard TT)
-            let effectiveHBT = TempTargetCalculations.computeEffectiveHBT(
-                tempTargetHalfBasalTarget: latestTempTarget.halfBasalTarget?.decimalValue,
-                settingHalfBasalTarget: state.settingHalfBasalTarget,
-                target: target,
-                autosensMax: state.autosensMax
-            ) ?? state.settingHalfBasalTarget
-            var showPercentage = false
-            if target > 100, state.isExerciseModeActive || state.highTTraisesSens { showPercentage = true }
-            if target < 100, state.lowTTlowersSens, state.autosensMax > 1 { showPercentage = true }
-            if showPercentage {
-                percentageString =
-                    " \(Int(TempTargetCalculations.computeAdjustedPercentage(halfBasalTarget: effectiveHBT, target: target, autosensMax: state.autosensMax)))%"
-            }
-            target = state.units == .mmolL ? target.asMmolL : target
-            let targetString = target == 0 ? "" : (fetchedTargetFormatter.string(from: target as NSNumber) ?? "") + " " +
-                state.units.rawValue + percentageString
-
-            if newDuration >= 1 {
-                durationString =
-                    "\(newDuration.formatted(.number.grouping(.never).rounded().precision(.fractionLength(0)))) min"
-            } else if newDuration > 0 {
-                durationString =
-                    "\((newDuration * 60).formatted(.number.grouping(.never).rounded().precision(.fractionLength(0)))) s"
-            } else {
-                /// Do not show the Temp Target anymore
-                Task {
-                    guard let objectID = self.latestTempTarget.first?.objectID else { return }
-                    await state.cancelTempTarget(withID: objectID)
-                }
-            }
-
-            let components = [targetString, durationString].filter { !$0.isEmpty }
-            return components.isEmpty ? nil : components.joined(separator: ", ")
-        }
-
-        var timeIntervalButtons: some View {
-            let buttonColor = (colorScheme == .dark ? Color.white : Color.black).opacity(0.8)
-
-            return HStack(alignment: .center) {
-                ForEach(timeButtons) { button in
-                    Button(action: {
-                        state.hours = button.hours
-                    }) {
-                        Group {
-                            if button.active {
-                                Text(
-                                    button.hours.description + "\u{00A0}" +
-                                        String(localized: "h", comment: "h")
-                                )
-                            } else {
-                                Text(button.hours.description)
-                            }
-                        }
-                        .font(.footnote)
-                        .fontWeight(button.active ? .semibold : .regular)
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 10)
-                        .foregroundColor(
-                            button
-                                .active ? (colorScheme == .dark ? Color.bgDarkerDarkBlue : Color.white) : buttonColor
-                        )
-                        .background(button.active ? buttonColor.opacity(colorScheme == .dark ? 1 : 0.8) : Color.clear)
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule()
-                                .stroke(button.active ? buttonColor.opacity(0.4) : Color.clear, lineWidth: 2)
-                        )
-                    }
-                }
-            }
-        }
-
-        var statsIconString: String {
-            if #available(iOS 18, *) {
-                return "chart.line.text.clipboard"
-            } else {
-                return "list.clipboard"
-            }
-        }
-
-        @ViewBuilder private func tappableButton(
-            buttonColor: Color,
-            label: String,
-            iconString: String,
-            action: @escaping () -> Void
-        ) -> some View {
-            Button(action: {
-                action()
-            }) {
-                HStack {
-                    Image(systemName: iconString)
-                    Text(label)
-                }
-                .font(.footnote)
-                .padding(.vertical, 5)
-                .padding(.horizontal, 10)
-                .foregroundStyle(buttonColor)
-                .overlay(
-                    Capsule()
-                        .stroke(buttonColor.opacity(0.4), lineWidth: 2)
-                )
-            }
-        }
-
         @ViewBuilder func mainChart(geo: GeometryProxy) -> some View {
+            // the chart is the only flexible zone: it takes what the fixed slots leave over
+            let chartHeight = max(
+                geo.size.height - HomeLayout.headerHeight - HomeLayout.mealSlotHeight - HomeLayout.bottomZoneHeight,
+                HomeLayout.chartMinHeight
+            )
             ZStack {
                 MainChartView(
                     geo: geo,
-                    safeAreaSize: notificationsDisabled == true ? safeAreaSize : 0,
+                    chartHeight: chartHeight,
                     units: state.units,
-                    hours: state.filteredHours,
                     highGlucose: state.highGlucose,
                     lowGlucose: state.lowGlucose,
                     currentGlucoseTarget: state.currentGlucoseTarget,
                     glucoseColorScheme: state.glucoseColorScheme,
-                    screenHours: state.hours,
                     displayXgridLines: state.displayXgridLines,
                     displayYgridLines: state.displayYgridLines,
                     thresholdLines: state.thresholdLines,
                     state: state
                 )
             }
-            .padding(.bottom, UIDevice.adjustPadding(min: 0, max: nil))
-        }
-
-        func highlightButtons() {
-            for i in 0 ..< timeButtons.count {
-                timeButtons[i].active = timeButtons[i].hours == state.hours
+            // enforce the zone budget; panes flex within it
+            .frame(height: chartHeight)
+            .overlay(alignment: .bottomTrailing) {
+                chartInfoButton
+                    .offset(x: 0, y: -10)
             }
-        }
-
-        @ViewBuilder func rightHeaderPanel(_: GeometryProxy) -> some View {
-            VStack(alignment: .leading, spacing: 20) {
-                /// Loop view at bottomLeading
-                LoopView(
-                    closedLoop: state.closedLoop,
-                    timerDate: state.timerDate,
-                    isLooping: state.isLooping,
-                    lastLoopDate: state.lastLoopDate,
-                    manualTempBasal: state.manualTempBasal,
-                    determination: state.determinationsFromPersistence
-                )
-                .onTapGesture {
-                    state.isLoopStatusPresented = true
-                }
-                .onLongPressGesture {
-                    let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
-                    impactHeavy.impactOccurred()
-                    state.runLoop()
-                }
-                /// eventualBG string at bottomTrailing
-
-                if let eventualBG = state.enactedAndNonEnactedDeterminations.first?.eventualBG {
-                    let eventualGlucose = eventualBG as Decimal
-                    HStack {
-                        Image(systemName: "arrow.right.circle")
-                            .font(.callout)
-                            .fontWeight(.bold)
-
-                        Text(state.units == .mgdL ? eventualGlucose.description : eventualGlucose.formattedAsMmolL)
-                            .font(.callout)
-                            .fontWeight(.bold)
-                            .fontDesign(.rounded)
-                    }
-                    // aligns the evBG icon exactly with the first pixel of loop status icon
-                    .padding(.leading, 12)
-                } else {
-                    HStack {
-                        Image(systemName: "arrow.right.circle")
-                            .font(.callout).fontWeight(.bold)
-                        Text("--")
-                            .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                    }
-                }
-            }
-        }
-
-        @ViewBuilder var activeProfileIndicator: some View {
-            if let activePreset = state.activeProfilePreset {
-                HStack(spacing: 6) {
-                    Image(systemName: state.isProfileDiverged ? "exclamationmark.triangle.fill" : activePreset.icon)
-                        .font(.caption)
-                        .foregroundColor(state.isProfileDiverged ? .orange : .accentColor)
-                    Text(activePreset.name)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(state.isProfileDiverged ? .orange : .accentColor)
-                    if state.isProfileDiverged {
-                        Text(
-                            "modified",
-                            comment: "Home: label indicating active preset settings have been modified"
-                        )
-                        .font(.caption2)
-                        .foregroundColor(.orange)
-                    }
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(
-                    state.isProfileDiverged
-                        ? Color.orange.opacity(0.1)
-                        : Color.accentColor.opacity(0.1)
-                )
-                .clipShape(Capsule())
-                .onTapGesture {
-                    selectedTab = 2
-                }
-            }
-        }
-
-        @ViewBuilder func mealPanel(_: GeometryProxy) -> some View {
-            HStack {
-                HStack {
-                    Image(systemName: "syringe.fill")
-                        .font(.callout)
-                        .foregroundColor(Color.insulin)
-                    Text(
-                        (
-                            Formatter.decimalFormatterWithTwoFractionDigits
-                                .string(from: state.currentIOB as NSNumber) ?? "0"
-                        ) +
-                            String(localized: " U", comment: "Insulin unit")
-                    )
-                    .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                }
-
-                Spacer()
-
-                HStack {
-                    Image(systemName: "fork.knife")
-                        .font(.callout)
-                        .foregroundColor(.loopYellow)
-                    Text(
-                        (
-                            Formatter.decimalFormatterWithTwoFractionDigits.string(
-                                from: NSNumber(value: state.enactedAndNonEnactedDeterminations.first?.cob ?? 0)
-                            ) ?? "0"
-                        ) +
-                            String(localized: " g", comment: "gram of carbs")
-                    )
-                    .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                }
-
-                Spacer()
-
-                if state.maxIOB == 0.0 {
-                    HStack {
-                        Image(systemName: "exclamationmark.circle.fill")
-                        Text("MaxIOB: 0 U")
-                    }.bold()
-                        .foregroundStyle(Color.red)
-                        .font(.callout)
-                } else {
-                    HStack {
-                        /// Only display the insulin delivery rate info if the pump is not
-                        /// suspended and is available (e.g., pod is paired & not faulted).
-                        let pumpAvailable = state.apsManager.isScheduledBasal != nil
-                        if !state.apsManager.isSuspended && pumpAvailable {
-                            Image(systemName: "drop.circle")
-                                .font(.callout)
-                                .foregroundColor(.insulinTintColor)
-                            if let basalString = self.basalString {
-                                /// Adjust opacity when displaying a scheduled basal rate
-                                let opacity = state.apsManager?.isScheduledBasal == true ? 0.6 : 1.0
-                                if basalString.count > 5 {
-                                    Text(basalString)
-                                        .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.85)
-                                        .truncationMode(.tail)
-                                        .allowsTightening(true)
-                                        .opacity(opacity)
-                                } else {
-                                    // Short strings can just display normally
-                                    Text(basalString)
-                                        .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                                        .opacity(opacity)
-                                }
-                            } else {
-                                Text("No Data")
-                                    .font(.callout).fontWeight(.bold).fontDesign(.rounded)
-                            }
-                        }
-                    }
-                }
-            }.padding(.horizontal)
-        }
-
-        @ViewBuilder func adjustmentsOverrideView(_ overrideString: String) -> some View {
-            Group {
-                Image(systemName: "clock.arrow.2.circlepath")
-                    .font(.title2)
-                    .foregroundStyle(Color.primary, Color.purple)
-                VStack(alignment: .leading) {
-                    Text(latestOverride.first?.name ?? String(localized: "Custom Override"))
-                        .font(.subheadline)
-                        .frame(alignment: .leading)
-
-                    Text(overrideString)
-                        .font(.caption)
-                }
-            }
-            .onTapGesture {
-                selectedTab = 2
-            }
-        }
-
-        @ViewBuilder func adjustmentsTempTargetView(_ tempTargetString: String) -> some View {
-            Group {
-                Image(systemName: "target")
-                    .font(.title2)
-                    .foregroundStyle(Color.loopGreen)
-                VStack(alignment: .leading) {
-                    Text(latestTempTarget.first?.name ?? String(localized: "Temp Target"))
-                        .font(.subheadline)
-                    Text(tempTargetString)
-                        .font(.caption)
-                }
-            }
-            .onTapGesture {
-                selectedTab = 2
-            }
-        }
-
-        @ViewBuilder func adjustmentsCancelView(_ cancelAction: @escaping () -> Void) -> some View {
-            Image(systemName: "xmark.app")
-                .font(.title)
-                .onTapGesture {
-                    cancelAction()
-                }
-        }
-
-        @ViewBuilder func adjustmentsCancelTempTargetView() -> some View {
-            Image(systemName: "xmark.app")
-                .font(.title)
-                .confirmationDialog(
-                    "Stop the Temp Target \"\(latestTempTarget.first?.name ?? "")\"?",
-                    isPresented: $isConfirmStopTempTargetShown,
-                    titleVisibility: .visible
-                ) {
-                    Button("Stop", role: .destructive) {
-                        Task {
-                            guard let objectID = latestTempTarget.first?.objectID else { return }
-                            await state.cancelTempTarget(withID: objectID)
-                        }
-                    }
-                    Button("Cancel", role: .cancel) {}
-                }
-                .padding(.trailing, 8)
-                .onTapGesture {
-                    if !latestTempTarget.isEmpty {
-                        isConfirmStopTempTargetShown = true
-                    }
-                }
-        }
-
-        @ViewBuilder func adjustmentsCancelOverrideView() -> some View {
-            Image(systemName: "xmark.app")
-                .font(.title)
-                .confirmationDialog(
-                    "Stop the Override \"\(latestOverride.first?.name ?? "")\"?",
-                    isPresented: $isConfirmStopOverridePresented,
-                    titleVisibility: .visible
-                ) {
-                    Button("Stop", role: .destructive) {
-                        Task {
-                            guard let objectID = latestOverride.first?.objectID else { return }
-                            await state.cancelOverride(withID: objectID)
-                        }
-                    }
-                    Button("Cancel", role: .cancel) {}
-                }
-                .padding(.trailing, 8)
-                .onTapGesture {
-                    if !latestOverride.isEmpty {
-                        isConfirmStopOverridePresented = true
-                    }
-                }
-        }
-
-        @ViewBuilder func noActiveAdjustmentsView() -> some View {
-            Group {
-                VStack {
-                    Text("No Active Adjustment")
-                        .font(.subheadline)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Profile at 100 %")
-                        .font(.caption)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }.padding(.leading, 10)
-
-                Spacer()
-
-                /// to ensure the same position....
-                Image(systemName: "xmark.app")
-                    .font(.title)
-                    // clear color for the icon
-                    .foregroundStyle(Color.clear)
-            }.onTapGesture {
-                selectedTab = 2
-            }
-        }
-
-        @ViewBuilder func adjustmentView(geo: GeometryProxy) -> some View {
-//            let background = colorScheme == .dark ? Material.ultraThinMaterial.opacity(0.5) : Color.black.opacity(0.2)
-
-            ZStack {
-                /// rectangle as background
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(
-                        (overrideString != nil || tempTargetString != nil) ?
-                            (
-                                colorScheme == .dark ?
-                                    Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745) :
-                                    Color.insulin.opacity(0.1)
-                            ) : Color.clear // Use clear and add the Material in the background
-                    )
-                    .background(colorScheme == .dark ? Color.chart.opacity(0.25) : Color.black.opacity(0.075))
-                    .clipShape(RoundedRectangle(cornerRadius: 15))
-                    .frame(height: geo.size.height * 0.08)
-                    .shadow(
-                        color: (overrideString != nil || tempTargetString != nil) ?
-                            (
-                                colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
-                                    Color.black.opacity(0.33)
-                            ) : Color.clear,
-                        radius: 3
-                    )
-                HStack {
-                    if let overrideString = overrideString, let tempTargetString = tempTargetString {
-                        HStack {
-                            adjustmentsOverrideView(overrideString)
-
-                            Spacer()
-
-                            Divider()
-                                .frame(height: geo.size.height * 0.05)
-                                .padding(.horizontal, 2)
-
-                            adjustmentsTempTargetView(tempTargetString)
-
-                            Spacer()
-
-                            adjustmentsCancelView({
-                                if !latestTempTarget.isEmpty, !latestOverride.isEmpty {
-                                    showCancelConfirmDialog = true
-                                } else if !latestOverride.isEmpty {
-                                    showCancelAlert = true
-                                } else if !latestTempTarget.isEmpty {
-                                    showCancelAlert = true
-                                }
-                            })
-                        }
-                    } else if let overrideString = overrideString {
-                        adjustmentsOverrideView(overrideString)
-                        Spacer()
-                        adjustmentsCancelOverrideView()
-
-                    } else if let tempTargetString = tempTargetString {
-                        HStack {
-                            adjustmentsTempTargetView(tempTargetString)
-                            Spacer()
-                            adjustmentsCancelTempTargetView()
-                        }
-                    } else {
-                        noActiveAdjustmentsView()
-                    }
-                }.padding(.horizontal, 10)
-                    .confirmationDialog("Adjustment to Stop", isPresented: $showCancelConfirmDialog) {
-                        Button("Stop Override", role: .destructive) {
-                            Task {
-                                guard let objectID = latestOverride.first?.objectID else { return }
-                                await state.cancelOverride(withID: objectID)
-                            }
-                        }
-                        Button("Stop Temp Target", role: .destructive) {
-                            Task {
-                                guard let objectID = latestTempTarget.first?.objectID else { return }
-                                await state.cancelTempTarget(withID: objectID)
-                            }
-                        }
-                        Button("Stop All Adjustments", role: .destructive) {
-                            Task {
-                                guard let overrideObjectID = latestOverride.first?.objectID else { return }
-                                await state.cancelOverride(withID: overrideObjectID)
-
-                                guard let tempTargetObjectID = latestTempTarget.first?.objectID else { return }
-                                await state.cancelTempTarget(withID: tempTargetObjectID)
-                            }
-                        }
-                    } message: {
-                        Text("Select Adjustment")
-                    }
-            }.padding(.horizontal, 10).padding(.bottom, UIDevice.adjustPadding(min: nil, max: 10))
-        }
-
-        @ViewBuilder func bolusView(geo: GeometryProxy, _ progress: Decimal) -> some View {
-            /// ensure that state.lastPumpBolus has a value, i.e. there is a last bolus done by the pump and not an external bolus
-            /// - TRUE:  show the pump bolus
-            /// - FALSE:  do not show a progress bar at all
-            if let bolusTotal = state.lastPumpBolus?.bolus?.amount {
-                let progressValue = (progress as NSDecimalNumber).doubleValue
-                let bolusFraction = progress * (bolusTotal as Decimal)
-                let bolusString =
-                    (bolusProgressFormatter.string(from: bolusFraction as NSNumber) ?? "0")
-                        + String(localized: " of ", comment: "Bolus string partial message: 'x U of y U' in home view") +
-                        (Formatter.decimalFormatterWithThreeFractionDigits.string(from: bolusTotal as NSNumber) ?? "0")
-                        + String(localized: " U", comment: "Insulin unit")
-                let bolusLabel = state
-                    .bolusStatus == .inProgress ? String(localized: "Bolusing") : String(localized: "Initiating…")
-
-                ZStack {
-                    /// rectangle as background
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(
-                            colorScheme == .dark ? Color(red: 0.03921568627, green: 0.133333333, blue: 0.2156862745) : Color
-                                .insulin
-                                .opacity(0.2)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 15))
-                        .frame(height: geo.size.height * 0.08)
-                        // The card's full-width border is the progress meter: a bright fill
-                        // runs left → right along the top and bottom edges equally (over a
-                        // faint track) as the bolus completes.
-                        .progressRoundedBorder(progress: progressValue, color: .insulin, cornerRadius: 15, lineWidth: 3)
-                        .shadow(
-                            color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
-                                Color.black.opacity(0.33),
-                            radius: 3
-                        )
-
-                    /// actual bolus view
-                    HStack {
-                        Image(systemName: "cross.vial.fill")
-                            .font(.system(size: 25))
-
-                        Spacer()
-
-                        VStack {
-                            Text(bolusLabel)
-                                .font(.subheadline)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(bolusString)
-                                .font(.caption)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }.padding(.leading, 5)
-
-                        Spacer()
-
-                        if state.bolusStatus == .inProgress {
-                            Button {
-                                state.showProgressView()
-                                state.cancelBolus()
-                            } label: {
-                                Image(systemName: "xmark.app")
-                                    .font(.system(size: 25))
-                            }
-                        } else if state.bolusStatus == .initiating {
-                            ProgressView()
-                        }
-                    }.padding(.horizontal, 10)
+            .overlay(alignment: .topTrailing) {
+                // borderless capsule (not a control); centered in the basal
+                // pane band so it clears the y-axis labels on every device size
+                if let rate = currentBasalRateLabel {
+                    Text(rate)
+                        .font(.system(size: 14, weight: .semibold))
+                        .fontDesign(.rounded)
+                        .foregroundStyle(Color.insulin)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(.ultraThinMaterial))
+                        .frame(height: chartHeight * 0.10)
                         .padding(.trailing, 8)
                 }
-                .padding(.horizontal, 10)
-                .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 10))
-                .clipShape(RoundedRectangle(cornerRadius: 15))
             }
         }
 
-        @ViewBuilder func alertSafetyNotificationsView(geo: GeometryProxy) -> some View {
-            ZStack {
-                /// rectangle as background
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(
-                        Color(
-                            red: 0.9,
-                            green: 0.133333333,
-                            blue: 0.2156862745
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 15))
-                    .frame(height: geo.size.height * safeAreaSize)
-                    .coordinateSpace(name: "alertSafetyNotificationsView")
-                    .shadow(
-                        color: colorScheme == .dark ? Color(red: 0.02745098039, green: 0.1098039216, blue: 0.1411764706) :
-                            Color.black.opacity(0.33),
-                        radius: 3
-                    )
-                HStack {
-                    Spacer()
-                    VStack {
-                        Text("⚠️ Safety Notifications are OFF")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .fontDesign(.rounded)
-                            .foregroundStyle(.white.gradient)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("Fix now by turning Notifications ON.")
-                            .font(.footnote)
-                            .fontDesign(.rounded)
-                            .foregroundStyle(.white.gradient)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }.padding(.leading, 5)
-                    Spacer()
-                    Image(systemName: "chevron.right").foregroundColor(.white)
-                        .font(.headline)
-                }.padding(.horizontal, 10)
-                    .padding(.trailing, 8)
-                    .onTapGesture {
-                        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-                    }
-            }.padding(.horizontal, 10)
-                .padding(.top, 0)
+        private var currentBasalRateLabel: String? {
+            guard let rate = state.tempBasals.last?.tempBasal?.rate else { return nil }
+            let value = Formatter.decimalFormatterWithTwoFractionDigits.string(from: rate) ?? "\(rate)"
+            return value + String(localized: " U/hr", comment: "Unit per hour with space")
+        }
+
+        @ViewBuilder private var chartInfoButton: some View {
+            Button {
+                state.isLegendPresented.toggle()
+            } label: {
+                Image(systemName: "info")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 32, height: 32)
+                    .background(Circle().fill(.ultraThinMaterial))
+                    .overlay(Circle().strokeBorder(Color.primary.opacity(0.12), lineWidth: 1))
+            }
+            .contentShape(Circle())
+            .padding(.bottom, 6)
+            .padding(.trailing, 8)
         }
 
         @ViewBuilder func mainViewElements(_ geo: GeometryProxy) -> some View {
-            VStack(spacing: 0) {
-                ZStack {
-                    if let apsManager = state.apsManager, let bluetoothManager = apsManager.bluetoothManager,
-                       bluetoothManager.bluetoothAuthorization != .authorized
-                    {
-                        BluetoothRequiredView()
-                    } else {
-                        /// right panel with loop status and evBG
-                        HStack {
-                            Spacer()
-                            rightHeaderPanel(geo)
-                        }.padding(.trailing, 20)
-
-                        /// glucose bobble
-                        glucoseView
-
-                        /// left panel with pump related info
-                        HStack {
-                            pumpView
-                            Spacer()
-                        }.padding(.leading, 20)
-                    }
-                }
-                .padding(.top, 10)
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    if notificationsDisabled {
-                        alertSafetyNotificationsView(geo: geo)
-                    }
-                    if let badgeImage = state.pumpStatusBadgeImage, let badgeColor = state.pumpStatusBadgeColor {
-                        pumpTimezoneView(badgeImage, badgeColor)
-                            .padding(.horizontal, 20)
-                    }
-                }
-
-                mealPanel(geo).padding(.top, UIDevice.adjustPadding(min: nil, max: 30))
-                    .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 20))
-
-                mainChart(geo: geo)
-
-                HStack {
-                    tappableButton(
-                        buttonColor: (colorScheme == .dark ? Color.white : Color.black).opacity(0.8),
-                        label: String(localized: "Stats", comment: "Stats icon in main view"),
-                        iconString: statsIconString,
-                        action: { state.showModal(for: .statistics) }
+            // viewport-sized content: rubber-bands for the pull-down, never scrolls
+            ScrollView(.vertical, showsIndicators: false) {
+                dashboardContent(geo)
+                    .padding(.top, isForcingLoop ? HomeLayout.refreshIndicatorHeight : 0)
+                    .animation(.easeInOut(duration: 0.25), value: isForcingLoop)
+                    .background(
+                        GeometryReader { g in
+                            Color.clear.preference(
+                                key: HomePullOffsetKey.self,
+                                value: g.frame(in: .named("homeScroll")).minY
+                            )
+                        }
                     )
-
-                    Spacer()
-
-                    timeIntervalButtons.padding(.top, UIDevice.adjustPadding(min: 0, max: 10))
-                        .padding(.bottom, UIDevice.adjustPadding(min: 0, max: 10))
-
-                    Spacer()
-
-                    tappableButton(
-                        buttonColor: (colorScheme == .dark ? Color.white : Color.black).opacity(0.8),
-                        label: String(localized: "Info", comment: "Info icon in main view"),
-                        iconString: "info",
-                        action: { state.isLegendPresented.toggle() }
-                    )
-                }.padding([.horizontal, .bottom])
-
-                activeProfileIndicator
-                    .padding(.bottom)
-
-                if let progress = state.bolusProgress {
-                    bolusView(geo: geo, progress)
-                        .padding(.bottom, UIDevice.adjustPadding(min: nil, max: 40))
-                } else {
-                    adjustmentView(geo: geo).padding(.bottom, UIDevice.adjustPadding(min: nil, max: 40))
-                }
+            }
+            .coordinateSpace(name: "homeScroll")
+            .scrollBounceBehavior(.always, axes: [.vertical])
+            .modifier(HomePullOffsetReader(onChange: handlePullChange))
+            .onPreferenceChange(HomePullOffsetKey.self) { handlePullChange($0) }
+            .overlay(alignment: .top) { pullToRefreshIndicator }
+            // safe-area anchor: the tab bar can never cover the bottom controls
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                bottomControls()
             }
             .background(appState.trioBackgroundColor(for: colorScheme))
             .onReceive(
@@ -1021,17 +165,53 @@ extension Home {
             )
         }
 
+        @ViewBuilder private func dashboardContent(_ geo: GeometryProxy) -> some View {
+            VStack(spacing: 0) {
+                ZStack {
+                    if let apsManager = state.apsManager, let bluetoothManager = apsManager.bluetoothManager,
+                       bluetoothManager.bluetoothAuthorization != .authorized
+                    {
+                        BluetoothRequiredView()
+                    } else {
+                        /// right panel with loop status and evBG
+                        HStack {
+                            Spacer()
+                            rightHeaderPanel()
+                        }.padding(.trailing, 20)
+
+                        /// glucose bobble
+                        glucoseView
+
+                        /// left panel with pump related info
+                        HStack {
+                            pumpView
+                            Spacer()
+                        }.padding(.leading, 20)
+                    }
+                }
+                // fixed slot: header state changes never reflow the zones below
+                .frame(height: HomeLayout.headerHeight)
+
+                mealPanel().frame(height: HomeLayout.mealSlotHeight)
+
+                mainChart(geo: geo)
+            }
+            .frame(maxWidth: .infinity)
+        }
+
         @ViewBuilder func mainView() -> some View {
             GeometryReader { geo in
                 mainViewElements(geo)
-            }
-            .onChange(of: state.hours) {
-                highlightButtons()
+                    // fixed zones bust beyond XXL; cap dashboard type size
+                    .dynamicTypeSize(...DynamicTypeSize.xxLarge)
             }
             .onAppear {
-                configureView {
-                    highlightButtons()
-                }
+                configureView()
+                refreshAlarmsSnooze()
+            }
+            // UserDefaults changes don't invalidate views; refresh on sheet dismissal
+            .onChange(of: showSnoozeSheet) {
+                if !showSnoozeSheet { refreshAlarmsSnooze() }
             }
             .navigationTitle("Home")
             .navigationBarHidden(true)
@@ -1044,6 +224,11 @@ extension Home {
             }
             .sheet(isPresented: $showSnoozeSheet) {
                 SnoozeAlertsSheetView(resolver: resolver, isPresented: $showSnoozeSheet)
+            }
+            .sheet(isPresented: $showManualGlucose) {
+                ManualGlucoseEntryView(units: state.units, isPresented: $showManualGlucose) { amount in
+                    state.addManualGlucose(amount)
+                }
             }
             // PUMP RELATED
             .confirmationDialog("Pump Model", isPresented: $showPumpSelection) {
@@ -1117,6 +302,129 @@ extension Home {
         }
 
         @ViewBuilder func tabBar() -> some View {
+            if #available(iOS 26.0, *) {
+                modernTabBar()
+            } else {
+                legacyTabBar()
+            }
+        }
+
+        /// Legacy layout on the glass bar: a dead middle slot with the
+        /// treatment button overlaid; the slot's selection is swallowed.
+        @available(iOS 26.0, *)
+        @ViewBuilder private func modernTabBar() -> some View {
+            ZStack(alignment: .bottom) {
+                TabView(selection: modernTabSelection) {
+                    let carbsRequiredBadge: String? = carbsRequiredBadgeValue
+
+                    NavigationStack { mainView() }
+                        .tabItem { Label("", systemImage: "chart.xyaxis.line") }
+                        .badge(carbsRequiredBadge).tag(0)
+                        .accessibilityLabel(Text("Main"))
+
+                    NavigationStack { History.RootView(resolver: resolver) }
+                        .tabItem { Label("", systemImage: historySFSymbol) }.tag(1)
+                        .accessibilityLabel(Text("History"))
+
+                    Spacer()
+                        // nbsp title + empty image: invisible item that still
+                        // holds a full-width slot for the overlaid button
+                        .tabItem { Label {
+                            Text(String(repeating: "\u{00A0}", count: 12))
+                        } icon: {
+                            Image(uiImage: UIImage())
+                        } }
+                        .tag(RootView.treatmentTabTag)
+
+                    NavigationStack { Adjustments.RootView(resolver: resolver) }
+                        .tabItem {
+                            Label(
+                                "",
+                                systemImage: "slider.horizontal.2.gobackward"
+                            ) }.tag(2)
+                        .accessibilityLabel(Text("Adjustments"))
+
+                    NavigationStack(path: self.$settingsPath) {
+                        Settings.RootView(resolver: resolver) }
+                        .environment(settingsSearchHighlight)
+                        .tabItem { Label(
+                            "",
+                            systemImage: "gear"
+                        ) }.tag(3)
+                        .accessibilityLabel(Text("Settings"))
+                }
+                .tint(Color.tabBar)
+
+                treatmentButton
+                    // measured slot center; stays at screen center if the probe finds nothing
+                    .offset(x: treatmentSlotOffsetX)
+                    // the floating bar tracks the screen edge, not the safe area
+                    .padding(.bottom, 28)
+            }
+            .background(TabBarSlotProbe { treatmentSlotOffsetX = $0 })
+            .ignoresSafeArea(.container, edges: .bottom)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .blur(radius: state.waitForSuggestion ? 8 : 0)
+            .onChange(of: selectedTab) {
+                if selectedTab != 3, !settingsPath.isEmpty {
+                    settingsPath = NavigationPath()
+                }
+            }
+        }
+
+        /// Swallows the dead middle slot so a tap beside the button can't select it.
+        private var modernTabSelection: Binding<Int> {
+            Binding(
+                get: { selectedTab },
+                set: { newValue in
+                    if newValue != RootView.treatmentTabTag {
+                        selectedTab = newValue
+                    }
+                }
+            )
+        }
+
+        private var treatmentButton: some View {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(Color.tabBar)
+                .padding(.vertical, 2)
+                .padding(.horizontal, 24)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    state.showModal(for: .treatmentView)
+                }
+                .onLongPressGesture(minimumDuration: 0.5) {
+                    guard state.enableQuickBolus else { return }
+                    let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
+                    impactHeavy.impactOccurred()
+                    Task {
+                        await state.loadQuickBolusSuggestions()
+                        if state.quickBolusHistory.isEmpty {
+                            showQuickBolusNoHistory = true
+                        } else {
+                            showQuickBolusPicker = true
+                        }
+                    }
+                }
+                .accessibilityLabel(Text("Add Treatment"))
+        }
+
+        private var carbsRequiredBadgeValue: String? {
+            guard let carbsRequired = state.enactedAndNonEnactedDeterminations.first?.carbsRequired,
+                  state.showCarbsRequiredBadge
+            else {
+                return nil
+            }
+            let carbsRequiredDecimal = Decimal(carbsRequired)
+            if carbsRequiredDecimal > state.settingsManager.settings.carbsRequiredThreshold {
+                let numberAsNSNumber = NSDecimalNumber(decimal: carbsRequiredDecimal)
+                return (Formatter.decimalFormatterWithTwoFractionDigits.string(from: numberAsNSNumber) ?? "") + " g"
+            }
+            return nil
+        }
+
+        @ViewBuilder private func legacyTabBar() -> some View {
             ZStack(alignment: .bottom) {
                 TabView(selection: $selectedTab) {
                     let carbsRequiredBadge: String? = {
@@ -1159,31 +467,11 @@ extension Home {
                 }
                 .tint(Color.tabBar)
 
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(Color.tabBar)
-                    .padding(.vertical, 2)
-                    .padding(.horizontal, 24)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        state.showModal(for: .treatmentView)
-                    }
-                    .onLongPressGesture(minimumDuration: 0.5) {
-                        guard state.enableQuickBolus else { return }
-                        let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
-                        impactHeavy.impactOccurred()
-                        Task {
-                            await state.loadQuickBolusSuggestions()
-                            if state.quickBolusHistory.isEmpty {
-                                showQuickBolusNoHistory = true
-                            } else {
-                                showQuickBolusPicker = true
-                            }
-                        }
-                    }
+                treatmentButton
             }.ignoresSafeArea(.keyboard, edges: .bottom).blur(radius: state.waitForSuggestion ? 8 : 0)
                 .onChange(of: selectedTab) {
-                    if !settingsPath.isEmpty {
+                    // reset only when leaving Settings; programmatic pushes survive the switch
+                    if selectedTab != 3, !settingsPath.isEmpty {
                         settingsPath = NavigationPath()
                     }
                 }
@@ -1205,50 +493,83 @@ extension Home {
                 )
             }
             .alert(
-                String(localized: "No Quick Bolus History Yet", comment: "Alert title when no quick bolus history exists"),
+                String(localized: "No bolus history yet", comment: "Alert title when no quick-pick boluses history exists"),
                 isPresented: $showQuickBolusNoHistory
             ) {
                 Button(String(localized: "OK"), role: .cancel) {}
             } message: {
                 Text(String(
-                    localized: "Quick Bolus learns from your manual boluses over time. Once you've delivered a few boluses, it will suggest amounts based on what you typically take at this time of day.",
-                    comment: "Alert body explaining that quick bolus history is empty"
+                    localized: "Quick-Pick Boluses learns from your manual boluses over time. Once you've delivered a few boluses, it will suggest amounts based on what you typically enact at this time of day.",
+                    comment: "Alert body explaining that quick-pick boluses history is empty"
                 ))
             }
         }
     }
 }
 
-extension UIDevice {
-    public enum DeviceSize: CGFloat {
-        case smallDevice = 667 // Height for 4" iPhone SE
-        case largeDevice = 852 // Height for 6.1" iPhone 15 Pro
+/// Locates the tab bar's middle button and reports how far its center sits
+/// from screen center, so an overlay can be aligned to the real slot.
+private struct TabBarSlotProbe: UIViewRepresentable {
+    var onResolve: (CGFloat) -> Void
+
+    func makeUIView(context _: Context) -> ProbeView {
+        let view = ProbeView()
+        view.onResolve = onResolve
+        return view
     }
 
-    @usableFromInline static func adjustPadding(
-        min: CGFloat? = nil,
-        max: CGFloat? = nil
-    ) -> CGFloat? {
-        if UIScreen.screenHeight > UIDevice.DeviceSize.smallDevice.rawValue {
-            if UIScreen.screenHeight >= UIDevice.DeviceSize.largeDevice.rawValue {
-                return max
-            } else {
-                return min != nil ?
-                    (max != nil ? max! * (UIScreen.screenHeight / UIDevice.DeviceSize.largeDevice.rawValue) : nil) : nil
-            }
-        } else {
-            return min
+    func updateUIView(_ uiView: ProbeView, context _: Context) {
+        uiView.scheduleResolve()
+    }
+
+    final class ProbeView: UIView {
+        var onResolve: ((CGFloat) -> Void)?
+        private var attempts = 0
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            attempts = 0
+            scheduleResolve()
         }
-    }
-}
 
-extension UIScreen {
-    static var screenHeight: CGFloat {
-        UIScreen.main.bounds.height
-    }
+        func scheduleResolve() {
+            DispatchQueue.main.async { [weak self] in self?.resolve() }
+        }
 
-    static var screenWidth: CGFloat {
-        UIScreen.main.bounds.width
+        private func resolve() {
+            guard let window else { return }
+            guard let offset = Self.middleSlotOffset(in: window) else {
+                // the bar may not be laid out yet; retry briefly
+                attempts += 1
+                if attempts < 10 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in self?.resolve() }
+                }
+                return
+            }
+            onResolve?(offset)
+        }
+
+        private static func middleSlotOffset(in window: UIWindow) -> CGFloat? {
+            var buttons: [UIView] = []
+            collectTabButtons(in: window, into: &buttons)
+            guard buttons.count == 5 else { return nil }
+            buttons.sort { $0.convert($0.bounds, to: window).minX < $1.convert($1.bounds, to: window).minX }
+            let slotCenterX = buttons[2].convert(buttons[2].bounds, to: window).midX
+            return slotCenterX - window.bounds.midX
+        }
+
+        private static func collectTabButtons(in view: UIView, into buttons: inout [UIView]) {
+            // iOS 26 items are _UITabButton; the classic bar uses UITabBarButton
+            if String(describing: type(of: view)).contains("TabButton") ||
+                String(describing: type(of: view)).contains("TabBarButton")
+            {
+                buttons.append(view)
+                return
+            }
+            for subview in view.subviews {
+                collectTabButtons(in: subview, into: &buttons)
+            }
+        }
     }
 }
 
