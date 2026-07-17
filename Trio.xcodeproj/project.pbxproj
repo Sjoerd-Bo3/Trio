@@ -540,7 +540,6 @@
 		FA6B58486AE2496F9F8589C6 /* QuickBolusConfigProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EEC5C2927FA4C5DA61A1A40 /* QuickBolusConfigProvider.swift */; };
 		87F4D02B8D4D4D329BA291D2 /* QuickBolusConfigStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91711E7CA54747EFAD6540EE /* QuickBolusConfigStateModel.swift */; };
 		C5BAAA36C643401D97A8CE11 /* QuickBolusConfigRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB3EBC8BA17C4627BD32C58F /* QuickBolusConfigRootView.swift */; };
-		584C79A91D034426A1DE60CB /* SlideToConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF96FC200503405E94334390 /* SlideToConfirmView.swift */; };
 		DECF1903237041E2BBBE4033 /* QuickBolusInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1526A587AD1544C495050662 /* QuickBolusInfoView.swift */; };
 		3F23E18680094E6DA98628E4 /* QuickBolusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A54068ABDAE4898B243DF14 /* QuickBolusView.swift */; };
 		BD7DB88E2D2C4A17003D3155 /* BolusCalculationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7DB88D2D2C4A0A003D3155 /* BolusCalculationManager.swift */; };
@@ -1708,7 +1707,6 @@
 		CEE9A65B2BBB41C800EB5194 /* CalibrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationService.swift; sourceTree = "<group>"; };
 		CEE9A65D2BBC9F6500EB5194 /* CalibrationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationsTests.swift; sourceTree = "<group>"; };
 		CEF1ED6A2D58FB4600FAF41E /* CGMOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGMOptions.swift; sourceTree = "<group>"; };
-		CF96FC200503405E94334390 /* SlideToConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlideToConfirmView.swift; sourceTree = "<group>"; };
 		CFCFE0781F9074C2917890E8 /* ManualTempBasalStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ManualTempBasalStateModel.swift; sourceTree = "<group>"; };
 		D0BDC6993C1087310EDFC428 /* CarbRatioEditorRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarbRatioEditorRootView.swift; sourceTree = "<group>"; };
 		D7C5E1F4A7B91E2F3C5D6E71 /* TimeInterval+Convenience.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TimeInterval+Convenience.swift"; sourceTree = "<group>"; };
@@ -1945,7 +1943,6 @@
 		E592A3742CEEC038009A472C /* ContactImageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactImageProvider.swift; sourceTree = "<group>"; };
 		E592A3752CEEC038009A472C /* ContactImageStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactImageStateModel.swift; sourceTree = "<group>"; };
 		E625985B47742D498CB1681A /* GlucoseNotificationSettingsProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GlucoseNotificationSettingsProvider.swift; sourceTree = "<group>"; };
-		B3919BBB515547118D684CA2 /* SettingsSearchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchTests.swift; sourceTree = "<group>"; };
 		F816825D28DB441200054060 /* HeartBeatManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeartBeatManager.swift; sourceTree = "<group>"; };
 		F816825F28DB441800054060 /* BluetoothTransmitter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothTransmitter.swift; sourceTree = "<group>"; };
 		F90692A9274B7AAE0037068D /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
@@ -2269,13 +2266,6 @@
 			path = View;
 			sourceTree = "<group>";
 		};
-		2148032F6F184487B49B1095 /* View */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = View;
-			sourceTree = "<group>";
-		};
 		34CA4DF169B53D67EF18ED8A /* View */ = {
 			isa = PBXGroup;
 			children = (
@@ -2479,26 +2469,6 @@
 				38E8754D275556E100975559 /* WatchManager */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		BD1179262F4E22C100F90001 /* Alerts */ = {
-			isa = PBXGroup;
-			children = (
-				BD1179312F4E22C100F90001 /* CriticalAlertAudioPlayer.swift */,
-				BD1179412F4E22C100F90001 /* ForecastedGlucoseEvaluator.swift */,
-				BD11795D2F4E22C100F90001 /* GlucoseAlertCoordinator.swift */,
-				BD1179592F4E22C100F90001 /* GlucoseAlertsStore.swift */,
-				BD1179882F4E22C100F90001 /* DeviceAlertsStore.swift */,
-				BD1179AB2F4E22C100F90001 /* NotLoopingMonitor.swift */,
-				BD1179292F4E22C100F90001 /* TrioAlertCategory.swift */,
-				BD1179212F4E22C100F90001 /* TrioAlertManager.swift */,
-				BD1179232F4E22C100F90001 /* TrioModalAlertScheduler.swift */,
-				BD1179252F4E22C100F90001 /* TrioUserNotificationAlertScheduler.swift */,
-				CA01000000000000000010C1 /* AlertCatalogVendor.swift */,
-				CA01000000000000000010C3 /* AlertCatalogRegistry.swift */,
-				CA01000000000000000010C5 /* CGMManagerAlertOwnership.swift */,
-			);
-			path = Alerts;
 			sourceTree = "<group>";
 		};
 		3811DE9225C9D88200A708ED /* Appearance */ = {
