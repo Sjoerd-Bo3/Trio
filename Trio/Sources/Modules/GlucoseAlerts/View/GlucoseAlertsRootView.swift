@@ -50,22 +50,39 @@ extension GlucoseAlerts {
                         }
                     }.listRowBackground(Color.chart)
                 }
+                if !cgmHandledAlerts.isEmpty {
+                    Section(
+                        header: Text("Handled by CGM App"),
+                        footer: cgmHandledFooter
+                    ) {
+                        ForEach(cgmHandledAlerts) { alarm in
+                            row(for: alarm).opacity(0.6)
+                        }
+                    }.listRowBackground(Color.chart)
+                }
 
                 // FIXME: make this into a nice setting with mini and verbose hint
                 Section {
                     Text("Day & Night Windows")
+                        .foregroundStyle(Color.accentColor)
                         .navigationLink(to: .alarmWindows, from: self)
                 }.listRowBackground(Color.chart)
 
-                Section(footer: Text(
-                    "On by default for all CGM or apps that handle glucose alerts (all Dexcom CGMs, xDrip4iOS). Turn off if you've disabled those and want Trio to alert you instead."
-                )) {
+                Section(footer: Text(useCGMAlertsFooter)) {
                     Toggle(isOn: Binding(
-                        get: { !store.configuration.forceTrioAlertsWhenCGMProvidesOwn },
+                        // When the active CGM has no companion app to defer
+                        // to, force the visible state OFF regardless of the
+                        // stored preference — there's nothing for the toggle
+                        // to control, so showing it ON would mislead.
+                        get: {
+                            guard state.cgmProvidesOwnAlerts else { return false }
+                            return !store.configuration.forceTrioAlertsWhenCGMProvidesOwn
+                        },
                         set: { store.configuration.forceTrioAlertsWhenCGMProvidesOwn = !$0 }
                     )) {
                         Text("Use CGM App Alerts")
                     }
+                    .disabled(!state.cgmProvidesOwnAlerts)
                 }.listRowBackground(Color.chart)
 
                 SettingInputSection(
@@ -128,7 +145,10 @@ extension GlucoseAlerts {
                     sheetTitle: String(localized: "Help", comment: "Help sheet title")
                 )
             }
-            .onAppear(perform: configureView)
+            .onAppear {
+                configureView()
+                state.refreshCGMOwnership()
+            }
         }
 
         private func handleSheetDismiss() {
@@ -148,9 +168,78 @@ extension GlucoseAlerts {
 
         // MARK: - Sorted lists
 
+        /// Mirror of `GlucoseAlertCoordinator.shouldRespect(alarm:)`'s
+        /// CGM-ownership branch: when "Use CGM App Alerts" is ON and the
+        /// active CGM provides its own glucose alerts, the coordinator
+        /// silences reading-driven types. The view surfaces this by moving
+        /// those alarms into a dedicated section.
+        private var isCGMSuppressionActive: Bool {
+            !store.configuration.forceTrioAlertsWhenCGMProvidesOwn && state.cgmProvidesOwnAlerts
+        }
+
+        private var cgmHandledAlerts: [GlucoseAlert] {
+            guard isCGMSuppressionActive else { return [] }
+            return store.alerts
+                .filter { $0.isEnabled && $0.type.isReadingDriven }
+                .sorted { lhs, rhs in
+                    lhs.type.priority < rhs.type.priority
+                }
+        }
+
+        /// Footer for the "Use CGM App Alerts" toggle. Names the eligible
+        /// CGMs when one of them is active and the user can decide; when
+        /// the active CGM has no companion app the toggle is disabled and
+        /// the footer says Trio is handling alarms.
+        private var useCGMAlertsFooter: String {
+            if state.cgmProvidesOwnAlerts {
+                return String(
+                    localized:
+                    "Your CGM app handles alerts (Dexcom G6 / One, G7 / One+, or xDrip4iOS). Turn off to let Trio alert you."
+                )
+            }
+            return String(
+                localized:
+                "Your CGM has no companion app, so Trio handles alarms."
+            )
+        }
+
+        /// Footer for the "Handled by CGM App" section. Names the specific
+        /// companion app, and renders its name as a deep link when a URL
+        /// scheme is known for that app (see CGMManagerAlertOwnership).
+        @ViewBuilder private var cgmHandledFooter: some View {
+            if let info = state.cgmAppInfo {
+                Text(handledFooterMarkdown(for: info))
+            } else {
+                Text(
+                    "These alarms are silenced because the CGM app handles them. To have Trio notify you instead, turn off \"Use CGM App Alerts\" below."
+                )
+            }
+        }
+
+        private func handledFooterMarkdown(for info: CGMManagerAlertOwnership.OwningApp) -> AttributedString {
+            let body = String(
+                format: String(
+                    localized:
+                    "These alarms are silenced because the %@ app handles CGM alerts. To have Trio notify you instead, turn off \"Use CGM App Alerts\" below."
+                ),
+                "{{NAME}}"
+            )
+            var result = AttributedString(body)
+            if let range = result.range(of: "{{NAME}}") {
+                var name = AttributedString(info.name)
+                if let url = info.deepLink {
+                    name.link = url
+                }
+                result.replaceSubrange(range, with: name)
+            }
+            return result
+        }
+
         private var enabledAlerts: [GlucoseAlert] {
-            store.alerts
+            let handled = Set(cgmHandledAlerts.map(\.id))
+            return store.alerts
                 .filter(\.isEnabled)
+                .filter { !handled.contains($0.id) }
                 .sorted { lhs, rhs in
                     lhs.type.priority < rhs.type.priority
                 }
@@ -205,27 +294,39 @@ extension GlucoseAlerts {
             let comparator: String = {
                 switch alarm.type {
                 case .high: return String(localized: "above")
+                case .carbsRequired: return String(localized: "at least")
                 default: return String(localized: "below")
                 }
             }()
-            let threshold = "\(alarm.thresholdMgDL.formatted(for: state.units)) \(state.units.rawValue)"
+            let threshold: String = {
+                // `thresholdMgDL` stores grams for carbsRequired — no
+                // mg/dL ↔ mmol/L conversion and a fixed "g" unit label.
+                if alarm.type == .carbsRequired {
+                    return "\(alarm.thresholdMgDL) \(String(localized: "g", comment: "gram of carbs"))"
+                }
+                return "\(alarm.thresholdMgDL.formatted(for: state.units)) \(state.units.rawValue)"
+            }()
             let window = AlarmEnumDescription.description(for: alarm.activeOption)
             return "\(comparator.localizedCapitalized) \(threshold) • \(window)"
         }
 
         private func soundSummary(for alarm: GlucoseAlert) -> some View {
-            var icon = "speaker.fill"
-            var label = String(localized: "Sound on")
-            if !alarm.playsSound {
-                icon = "speaker.slash.fill"
-                label = String(localized: "Sound off")
-            } else if alarm.overridesSilenceAndDND {
-                icon = "speaker.wave.3.fill"
-                label = String(localized: "Override Silence & Focus")
-            }
-            return HStack(spacing: 4) {
-                Image(systemName: icon)
-                Text(label)
+            // Show the sound and override facts independently. Previously
+            // the override badge was hidden when sound was off, but "sound
+            // off + override on" is a valid combo (silent + haptic that
+            // breaks through Focus / Sleep) and the user needs to see it.
+            HStack(spacing: 6) {
+                HStack(spacing: 4) {
+                    Image(systemName: alarm.playsSound ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                    Text(alarm.playsSound ? "Sound on" : "Sound off")
+                }
+                if alarm.overridesSilenceAndDND {
+                    Text("·")
+                    HStack(spacing: 4) {
+                        Image(systemName: "bell.badge.fill")
+                        Text("Overrides Focus")
+                    }
+                }
             }
             .font(.footnote)
             .foregroundColor(.secondary)

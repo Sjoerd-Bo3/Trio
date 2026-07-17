@@ -7,20 +7,31 @@ extension Home.StateModel {
     @MainActor func setupEnactedDeterminationController() {
         enactedDeterminationControllerDelegate.onContentChange = { [weak self] in
             Task { @MainActor in
-                guard let self else { return }
-                self.updateEnactedDeterminationFromController()
-                await self.updateForecastData()
+                self?.scheduleForecastUpdate()
             }
         }
 
         do {
             try enactedDeterminationController.performFetch()
             updateEnactedDeterminationFromController()
-            Task { @MainActor in
+            // Initial population; assigned to `forecastUpdateTask` so a change arriving
+            // during startup cancels it instead of racing it.
+            forecastUpdateTask = Task { @MainActor in
                 await self.updateForecastData()
             }
         } catch {
             debug(.default, "\(DebuggingIdentifiers.failed) Failed to perform enacted determination fetch: \(error)")
+        }
+    }
+
+    /// Coalesces rapid determination changes — each cancels the previous pending recompute.
+    @MainActor func scheduleForecastUpdate() {
+        forecastUpdateTask?.cancel()
+        forecastUpdateTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled else { return }
+            updateEnactedDeterminationFromController()
+            await updateForecastData()
         }
     }
 
@@ -46,7 +57,7 @@ extension Home.StateModel {
         }
     }
 
-    @MainActor private func updateDeterminationsFromController() {
+    @MainActor func updateDeterminationsFromController() {
         guard let objects = determinationController.fetchedObjects else { return }
         enactedAndNonEnactedDeterminations = objects
         yAxisChartDataCobChart(determinations: objects)

@@ -187,7 +187,7 @@ extension Treatments {
         typealias PumpEvent = PumpEventStored.EventType
 
         var bolusProgress: Decimal?
-        var isBolusInProgress: Bool { bolusProgress != nil }
+        var bolusStatus: BolusStatus = .noBolus
         var lastPumpBolus: PumpEventStored?
 
         func unsubscribe() {
@@ -211,12 +211,26 @@ extension Treatments {
 
         private var hasCleanedUp = false
 
+        /// In-flight work started by this instance; cancelled in `cleanupTreatmentState()`.
+        @ObservationIgnored private var setupTask: Task<Void, Never>?
+        @ObservationIgnored private var determinationUpdateTask: Task<Void, Never>?
+
         func cleanupTreatmentState() {
             guard !hasCleanedUp else { return }
             hasCleanedUp = true
 
             unsubscribe()
             lifetime = Lifetime()
+
+            // Stop the FRC → recompute pipelines; a dismissed instance must not keep
+            // re-running the bolus calculator on every viewContext merge.
+            glucoseControllerDelegate.onContentChange = nil
+            determinationControllerDelegate.onContentChange = nil
+            lastBolusControllerDelegate.onContentChange = nil
+
+            // Cancel in-flight work — the setup task awaits a full oref simulation.
+            setupTask?.cancel()
+            determinationUpdateTask?.cancel()
 
             broadcaster?.unregister(DeterminationObserver.self, observer: self)
             broadcaster?.unregister(BolusFailureObserver.self, observer: self)
@@ -226,7 +240,7 @@ extension Treatments {
 
         private func setupBolusStateConcurrently() {
             debug(.bolusState, "Setting up bolus state concurrently...")
-            Task {
+            setupTask = Task {
                 // Load settings and observers first so the determination controller's initial
                 // population (which runs calculateInsulin) sees correct values.
                 do {
@@ -248,10 +262,13 @@ extension Treatments {
                     debug(.default, "Failed to setup bolus state concurrently: \(error)")
                 }
 
-                // NSFetchedResultsControllers are bound to the viewContext, so set them up on the main actor.
-                await self.setupGlucoseController()
-                await self.setupDeterminationController()
-                await self.setupLastBolusController()
+                // viewContext-bound FRCs: guard and wiring share one main-actor slice.
+                await MainActor.run {
+                    guard !Task.isCancelled, !self.hasCleanedUp else { return }
+                    self.setupGlucoseController()
+                    self.setupDeterminationController()
+                    self.setupLastBolusController()
+                }
             }
         }
 
@@ -262,6 +279,11 @@ extension Treatments {
             apsManager.bolusProgress
                 .receive(on: DispatchQueue.main)
                 .weakAssign(to: \.bolusProgress, on: self)
+                .store(in: &lifetime)
+
+            provider.deviceManager.bolusTrigger
+                .receive(on: DispatchQueue.main)
+                .weakAssign(to: \.bolusStatus, on: self)
                 .store(in: &lifetime)
         }
 
@@ -435,6 +457,9 @@ extension Treatments {
                 simulatedCOB: simulatedCOB,
                 isBackdated: isBackdated
             )
+
+            // A superseded run must not overwrite the breakdown a newer run published.
+            guard !Task.isCancelled else { return apsManager.roundBolus(amount: result.insulinCalculated) }
 
             // Update state properties with calculation results on main thread
             await MainActor.run {
@@ -751,6 +776,8 @@ extension Treatments.StateModel: DeterminationObserver, BolusFailureObserver {
 
     func bolusDidFail() {
         DispatchQueue.main.async {
+            // A dismissed instance may still observe until dealloc — don't hide an unrelated modal.
+            guard self.isActive else { return }
             debug(.bolusState, "bolusDidFail fired")
             self.isAwaitingDeterminationResult = false
             if self.addButtonPressed {
@@ -768,7 +795,8 @@ extension Treatments.StateModel {
     @MainActor func setupGlucoseController() {
         glucoseControllerDelegate.onContentChange = { [weak self] in
             Task { @MainActor in
-                self?.updateGlucoseFromController()
+                guard let self, self.isActive else { return }
+                self.updateGlucoseFromController()
             }
         }
 
@@ -815,24 +843,31 @@ extension Treatments.StateModel {
     @MainActor func setupDeterminationController() {
         determinationControllerDelegate.onContentChange = { [weak self] in
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, self.isActive else { return }
                 self.updateDeterminationFromController()
-                self.insulinCalculated = await self.calculateInsulin()
-                let forecastData = self.mapForecastsFromController()
-                await self.updateForecasts(with: forecastData)
+                self.scheduleInsulinAndForecastUpdate()
             }
         }
 
         do {
             try determinationController.performFetch()
             updateDeterminationFromController()
-            Task { @MainActor in
-                self.insulinCalculated = await self.calculateInsulin()
-                let forecastData = self.mapForecastsFromController()
-                await self.updateForecasts(with: forecastData)
-            }
+            scheduleInsulinAndForecastUpdate()
         } catch {
             debug(.default, "\(DebuggingIdentifiers.failed) Failed to perform determination fetch: \(error)")
+        }
+    }
+
+    /// Recomputes bolus recommendation and forecast; each new determination cancels the
+    /// previous in-flight run so a superseded run cannot publish stale results.
+    @MainActor private func scheduleInsulinAndForecastUpdate() {
+        determinationUpdateTask?.cancel()
+        determinationUpdateTask = Task { @MainActor in
+            let insulinCalculated = await self.calculateInsulin()
+            guard !Task.isCancelled else { return }
+            self.insulinCalculated = insulinCalculated
+            let forecastData = self.mapForecastsFromController()
+            await self.updateForecasts(with: forecastData)
         }
     }
 
@@ -901,7 +936,7 @@ extension Treatments.StateModel {
             simulatedDetermination = forecastData
             debugPrint("\(DebuggingIdentifiers.failed) minPredBG: \(minPredBG)")
         } else {
-            simulatedDetermination = await Task { [self] in
+            let simulated = await Task { [self] in
                 debug(.bolusState, "calling simulateDetermineBasal to get forecast data")
                 return await apsManager.simulateDetermineBasal(
                     simulatedCarbsAmount: carbs,
@@ -910,8 +945,12 @@ extension Treatments.StateModel {
                 )
             }.value
 
+            // Stale minPredBG/cob from a superseded run would feed the next bolus calculation.
+            guard !Task.isCancelled else { return }
+            simulatedDetermination = simulated
+
             // Update evBG and minPredBG from simulated determination
-            if let simDetermination = simulatedDetermination {
+            if let simDetermination = simulated {
                 evBG = Decimal(simDetermination.eventualBG ?? 0)
                 minPredBG = simDetermination.minPredBGFromReason ?? 0
                 debugPrint("\(DebuggingIdentifiers.inProgress) minPredBG: \(minPredBG)")
@@ -950,8 +989,13 @@ extension Treatments.StateModel {
             }
         }.value
 
-        minForecast = await minForecastResult
-        maxForecast = await maxForecastResult
+        let minResult = await minForecastResult
+        let maxResult = await maxForecastResult
+
+        guard !Task.isCancelled else { return }
+
+        minForecast = minResult
+        maxForecast = maxResult
     }
 }
 
@@ -970,7 +1014,8 @@ extension Treatments.StateModel {
     @MainActor func setupLastBolusController() {
         lastBolusControllerDelegate.onContentChange = { [weak self] in
             Task { @MainActor in
-                self?.updateLastBolusFromController()
+                guard let self, self.isActive else { return }
+                self.updateLastBolusFromController()
             }
         }
 
