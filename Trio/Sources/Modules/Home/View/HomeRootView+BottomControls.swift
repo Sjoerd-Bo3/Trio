@@ -445,6 +445,7 @@ extension Home.RootView {
         /// - FALSE:  do not show a progress bar at all
         if let bolusTotal = state.lastPumpBolus?.bolus?.amount {
             let bolusFraction = progress * (bolusTotal as Decimal)
+            let progressValue = (progress as NSDecimalNumber).doubleValue
             let bolusString =
                 (bolusProgressFormatter.string(from: bolusFraction as NSNumber) ?? "0")
                     + String(localized: " of ", comment: "Bolus string partial message: 'x U of y U' in home view") +
@@ -486,12 +487,14 @@ extension Home.RootView {
             .padding(.trailing, 8)
             .frame(height: HomeLayout.bottomPanelHeight)
             .glassPanel(tint: .insulin, tintOpacity: 0.18, strokeOpacity: 0.30)
-            .overlay(alignment: .bottom) {
-                // bar hugs the panel's bottom edge (the slot no longer has outer bottom padding)
-                BolusProgressBar(progress: progress)
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 1)
-            }
+            // Animated progress border: a bright fill runs left→right along the top and
+            // bottom edges as the bolus completes, matching the pump/loop pill border.
+            .progressRoundedBorder(
+                progress: progressValue,
+                color: .insulin,
+                cornerRadius: GlassChrome.panelCornerRadius,
+                lineWidth: 3
+            )
             .padding(.horizontal, 10)
         }
     }
