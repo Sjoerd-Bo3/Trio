@@ -232,6 +232,7 @@ struct CurrentGlucoseView: View {
     /// grace period), or any non-normal state from a battery-based manager.
     private var shouldShowArc: Bool {
         if isInWarmup { return true }
+        if cgmProgress != nil { return true } // xDrip always sends percentComplete
         if let expiresAt = cgmSensorExpiresAt {
             return expiresAt.timeIntervalSinceNow <= 48 * 60 * 60
         }
