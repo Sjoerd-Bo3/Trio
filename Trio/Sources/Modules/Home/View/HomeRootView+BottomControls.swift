@@ -59,11 +59,6 @@ extension Home.RootView {
             .background(Circle().fill(tint.opacity(0.18)))
     }
 
-    var adjustmentTint: Color? {
-        if overrideString != nil { return Color.purple }
-        if tempTargetString != nil { return Color.loopGreen }
-        return nil
-    }
 
     var overrideString: String? {
         guard let latestOverride = latestOverride.first else {
@@ -222,13 +217,6 @@ extension Home.RootView {
         }
     }
 
-    @ViewBuilder func adjustmentsCancelView(_ cancelAction: @escaping () -> Void) -> some View {
-        Image(systemName: "xmark.app")
-            .font(.title)
-            .onTapGesture {
-                cancelAction()
-            }
-    }
 
     @ViewBuilder func adjustmentsCancelTempTargetView() -> some View {
         Image(systemName: "xmark.app")
@@ -279,162 +267,96 @@ extension Home.RootView {
     }
 
     @ViewBuilder func noActiveAdjustmentsView() -> some View {
-        Group {
-            adjustmentIcon("slider.horizontal.2.gobackward", tint: Color.secondary)
+        adjustmentIcon("slider.horizontal.2.gobackward", tint: Color.secondary)
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text("No Active Adjustment")
-                    .font(.subheadline).fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text("Profile at 100 %")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+        VStack(alignment: .leading, spacing: 1) {
+            Text("No Active Adjustment")
+                .font(.subheadline).fontWeight(.medium)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("Profile at 100 %")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
 
-            Spacer()
+        Spacer(minLength: 0)
+    }
 
-            // clear icon keeps text aligned with the cancel-button states
-            Image(systemName: "xmark.app")
-                .font(.title)
-                .foregroundStyle(Color.clear)
+    /// Icon + name for the active profile preset (orange + warning icon when modified).
+    @ViewBuilder func activeProfileContent(_ preset: ProfilePreset) -> some View {
+        adjustmentIcon(
+            state.isProfileDiverged ? "exclamationmark.triangle.fill" : preset.icon,
+            tint: state.isProfileDiverged ? .orange : .accentColor
+        )
+        VStack(alignment: .leading, spacing: 1) {
+            Text(preset.name)
+                .font(.subheadline).fontWeight(.semibold)
+                .foregroundStyle(state.isProfileDiverged ? Color.orange : Color.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(state.isProfileDiverged
+                ? String(localized: "Profile · modified", comment: "Adjustment panel: active profile preset has been modified")
+                : String(localized: "Active profile", comment: "Adjustment panel subtitle for the active profile preset"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    @ViewBuilder func remainingBar(_ fraction: Double?, tint: Color) -> some View {
-        GeometryReader { barGeo in
-            if let fraction {
-                Capsule()
-                    .fill(tint.opacity(0.85))
-                    .frame(width: barGeo.size.width * fraction, height: 3)
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-            }
+    /// One adjustment rendered as its own bordered glass panel. `fraction` drives a reversed
+    /// countdown border (1 = full, 0 = empty); pass nil for no border.
+    @ViewBuilder func adjustmentPanel<Content: View>(
+        tint: Color?,
+        fraction: Double?,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack {
+            content()
         }
-        .frame(height: 3)
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity)
+        .frame(height: HomeLayout.bottomPanelHeight)
+        .glassPanel(tint: tint, tintOpacity: 0.12, strokeOpacity: tint == nil ? 0.08 : 0.30)
+        .progressRoundedBorderIfPresent(
+            progress: fraction,
+            color: tint,
+            cornerRadius: GlassChrome.panelCornerRadius,
+            lineWidth: 3
+        )
+        .contentShape(Rectangle())
+        .onTapGesture { selectedTab = 2 }
     }
 
     @ViewBuilder func adjustmentView() -> some View {
-        let tint = adjustmentTint
-        // concurrent override + temp target: halved tint, one remaining bar per half
-        let isConcurrent = overrideString != nil && tempTargetString != nil
-
-        ZStack {
-            if isConcurrent {
-                // halved tint layer the single-tint glass chrome can't express
-                HStack(spacing: 0) {
-                    Color.purple.opacity(0.12)
-                    Color.loopGreen.opacity(0.12)
-                }
-                .clipShape(GlassChrome.panelShape)
-            }
-            HStack {
-                if let overrideString = overrideString, let tempTargetString = tempTargetString {
-                    // content halves match the tint halves so icons clear the seam
-                    HStack(spacing: 0) {
-                        HStack {
-                            adjustmentsOverrideView(overrideString)
-                            Spacer(minLength: 0)
-                        }
-                        .frame(maxWidth: .infinity)
-
-                        HStack {
-                            adjustmentsTempTargetView(tempTargetString)
-                                .padding(.leading, 8)
-
-                            Spacer(minLength: 0)
-
-                            adjustmentsCancelView({
-                                if !latestTempTarget.isEmpty, !latestOverride.isEmpty {
-                                    showCancelConfirmDialog = true
-                                } else if !latestOverride.isEmpty {
-                                    showCancelAlert = true
-                                } else if !latestTempTarget.isEmpty {
-                                    showCancelAlert = true
-                                }
-                            })
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                } else if let overrideString = overrideString {
+        // Each active adjustment is its own bordered panel, side by side. Override and temp
+        // target show a reversed countdown border (full → empty as they run out); the profile
+        // preset has no expiry, so its border stays full.
+        HStack(spacing: 8) {
+            if let overrideString = overrideString {
+                adjustmentPanel(tint: .purple, fraction: overrideRemainingFraction ?? 1) {
                     adjustmentsOverrideView(overrideString)
-                    Spacer()
+                    Spacer(minLength: 0)
                     adjustmentsCancelOverrideView()
-
-                } else if let tempTargetString = tempTargetString {
-                    HStack {
-                        adjustmentsTempTargetView(tempTargetString)
-                        Spacer()
-                        adjustmentsCancelTempTargetView()
-                    }
-                } else {
+                }
+            }
+            if let tempTargetString = tempTargetString {
+                adjustmentPanel(tint: .loopGreen, fraction: tempTargetRemainingFraction ?? 1) {
+                    adjustmentsTempTargetView(tempTargetString)
+                    Spacer(minLength: 0)
+                    adjustmentsCancelTempTargetView()
+                }
+            }
+            if let preset = state.activeProfilePreset {
+                adjustmentPanel(tint: state.isProfileDiverged ? .orange : .accentColor, fraction: 1) {
+                    activeProfileContent(preset)
+                    Spacer(minLength: 0)
+                }
+            }
+            if overrideString == nil, tempTargetString == nil, state.activeProfilePreset == nil {
+                adjustmentPanel(tint: nil, fraction: nil) {
                     noActiveAdjustmentsView()
                 }
-            }.padding(.horizontal, 10)
-                .confirmationDialog("Adjustment to Stop", isPresented: $showCancelConfirmDialog) {
-                    Button("Stop Override", role: .destructive) {
-                        Task {
-                            guard let objectID = latestOverride.first?.objectID else { return }
-                            await state.cancelOverride(withID: objectID)
-                        }
-                    }
-                    Button("Stop Temp Target", role: .destructive) {
-                        Task {
-                            guard let objectID = latestTempTarget.first?.objectID else { return }
-                            await state.cancelTempTarget(withID: objectID)
-                        }
-                    }
-                    Button("Stop All Adjustments", role: .destructive) {
-                        Task {
-                            guard let overrideObjectID = latestOverride.first?.objectID else { return }
-                            await state.cancelOverride(withID: overrideObjectID)
-
-                            guard let tempTargetObjectID = latestTempTarget.first?.objectID else { return }
-                            await state.cancelTempTarget(withID: tempTargetObjectID)
-                        }
-                    }
-                } message: {
-                    Text("Select Adjustment")
-                }
-        }
-        .frame(height: HomeLayout.bottomPanelHeight)
-        .glassPanel(
-            tint: isConcurrent ? nil : tint,
-            tintOpacity: 0.12,
-            strokeOpacity: isConcurrent ? 0 : (tint == nil ? 0.08 : 0.30)
-        )
-        .overlay(
-            // concurrent halves get a bicolor rim the single-tint chrome can't express
-            isConcurrent
-                ? GlassChrome.panelShape.strokeBorder(
-                    LinearGradient(
-                        colors: [Color.purple.opacity(0.30), Color.loopGreen.opacity(0.30)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    lineWidth: 1
-                )
-                : nil
-        )
-        .overlay(alignment: .bottom) {
-            // inset clears the corner curve so the bar stays inside the shape
-            Group {
-                if isConcurrent {
-                    HStack(spacing: 6) {
-                        remainingBar(overrideRemainingFraction, tint: .purple)
-                        remainingBar(tempTargetRemainingFraction, tint: .loopGreen)
-                    }
-                } else if let tint = tint {
-                    remainingBar(overrideRemainingFraction ?? tempTargetRemainingFraction, tint: tint)
-                }
             }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 3)
-        }
-        // whole panel navigates; the cancel buttons' own gestures take precedence
-        .contentShape(Rectangle())
-        .onTapGesture {
-            selectedTab = 2
         }
         .padding(.horizontal, 10)
     }
@@ -537,12 +459,13 @@ extension Home.RootView {
         let tirString = hasData
             ? distribution.inRangePct.formatted(.number.precision(.fractionLength(0 ... 1))) + " %"
             : "-- %"
+        // Softer than the bolus/adjustment borders — this panel is informational, not an alert.
         let segments: [(color: Color, fraction: CGFloat)] = hasData ? [
-            (.red, CGFloat(distribution.veryLowPct / 100)),
-            (.orange, CGFloat(distribution.lowPct / 100)),
-            (.loopGreen, CGFloat(distribution.inRangePct / 100)),
-            (.purple, CGFloat((distribution.highPct + distribution.veryHighPct) / 100))
-        ] : [(Color.secondary.opacity(0.3), 1)]
+            (.red.opacity(0.6), CGFloat(distribution.veryLowPct / 100)),
+            (.orange.opacity(0.6), CGFloat(distribution.lowPct / 100)),
+            (.loopGreen.opacity(0.6), CGFloat(distribution.inRangePct / 100)),
+            (.purple.opacity(0.6), CGFloat((distribution.highPct + distribution.veryHighPct) / 100))
+        ] : [(Color.secondary.opacity(0.25), 1)]
 
         Button {
             state.showModal(for: .statistics)
@@ -552,7 +475,7 @@ extension Home.RootView {
                     switch face {
                     case .timeInRange:
                         VStack(alignment: .leading, spacing: 4) {
-                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            HStack(alignment: .center, spacing: 6) {
                                 Text(tirString)
                                     .font(.title2).fontWeight(.bold).fontDesign(.rounded)
                                     .foregroundStyle(.primary)
@@ -603,7 +526,7 @@ extension Home.RootView {
             .glassPanel()
             // Time-in-range distribution as the panel border (same edge treatment as the
             // bolus progress border): red / orange / green / purple laid out left → right.
-            .segmentedRoundedBorder(segments: segments, cornerRadius: GlassChrome.panelCornerRadius, lineWidth: 3)
+            .segmentedRoundedBorder(segments: segments, cornerRadius: GlassChrome.panelCornerRadius, lineWidth: 2)
             .padding(.horizontal, 10)
             .contentShape(Rectangle())
         }

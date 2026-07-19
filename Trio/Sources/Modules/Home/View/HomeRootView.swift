@@ -35,6 +35,7 @@ extension Home {
         @State var showSnoozeSheet: Bool = false
         @State var showManualGlucose: Bool = false
         @State var alarmsSnoozeUntil: Date = .distantPast
+        @State var alarmsSnoozeFrom: Date = .distantPast
         // Pull-down-to-force-loop (see HomeRootView+Refresh.swift)
         @State var pullOffset: CGFloat = 0
         @State var isRefreshArmed = false
