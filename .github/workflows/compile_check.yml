@@ -27,6 +27,7 @@ on:
       - chore/release-0.8.4
       - feat/bolus-progress-clearer
       - feat/xdrip-sensor-expiry
+      - feat/progress-border-translucent
     paths-ignore:
       - '**.md'
       - '**/README'

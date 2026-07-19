@@ -80,9 +80,11 @@ final class DashedSpinnerBorderView: UIView {
 
     private func applyColors() {
         if progress != nil {
-            // Determinate progress: a bright fill over a faint full-perimeter track.
-            shape.strokeColor = strokeColor.cgColor
-            shapeBottom.strokeColor = strokeColor.cgColor
+            // Determinate progress: a slightly translucent fill over a faint full-perimeter
+            // track. ~85% opacity keeps the fill easy on the eye and closer to the Liquid
+            // Glass look, without washing out the progress read.
+            shape.strokeColor = strokeColor.withAlphaComponent(0.85).cgColor
+            shapeBottom.strokeColor = strokeColor.withAlphaComponent(0.85).cgColor
             track.strokeColor = strokeColor.withAlphaComponent(0.18).cgColor
         } else {
             shape.strokeColor = strokeColor.withAlphaComponent(0.4).cgColor
