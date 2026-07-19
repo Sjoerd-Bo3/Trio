@@ -416,21 +416,27 @@ extension Home.RootView {
                 )
                 : nil
         )
+        // Concurrent override + temp target keeps the two thin bottom bars (one per half);
+        // a single progress border can't express two independent countdowns.
         .overlay(alignment: .bottom) {
-            // inset clears the corner curve so the bar stays inside the shape
-            Group {
-                if isConcurrent {
-                    HStack(spacing: 6) {
-                        remainingBar(overrideRemainingFraction, tint: .purple)
-                        remainingBar(tempTargetRemainingFraction, tint: .loopGreen)
-                    }
-                } else if let tint = tint {
-                    remainingBar(overrideRemainingFraction ?? tempTargetRemainingFraction, tint: tint)
+            if isConcurrent {
+                HStack(spacing: 6) {
+                    remainingBar(overrideRemainingFraction, tint: .purple)
+                    remainingBar(tempTargetRemainingFraction, tint: .loopGreen)
                 }
+                // inset clears the corner curve so the bars stay inside the shape
+                .padding(.horizontal, 14)
+                .padding(.bottom, 3)
             }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 3)
         }
+        // Single adjustment: reversed progress border — full at the start, emptying as the
+        // override/temp target counts down (same edge treatment as the bolus progress border).
+        .progressRoundedBorderIfPresent(
+            progress: isConcurrent ? nil : (overrideRemainingFraction ?? tempTargetRemainingFraction),
+            color: isConcurrent ? nil : tint,
+            cornerRadius: GlassChrome.panelCornerRadius,
+            lineWidth: 3
+        )
         // whole panel navigates; the cancel buttons' own gestures take precedence
         .contentShape(Rectangle())
         .onTapGesture {

@@ -34,6 +34,23 @@ extension View {
     ) -> some View {
         modifier(SegmentedRoundedBorder(segments: segments, cornerRadius: cornerRadius, lineWidth: lineWidth))
     }
+
+    /// Applies `progressRoundedBorder` only when both `progress` and `color` are non-nil,
+    /// otherwise a no-op. Pass a *remaining* fraction (1 → 0) for a countdown that empties
+    /// the border as time runs out.
+    @ViewBuilder
+    func progressRoundedBorderIfPresent(
+        progress: Double?,
+        color: Color?,
+        cornerRadius: CGFloat,
+        lineWidth: CGFloat = 3
+    ) -> some View {
+        if let progress = progress, let color = color {
+            progressRoundedBorder(progress: progress, color: color, cornerRadius: cornerRadius, lineWidth: lineWidth)
+        } else {
+            self
+        }
+    }
 }
 
 /// One half (top or bottom) of a rounded-rect perimeter, traced left-edge-midpoint →
