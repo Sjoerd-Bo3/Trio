@@ -28,6 +28,7 @@ on:
       - feat/bolus-progress-clearer
       - feat/xdrip-sensor-expiry
       - feat/progress-border-translucent
+      - sync/dev-updates
     paths-ignore:
       - '**.md'
       - '**/README'
