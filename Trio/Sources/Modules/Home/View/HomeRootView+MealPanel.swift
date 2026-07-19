@@ -47,7 +47,7 @@ extension Home.RootView {
         alarmsSnoozeUntil = UserDefaults.standard
             .object(forKey: "UserNotificationsManager.snoozeUntilDate") as? Date ?? .distantPast
         alarmsSnoozeFrom = UserDefaults.standard
-            .object(forKey: TrioAlertManager.snoozeFromDateKey) as? Date ?? .distantPast
+            .object(forKey: "UserNotificationsManager.snoozeFromDate") as? Date ?? .distantPast
     }
 
     /// Bell pill matching the header pills; countdown replaces the label while snoozed, and the
