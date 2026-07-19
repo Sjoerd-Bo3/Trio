@@ -16,6 +16,7 @@ on:
       - feat/restore-loop-bolus-animations
       - feat/tir-distribution-border
       - feat/adjustment-countdown-border
+      - fix/adjustment-compile
       - feat/loop-spinner-border
       - feat/spinner-pill-perf-and-pump
       - feat/spinner-pump-bolus
