@@ -339,6 +339,9 @@ extension Home.RootView {
         let tint = adjustmentTint
         // concurrent override + temp target: halved tint, one remaining bar per half
         let isConcurrent = overrideString != nil && tempTargetString != nil
+        let hasProfile = state.activeProfilePreset != nil
+        // total active adjustments (override, temp target, active profile preset)
+        let activeCount = (overrideString != nil ? 1 : 0) + (tempTargetString != nil ? 1 : 0) + (hasProfile ? 1 : 0)
 
         ZStack {
             if isConcurrent {
@@ -437,20 +440,28 @@ extension Home.RootView {
                 )
                 : nil
         )
-        // Single adjustment → reversed countdown border in its tint (full at the start, emptying
-        // as it runs out). Override + temp target at once → two side-by-side countdown bars
-        // instead, since a single border can't express two independent countdowns.
+        // One active adjustment → reversed countdown border in its tint (full at the start,
+        // emptying as it runs out). Two or more at once → one side-by-side bar per active
+        // adjustment instead, since a single border can't express several countdowns. The
+        // profile preset has no expiry, so its bar stays full (accent, orange when modified).
         .progressRoundedBorderIfPresent(
-            progress: isConcurrent ? nil : (overrideRemainingFraction ?? tempTargetRemainingFraction),
-            color: isConcurrent ? nil : tint,
+            progress: activeCount >= 2 ? nil : (overrideRemainingFraction ?? tempTargetRemainingFraction),
+            color: activeCount >= 2 ? nil : tint,
             cornerRadius: GlassChrome.panelCornerRadius,
             lineWidth: 3
         )
         .overlay(alignment: .bottom) {
-            if isConcurrent {
+            if activeCount >= 2 {
                 HStack(spacing: 6) {
-                    remainingBar(overrideRemainingFraction, tint: .purple)
-                    remainingBar(tempTargetRemainingFraction, tint: .loopGreen)
+                    if overrideString != nil {
+                        remainingBar(overrideRemainingFraction ?? 1, tint: .purple)
+                    }
+                    if tempTargetString != nil {
+                        remainingBar(tempTargetRemainingFraction ?? 1, tint: .loopGreen)
+                    }
+                    if hasProfile {
+                        remainingBar(1, tint: state.isProfileDiverged ? .orange : .accentColor)
+                    }
                 }
                 // inset clears the corner curve so the bars stay inside the shape
                 .padding(.horizontal, 14)
