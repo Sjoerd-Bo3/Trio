@@ -32,6 +32,8 @@ struct AppGroupSource: GlucoseSource {
 
     let cgmDisplayState = CurrentValueSubject<CgmDisplayState?, Never>(nil)
     let cgmProgressHighlight = CurrentValueSubject<LoopKit.DeviceLifecycleProgress?, Never>(nil)
+    /// Sensor expiry (epoch seconds) forwarded by xDrip in the shared app-group payload, when present.
+    let cgmSensorExpiresAtFromPayload = CurrentValueSubject<Date?, Never>(nil)
 
     func fetch(_ heartbeat: DispatchTimer?) -> AnyPublisher<[BloodGlucose], Never> {
         guard let suiteName = Bundle.main.appGroupSuiteName,
@@ -126,12 +128,18 @@ struct AppGroupSource: GlucoseSource {
         guard let payload else {
             cgmDisplayState.value = nil
             cgmProgressHighlight.value = nil
+            cgmSensorExpiresAtFromPayload.value = nil
             return
         }
 
         let cgm = payload["cgm"] as? [String: Any]
         cgmDisplayState.value = parseStatus(cgm?["status"] as? [String: Any])
         cgmProgressHighlight.value = parseSensorLifecycle(cgm?["sensor"] as? [String: Any])
+        if let expires = (cgm?["sensor"] as? [String: Any])?["expiresAt"] as? NSNumber {
+            cgmSensorExpiresAtFromPayload.value = Date(timeIntervalSince1970: expires.doubleValue)
+        } else {
+            cgmSensorExpiresAtFromPayload.value = nil
+        }
     }
 
     private func parseStatus(_ status: [String: Any]?) -> CgmDisplayState? {
