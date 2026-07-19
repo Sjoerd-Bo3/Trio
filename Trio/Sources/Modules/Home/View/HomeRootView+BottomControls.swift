@@ -59,11 +59,6 @@ extension Home.RootView {
             .background(Circle().fill(tint.opacity(0.18)))
     }
 
-    var adjustmentTint: Color? {
-        if overrideString != nil { return Color.purple }
-        if tempTargetString != nil { return Color.loopGreen }
-        return nil
-    }
 
     var overrideString: String? {
         guard let latestOverride = latestOverride.first else {
@@ -222,13 +217,6 @@ extension Home.RootView {
         }
     }
 
-    @ViewBuilder func adjustmentsCancelView(_ cancelAction: @escaping () -> Void) -> some View {
-        Image(systemName: "xmark.app")
-            .font(.title)
-            .onTapGesture {
-                cancelAction()
-            }
-    }
 
     @ViewBuilder func adjustmentsCancelTempTargetView() -> some View {
         Image(systemName: "xmark.app")
@@ -279,199 +267,96 @@ extension Home.RootView {
     }
 
     @ViewBuilder func noActiveAdjustmentsView() -> some View {
-        Group {
-            if let preset = state.activeProfilePreset {
-                // No override/temp target, but a profile preset is active — surface it here.
-                adjustmentIcon(
-                    state.isProfileDiverged ? "exclamationmark.triangle.fill" : preset.icon,
-                    tint: state.isProfileDiverged ? .orange : .accentColor
-                )
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(preset.name)
-                        .font(.subheadline).fontWeight(.semibold)
-                        .foregroundStyle(state.isProfileDiverged ? Color.orange : Color.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(state.isProfileDiverged
-                        ? String(localized: "Profile · modified", comment: "Adjustment card: active profile preset has been modified")
-                        : String(localized: "Active profile", comment: "Adjustment card subtitle for the active profile preset"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else {
-                adjustmentIcon("slider.horizontal.2.gobackward", tint: Color.secondary)
+        adjustmentIcon("slider.horizontal.2.gobackward", tint: Color.secondary)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("No Active Adjustment")
-                        .font(.subheadline).fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Profile at 100 %")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
+        VStack(alignment: .leading, spacing: 1) {
+            Text("No Active Adjustment")
+                .font(.subheadline).fontWeight(.medium)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("Profile at 100 %")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
 
-            Spacer()
+        Spacer(minLength: 0)
+    }
 
-            // clear icon keeps text aligned with the cancel-button states
-            Image(systemName: "xmark.app")
-                .font(.title)
-                .foregroundStyle(Color.clear)
+    /// Icon + name for the active profile preset (orange + warning icon when modified).
+    @ViewBuilder func activeProfileContent(_ preset: ProfilePreset) -> some View {
+        adjustmentIcon(
+            state.isProfileDiverged ? "exclamationmark.triangle.fill" : preset.icon,
+            tint: state.isProfileDiverged ? .orange : .accentColor
+        )
+        VStack(alignment: .leading, spacing: 1) {
+            Text(preset.name)
+                .font(.subheadline).fontWeight(.semibold)
+                .foregroundStyle(state.isProfileDiverged ? Color.orange : Color.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(state.isProfileDiverged
+                ? String(localized: "Profile · modified", comment: "Adjustment panel: active profile preset has been modified")
+                : String(localized: "Active profile", comment: "Adjustment panel subtitle for the active profile preset"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    /// A thin countdown bar (used side by side when more than one adjustment is active).
-    @ViewBuilder func remainingBar(_ fraction: Double?, tint: Color) -> some View {
-        GeometryReader { barGeo in
-            if let fraction {
-                Capsule()
-                    .fill(tint.opacity(0.85))
-                    .frame(width: barGeo.size.width * fraction, height: 3)
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-            }
+    /// One adjustment rendered as its own bordered glass panel. `fraction` drives a reversed
+    /// countdown border (1 = full, 0 = empty); pass nil for no border.
+    @ViewBuilder func adjustmentPanel<Content: View>(
+        tint: Color?,
+        fraction: Double?,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack {
+            content()
         }
-        .frame(height: 3)
-    }
-
-    @ViewBuilder func adjustmentView() -> some View {
-        let tint = adjustmentTint
-        // concurrent override + temp target: halved tint, one remaining bar per half
-        let isConcurrent = overrideString != nil && tempTargetString != nil
-        let hasProfile = state.activeProfilePreset != nil
-        // total active adjustments (override, temp target, active profile preset)
-        let activeCount = (overrideString != nil ? 1 : 0) + (tempTargetString != nil ? 1 : 0) + (hasProfile ? 1 : 0)
-
-        ZStack {
-            if isConcurrent {
-                // halved tint layer the single-tint glass chrome can't express
-                HStack(spacing: 0) {
-                    Color.purple.opacity(0.12)
-                    Color.loopGreen.opacity(0.12)
-                }
-                .clipShape(GlassChrome.panelShape)
-            }
-            HStack {
-                if let overrideString = overrideString, let tempTargetString = tempTargetString {
-                    // content halves match the tint halves so icons clear the seam
-                    HStack(spacing: 0) {
-                        HStack {
-                            adjustmentsOverrideView(overrideString)
-                            Spacer(minLength: 0)
-                        }
-                        .frame(maxWidth: .infinity)
-
-                        HStack {
-                            adjustmentsTempTargetView(tempTargetString)
-                                .padding(.leading, 8)
-
-                            Spacer(minLength: 0)
-
-                            adjustmentsCancelView({
-                                if !latestTempTarget.isEmpty, !latestOverride.isEmpty {
-                                    showCancelConfirmDialog = true
-                                } else if !latestOverride.isEmpty {
-                                    showCancelAlert = true
-                                } else if !latestTempTarget.isEmpty {
-                                    showCancelAlert = true
-                                }
-                            })
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                } else if let overrideString = overrideString {
-                    adjustmentsOverrideView(overrideString)
-                    Spacer()
-                    adjustmentsCancelOverrideView()
-
-                } else if let tempTargetString = tempTargetString {
-                    HStack {
-                        adjustmentsTempTargetView(tempTargetString)
-                        Spacer()
-                        adjustmentsCancelTempTargetView()
-                    }
-                } else {
-                    noActiveAdjustmentsView()
-                }
-            }.padding(.horizontal, 10)
-                .confirmationDialog("Adjustment to Stop", isPresented: $showCancelConfirmDialog) {
-                    Button("Stop Override", role: .destructive) {
-                        Task {
-                            guard let objectID = latestOverride.first?.objectID else { return }
-                            await state.cancelOverride(withID: objectID)
-                        }
-                    }
-                    Button("Stop Temp Target", role: .destructive) {
-                        Task {
-                            guard let objectID = latestTempTarget.first?.objectID else { return }
-                            await state.cancelTempTarget(withID: objectID)
-                        }
-                    }
-                    Button("Stop All Adjustments", role: .destructive) {
-                        Task {
-                            guard let overrideObjectID = latestOverride.first?.objectID else { return }
-                            await state.cancelOverride(withID: overrideObjectID)
-
-                            guard let tempTargetObjectID = latestTempTarget.first?.objectID else { return }
-                            await state.cancelTempTarget(withID: tempTargetObjectID)
-                        }
-                    }
-                } message: {
-                    Text("Select Adjustment")
-                }
-        }
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity)
         .frame(height: HomeLayout.bottomPanelHeight)
-        .glassPanel(
-            tint: isConcurrent ? nil : tint,
-            tintOpacity: 0.12,
-            strokeOpacity: isConcurrent ? 0 : (tint == nil ? 0.08 : 0.30)
-        )
-        .overlay(
-            // concurrent halves get a bicolor rim the single-tint chrome can't express
-            isConcurrent
-                ? GlassChrome.panelShape.strokeBorder(
-                    LinearGradient(
-                        colors: [Color.purple.opacity(0.30), Color.loopGreen.opacity(0.30)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    lineWidth: 1
-                )
-                : nil
-        )
-        // One active adjustment → reversed countdown border in its tint (full at the start,
-        // emptying as it runs out). Two or more at once → one side-by-side bar per active
-        // adjustment instead, since a single border can't express several countdowns. The
-        // profile preset has no expiry, so its bar stays full (accent, orange when modified).
+        .glassPanel(tint: tint, tintOpacity: 0.12, strokeOpacity: tint == nil ? 0.08 : 0.30)
         .progressRoundedBorderIfPresent(
-            progress: activeCount >= 2 ? nil : (overrideRemainingFraction ?? tempTargetRemainingFraction),
-            color: activeCount >= 2 ? nil : tint,
+            progress: fraction,
+            color: tint,
             cornerRadius: GlassChrome.panelCornerRadius,
             lineWidth: 3
         )
-        .overlay(alignment: .bottom) {
-            if activeCount >= 2 {
-                HStack(spacing: 6) {
-                    if overrideString != nil {
-                        remainingBar(overrideRemainingFraction ?? 1, tint: .purple)
-                    }
-                    if tempTargetString != nil {
-                        remainingBar(tempTargetRemainingFraction ?? 1, tint: .loopGreen)
-                    }
-                    if hasProfile {
-                        remainingBar(1, tint: state.isProfileDiverged ? .orange : .accentColor)
-                    }
-                }
-                // inset clears the corner curve so the bars stay inside the shape
-                .padding(.horizontal, 14)
-                .padding(.bottom, 3)
-            }
-        }
-        // whole panel navigates; the cancel buttons' own gestures take precedence
         .contentShape(Rectangle())
-        .onTapGesture {
-            selectedTab = 2
+        .onTapGesture { selectedTab = 2 }
+    }
+
+    @ViewBuilder func adjustmentView() -> some View {
+        // Each active adjustment is its own bordered panel, side by side. Override and temp
+        // target show a reversed countdown border (full → empty as they run out); the profile
+        // preset has no expiry, so its border stays full.
+        HStack(spacing: 8) {
+            if let overrideString = overrideString {
+                adjustmentPanel(tint: .purple, fraction: overrideRemainingFraction ?? 1) {
+                    adjustmentsOverrideView(overrideString)
+                    Spacer(minLength: 0)
+                    adjustmentsCancelOverrideView()
+                }
+            }
+            if let tempTargetString = tempTargetString {
+                adjustmentPanel(tint: .loopGreen, fraction: tempTargetRemainingFraction ?? 1) {
+                    adjustmentsTempTargetView(tempTargetString)
+                    Spacer(minLength: 0)
+                    adjustmentsCancelTempTargetView()
+                }
+            }
+            if let preset = state.activeProfilePreset {
+                adjustmentPanel(tint: state.isProfileDiverged ? .orange : .accentColor, fraction: 1) {
+                    activeProfileContent(preset)
+                    Spacer(minLength: 0)
+                }
+            }
+            if overrideString == nil, tempTargetString == nil, state.activeProfilePreset == nil {
+                adjustmentPanel(tint: nil, fraction: nil) {
+                    noActiveAdjustmentsView()
+                }
+            }
         }
         .padding(.horizontal, 10)
     }
