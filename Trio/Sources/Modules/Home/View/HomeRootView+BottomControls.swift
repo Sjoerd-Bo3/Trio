@@ -499,22 +499,6 @@ extension Home.RootView {
         }
     }
 
-    func statsDistributionBar(_ segments: [(color: Color, fraction: CGFloat)]) -> some View {
-        GeometryReader { g in
-            let spacing: CGFloat = 2
-            let shown = segments.filter { $0.fraction > 0.005 }
-            let available = max(g.size.width - spacing * CGFloat(max(shown.count - 1, 0)), 0)
-            HStack(spacing: spacing) {
-                ForEach(Array(shown.enumerated()), id: \.offset) { _, segment in
-                    Capsule()
-                        .fill(segment.color)
-                        .frame(width: available * segment.fraction)
-                }
-            }
-            .frame(maxHeight: .infinity)
-        }
-    }
-
     /// Mean glucose (mg/dL) of today's readings, nil without data.
     private var todayMeanGlucose: Double? {
         let startOfDay = Calendar.current.startOfDay(for: Date())
@@ -583,9 +567,6 @@ extension Home.RootView {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             }
-
-                            statsDistributionBar(segments)
-                                .frame(height: 6)
                         }
                     case .distributionBar:
                         VStack(alignment: .leading, spacing: 6) {
@@ -598,9 +579,6 @@ extension Home.RootView {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
-
-                            statsDistributionBar(segments)
-                                .frame(height: 6)
                         }
                     case .averages:
                         VStack(alignment: .leading, spacing: 1) {
@@ -623,6 +601,9 @@ extension Home.RootView {
             }
             .frame(height: HomeLayout.statsBannerHeight)
             .glassPanel()
+            // Time-in-range distribution as the panel border (same edge treatment as the
+            // bolus progress border): red / orange / green / purple laid out left → right.
+            .segmentedRoundedBorder(segments: segments, cornerRadius: GlassChrome.panelCornerRadius, lineWidth: 3)
             .padding(.horizontal, 10)
             .contentShape(Rectangle())
         }
