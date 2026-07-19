@@ -459,12 +459,13 @@ extension Home.RootView {
         let tirString = hasData
             ? distribution.inRangePct.formatted(.number.precision(.fractionLength(0 ... 1))) + " %"
             : "-- %"
+        // Softer than the bolus/adjustment borders — this panel is informational, not an alert.
         let segments: [(color: Color, fraction: CGFloat)] = hasData ? [
-            (.red, CGFloat(distribution.veryLowPct / 100)),
-            (.orange, CGFloat(distribution.lowPct / 100)),
-            (.loopGreen, CGFloat(distribution.inRangePct / 100)),
-            (.purple, CGFloat((distribution.highPct + distribution.veryHighPct) / 100))
-        ] : [(Color.secondary.opacity(0.3), 1)]
+            (.red.opacity(0.6), CGFloat(distribution.veryLowPct / 100)),
+            (.orange.opacity(0.6), CGFloat(distribution.lowPct / 100)),
+            (.loopGreen.opacity(0.6), CGFloat(distribution.inRangePct / 100)),
+            (.purple.opacity(0.6), CGFloat((distribution.highPct + distribution.veryHighPct) / 100))
+        ] : [(Color.secondary.opacity(0.25), 1)]
 
         Button {
             state.showModal(for: .statistics)
@@ -474,7 +475,7 @@ extension Home.RootView {
                     switch face {
                     case .timeInRange:
                         VStack(alignment: .leading, spacing: 4) {
-                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            HStack(alignment: .center, spacing: 6) {
                                 Text(tirString)
                                     .font(.title2).fontWeight(.bold).fontDesign(.rounded)
                                     .foregroundStyle(.primary)
@@ -525,7 +526,7 @@ extension Home.RootView {
             .glassPanel()
             // Time-in-range distribution as the panel border (same edge treatment as the
             // bolus progress border): red / orange / green / purple laid out left → right.
-            .segmentedRoundedBorder(segments: segments, cornerRadius: GlassChrome.panelCornerRadius, lineWidth: 3)
+            .segmentedRoundedBorder(segments: segments, cornerRadius: GlassChrome.panelCornerRadius, lineWidth: 2)
             .padding(.horizontal, 10)
             .contentShape(Rectangle())
         }
