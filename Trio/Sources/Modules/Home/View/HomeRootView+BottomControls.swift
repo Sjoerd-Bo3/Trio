@@ -280,17 +280,37 @@ extension Home.RootView {
 
     @ViewBuilder func noActiveAdjustmentsView() -> some View {
         Group {
-            adjustmentIcon("slider.horizontal.2.gobackward", tint: Color.secondary)
+            if let preset = state.activeProfilePreset {
+                // No override/temp target, but a profile preset is active — surface it here.
+                adjustmentIcon(
+                    state.isProfileDiverged ? "exclamationmark.triangle.fill" : preset.icon,
+                    tint: state.isProfileDiverged ? .orange : .accentColor
+                )
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(preset.name)
+                        .font(.subheadline).fontWeight(.semibold)
+                        .foregroundStyle(state.isProfileDiverged ? Color.orange : Color.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(state.isProfileDiverged
+                        ? String(localized: "Profile · modified", comment: "Adjustment card: active profile preset has been modified")
+                        : String(localized: "Active profile", comment: "Adjustment card subtitle for the active profile preset"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else {
+                adjustmentIcon("slider.horizontal.2.gobackward", tint: Color.secondary)
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text("No Active Adjustment")
-                    .font(.subheadline).fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text("Profile at 100 %")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("No Active Adjustment")
+                        .font(.subheadline).fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Profile at 100 %")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
 
             Spacer()
@@ -300,18 +320,6 @@ extension Home.RootView {
                 .font(.title)
                 .foregroundStyle(Color.clear)
         }
-    }
-
-    @ViewBuilder func remainingBar(_ fraction: Double?, tint: Color) -> some View {
-        GeometryReader { barGeo in
-            if let fraction {
-                Capsule()
-                    .fill(tint.opacity(0.85))
-                    .frame(width: barGeo.size.width * fraction, height: 3)
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-            }
-        }
-        .frame(height: 3)
     }
 
     @ViewBuilder func adjustmentView() -> some View {
@@ -416,27 +424,28 @@ extension Home.RootView {
                 )
                 : nil
         )
-        // Concurrent override + temp target keeps the two thin bottom bars (one per half);
-        // a single progress border can't express two independent countdowns.
-        .overlay(alignment: .bottom) {
-            if isConcurrent {
-                HStack(spacing: 6) {
-                    remainingBar(overrideRemainingFraction, tint: .purple)
-                    remainingBar(tempTargetRemainingFraction, tint: .loopGreen)
-                }
-                // inset clears the corner curve so the bars stay inside the shape
-                .padding(.horizontal, 14)
-                .padding(.bottom, 3)
-            }
-        }
-        // Single adjustment: reversed progress border — full at the start, emptying as the
-        // override/temp target counts down (same edge treatment as the bolus progress border).
+        // Reversed countdown border(s): full at the start, emptying as the adjustment runs out
+        // (same edge treatment as the bolus progress border). Single adjustment → one border in
+        // its tint. Concurrent override + temp target → two concentric borders: outer purple for
+        // the override, inner green (inset) for the temp target, each on its own countdown.
         .progressRoundedBorderIfPresent(
-            progress: isConcurrent ? nil : (overrideRemainingFraction ?? tempTargetRemainingFraction),
-            color: isConcurrent ? nil : tint,
+            progress: isConcurrent ? overrideRemainingFraction : (overrideRemainingFraction ?? tempTargetRemainingFraction),
+            color: isConcurrent ? Color.purple : tint,
             cornerRadius: GlassChrome.panelCornerRadius,
             lineWidth: 3
         )
+        .overlay {
+            if isConcurrent {
+                Color.clear
+                    .progressRoundedBorderIfPresent(
+                        progress: tempTargetRemainingFraction,
+                        color: Color.loopGreen,
+                        cornerRadius: GlassChrome.panelCornerRadius - 5,
+                        lineWidth: 3
+                    )
+                    .padding(5)
+            }
+        }
         // whole panel navigates; the cancel buttons' own gestures take precedence
         .contentShape(Rectangle())
         .onTapGesture {
