@@ -84,7 +84,7 @@
 		3811DE5F25C9D4D500A708ED /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5725C9D4D500A708ED /* ProgressBar.swift */; };
 		5BD4EAB56D214E8B9856C82D /* PresetSwitchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444D7FF319E24E5ABB3EA85F /* PresetSwitchCoordinator.swift */; };
 468C3F851FE245DCBD1E6E19 /* DivergenceSavePromptModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */; };
-		5A1C0B0E0D0C0B0A09080701 /* SpinningCapsuleBorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1C0B0E0D0C0B0A09080702 /* SpinningCapsuleBorder.swift */; };
+		5A1C0B0E0D0C0B0A09080701 /* AnimatedBorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1C0B0E0D0C0B0A09080702 /* AnimatedBorder.swift */; };
 		AA22CB01CC33DD44EE55F101 /* CapsuleBorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22CB01CC33DD44EE55F102 /* CapsuleBorder.swift */; };
 		AA22DB01CC33DD44EE55F201 /* PanelBorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22DB01CC33DD44EE55F202 /* PanelBorder.swift */; };
 3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */; };
@@ -1130,7 +1130,7 @@
 		3811DE5725C9D4D500A708ED /* ProgressBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
 		444D7FF319E24E5ABB3EA85F /* PresetSwitchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetSwitchCoordinator.swift; sourceTree = "<group>"; };
 4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivergenceSavePromptModifier.swift; sourceTree = "<group>"; };
-		5A1C0B0E0D0C0B0A09080702 /* SpinningCapsuleBorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpinningCapsuleBorder.swift; sourceTree = "<group>"; };
+		5A1C0B0E0D0C0B0A09080702 /* AnimatedBorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedBorder.swift; sourceTree = "<group>"; };
 		AA22CB01CC33DD44EE55F102 /* CapsuleBorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleBorder.swift; sourceTree = "<group>"; };
 		AA22DB01CC33DD44EE55F202 /* PanelBorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelBorder.swift; sourceTree = "<group>"; };
 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
@@ -2726,7 +2726,7 @@
 			children = (
 				DD6A4E072DBD95F1008C4B26 /* BluetoothRequiredView.swift */,
 				4A6D9C26424D42C9B022DC02 /* DivergenceSavePromptModifier.swift */,
-				5A1C0B0E0D0C0B0A09080702 /* SpinningCapsuleBorder.swift */,
+				5A1C0B0E0D0C0B0A09080702 /* AnimatedBorder.swift */,
 				AA22CB01CC33DD44EE55F102 /* CapsuleBorder.swift */,
 				AA22DB01CC33DD44EE55F202 /* PanelBorder.swift */,
 3811DE5925C9D4D500A708ED /* ViewModifiers.swift */,
@@ -5296,7 +5296,7 @@ ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */,
 				38EA05DA261F6E7C0064E39B /* SimpleLogReporter.swift in Sources */,
 				5BD4EAB56D214E8B9856C82D /* PresetSwitchCoordinator.swift in Sources */,
 468C3F851FE245DCBD1E6E19 /* DivergenceSavePromptModifier.swift in Sources */,
-				5A1C0B0E0D0C0B0A09080701 /* SpinningCapsuleBorder.swift in Sources */,
+				5A1C0B0E0D0C0B0A09080701 /* AnimatedBorder.swift in Sources */,
 				AA22CB01CC33DD44EE55F101 /* CapsuleBorder.swift in Sources */,
 				AA22DB01CC33DD44EE55F201 /* PanelBorder.swift in Sources */,
 3811DE6125C9D4D500A708ED /* ViewModifiers.swift in Sources */,

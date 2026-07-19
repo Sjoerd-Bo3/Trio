@@ -1,6 +1,6 @@
 //
 // This file is the shared base for the animated borders: the CoreAnimation
-// engine (`DashedSpinnerBorderView`) and the `SpinningCapsuleBorder` modifier.
+// engine (`DashedSpinnerBorderView`) and the `AnimatedBorder` modifier.
 // Capsule-shaped helpers live in CapsuleBorder.swift; rounded-rectangle "panel"
 // helpers (incl. the segmented distribution border) live in PanelBorder.swift.
 //
@@ -239,7 +239,7 @@ private struct DashedSpinnerBorder: UIViewRepresentable {
 /// Overlays a dashed border whose gap rotates around the perimeter while
 /// `isActive`, and shows a solid border otherwise. Reusable on any
 /// pill-shaped or rounded-rectangle view.
-struct SpinningCapsuleBorder: ViewModifier {
+struct AnimatedBorder: ViewModifier {
     let isActive: Bool
     var color: Color
     var lineWidth: CGFloat = 2

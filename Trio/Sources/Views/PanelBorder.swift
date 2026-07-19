@@ -2,19 +2,19 @@ import SwiftUI
 import UIKit
 
 // Rounded-rectangle "panel" border helpers. The animated spin / progress borders are built
-// on the shared `SpinningCapsuleBorder` engine in SpinningCapsuleBorder.swift; the segmented
+// on the shared `AnimatedBorder` engine in AnimatedBorder.swift; the segmented
 // distribution border is pure SwiftUI. Used by the bolus progress card and the
 // time-in-range stats panel.
 extension View {
     /// Animated, spinning **rounded-rectangle** border that activates with `isActive`.
     func spinningRoundedBorder(isActive: Bool, color: Color, cornerRadius: CGFloat, lineWidth: CGFloat = 2) -> some View {
-        modifier(SpinningCapsuleBorder(isActive: isActive, color: color, lineWidth: lineWidth, cornerRadius: cornerRadius))
+        modifier(AnimatedBorder(isActive: isActive, color: color, lineWidth: lineWidth, cornerRadius: cornerRadius))
     }
 
     /// Determinate **rounded-rectangle** progress border: a bright stroke fills the top and
     /// bottom edges symmetrically left → right as `progress` (0...1) approaches 1.
     func progressRoundedBorder(progress: Double, color: Color, cornerRadius: CGFloat, lineWidth: CGFloat = 2) -> some View {
-        modifier(SpinningCapsuleBorder(
+        modifier(AnimatedBorder(
             isActive: false,
             color: color,
             lineWidth: lineWidth,
