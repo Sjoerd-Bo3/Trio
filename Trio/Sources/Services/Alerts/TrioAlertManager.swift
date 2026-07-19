@@ -295,11 +295,14 @@ final class BaseTrioAlertManager: TrioAlertManager, Injectable {
     /// Persisted under the same key UN reads, so a force-quit + relaunch
     /// during a snooze sees the same end-date.
     private static let snoozeUntilDateKey = "UserNotificationsManager.snoozeUntilDate"
+    /// Start of the current snooze window, so the UI can show how much of it is left.
+    static let snoozeFromDateKey = "UserNotificationsManager.snoozeFromDate"
     private static let legacyGlucoseNotificationID = "Trio.glucoseNotification"
 
     @MainActor func applySnooze(for duration: TimeInterval) async {
         let untilDate = duration > 0 ? Date().addingTimeInterval(duration) : .distantPast
         UserDefaults.standard.set(untilDate, forKey: Self.snoozeUntilDateKey)
+        UserDefaults.standard.set(duration > 0 ? Date() : Date.distantPast, forKey: Self.snoozeFromDateKey)
 
         // Legacy glucose-notification UN cleanup (the new pipeline uses
         // per-alarm identifiers; this catches anything still lingering
