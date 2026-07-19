@@ -1,3 +1,9 @@
+//
+// This file is the shared base for the animated borders: the CoreAnimation
+// engine (`DashedSpinnerBorderView`) and the `AnimatedBorder` modifier.
+// Capsule-shaped helpers live in CapsuleBorder.swift; rounded-rectangle "panel"
+// helpers (incl. the segmented distribution border) live in PanelBorder.swift.
+//
 import SwiftUI
 import UIKit
 
@@ -233,7 +239,7 @@ private struct DashedSpinnerBorder: UIViewRepresentable {
 /// Overlays a dashed border whose gap rotates around the perimeter while
 /// `isActive`, and shows a solid border otherwise. Reusable on any
 /// pill-shaped or rounded-rectangle view.
-struct SpinningCapsuleBorder: ViewModifier {
+struct AnimatedBorder: ViewModifier {
     let isActive: Bool
     var color: Color
     var lineWidth: CGFloat = 2
@@ -252,41 +258,5 @@ struct SpinningCapsuleBorder: ViewModifier {
                 progress: progress
             )
         )
-    }
-}
-
-extension View {
-    /// Animated, spinning **capsule** (pill) border that activates with `isActive`.
-    func spinningCapsuleBorder(isActive: Bool, color: Color, lineWidth: CGFloat = 2) -> some View {
-        modifier(SpinningCapsuleBorder(isActive: isActive, color: color, lineWidth: lineWidth, cornerRadius: nil))
-    }
-
-    /// Animated, spinning **rounded-rectangle** border that activates with `isActive`.
-    func spinningRoundedBorder(isActive: Bool, color: Color, cornerRadius: CGFloat, lineWidth: CGFloat = 2) -> some View {
-        modifier(SpinningCapsuleBorder(isActive: isActive, color: color, lineWidth: lineWidth, cornerRadius: cornerRadius))
-    }
-
-    /// Determinate **capsule** (pill) progress border: a bright stroke fills the top and
-    /// bottom edges symmetrically left → right as `progress` (0...1) approaches 1.
-    func progressCapsuleBorder(progress: Double, color: Color, lineWidth: CGFloat = 2) -> some View {
-        modifier(SpinningCapsuleBorder(
-            isActive: false,
-            color: color,
-            lineWidth: lineWidth,
-            cornerRadius: nil,
-            progress: CGFloat(progress)
-        ))
-    }
-
-    /// Determinate **rounded-rectangle** progress border: a bright stroke fills the top and
-    /// bottom edges symmetrically left → right as `progress` (0...1) approaches 1.
-    func progressRoundedBorder(progress: Double, color: Color, cornerRadius: CGFloat, lineWidth: CGFloat = 2) -> some View {
-        modifier(SpinningCapsuleBorder(
-            isActive: false,
-            color: color,
-            lineWidth: lineWidth,
-            cornerRadius: cornerRadius,
-            progress: CGFloat(progress)
-        ))
     }
 }
