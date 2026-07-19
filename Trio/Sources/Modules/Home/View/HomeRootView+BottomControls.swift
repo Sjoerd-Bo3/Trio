@@ -322,6 +322,19 @@ extension Home.RootView {
         }
     }
 
+    /// A thin countdown bar (used side by side when more than one adjustment is active).
+    @ViewBuilder func remainingBar(_ fraction: Double?, tint: Color) -> some View {
+        GeometryReader { barGeo in
+            if let fraction {
+                Capsule()
+                    .fill(tint.opacity(0.85))
+                    .frame(width: barGeo.size.width * fraction, height: 3)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+            }
+        }
+        .frame(height: 3)
+    }
+
     @ViewBuilder func adjustmentView() -> some View {
         let tint = adjustmentTint
         // concurrent override + temp target: halved tint, one remaining bar per half
@@ -424,26 +437,24 @@ extension Home.RootView {
                 )
                 : nil
         )
-        // Reversed countdown border(s): full at the start, emptying as the adjustment runs out
-        // (same edge treatment as the bolus progress border). Single adjustment → one border in
-        // its tint. Concurrent override + temp target → two concentric borders: outer purple for
-        // the override, inner green (inset) for the temp target, each on its own countdown.
+        // Single adjustment → reversed countdown border in its tint (full at the start, emptying
+        // as it runs out). Override + temp target at once → two side-by-side countdown bars
+        // instead, since a single border can't express two independent countdowns.
         .progressRoundedBorderIfPresent(
-            progress: isConcurrent ? overrideRemainingFraction : (overrideRemainingFraction ?? tempTargetRemainingFraction),
-            color: isConcurrent ? Color.purple : tint,
+            progress: isConcurrent ? nil : (overrideRemainingFraction ?? tempTargetRemainingFraction),
+            color: isConcurrent ? nil : tint,
             cornerRadius: GlassChrome.panelCornerRadius,
             lineWidth: 3
         )
-        .overlay {
+        .overlay(alignment: .bottom) {
             if isConcurrent {
-                Color.clear
-                    .progressRoundedBorderIfPresent(
-                        progress: tempTargetRemainingFraction,
-                        color: Color.loopGreen,
-                        cornerRadius: GlassChrome.panelCornerRadius - 5,
-                        lineWidth: 3
-                    )
-                    .padding(5)
+                HStack(spacing: 6) {
+                    remainingBar(overrideRemainingFraction, tint: .purple)
+                    remainingBar(tempTargetRemainingFraction, tint: .loopGreen)
+                }
+                // inset clears the corner curve so the bars stay inside the shape
+                .padding(.horizontal, 14)
+                .padding(.bottom, 3)
             }
         }
         // whole panel navigates; the cancel buttons' own gestures take precedence
