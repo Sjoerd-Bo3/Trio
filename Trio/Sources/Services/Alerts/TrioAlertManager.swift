@@ -172,9 +172,15 @@ final class BaseTrioAlertManager: TrioAlertManager, Injectable {
         // Pump alerts: look up in catalog → override interruptionLevel.
         // Everything else (CGM lifecycle, Trio-internal glucose / loop) is
         // passed through with the level its producer chose.
-        let effective: Alert = AlertCatalogRegistry.lookup(alert.identifier).map { entry in
+        let cataloged: Alert = AlertCatalogRegistry.lookup(alert.identifier).map { entry in
             applyCatalogEntry(entry, to: alert)
         } ?? alert
+
+        // User per-alert severity override (Settings → Alert Severity), keyed
+        // by the alert's catalog concept. Only touches catalog-known
+        // device/system alerts; glucose alarms carry their own chosen level and
+        // aren't in the catalog, so they pass through untouched.
+        let effective = applySeverityOverride(to: cataloged)
 
         // Per-tier snooze for catalog-known pump alerts. Critical tier
         // ignores snooze.
@@ -220,6 +226,28 @@ final class BaseTrioAlertManager: TrioAlertManager, Injectable {
             backgroundContent: alert.backgroundContent,
             trigger: alert.trigger,
             interruptionLevel: entry.interruptionLevel,
+            sound: alert.sound,
+            metadata: alert.metadata
+        )
+    }
+
+    /// Rewrites an alert's `interruptionLevel` to the user's per-concept
+    /// severity override, when one is set. Resolves the concept (and its
+    /// catalog-default tier) via the same registry lookup used above; alerts
+    /// with no catalog entry (e.g. glucose alarms) are returned unchanged.
+    private func applySeverityOverride(to alert: Alert) -> Alert {
+        guard let entry = AlertCatalogRegistry.lookup(alert.identifier),
+              let catalogDefault = DeviceAlertSeverity(level: entry.interruptionLevel)
+        else { return alert }
+        let tier = AlertSeverityOverrideStore.shared.severity(for: entry.concept, default: catalogDefault)
+        let level = tier.interruptionLevel
+        guard level != alert.interruptionLevel else { return alert }
+        return Alert(
+            identifier: alert.identifier,
+            foregroundContent: alert.foregroundContent,
+            backgroundContent: alert.backgroundContent,
+            trigger: alert.trigger,
+            interruptionLevel: level,
             sound: alert.sound,
             metadata: alert.metadata
         )

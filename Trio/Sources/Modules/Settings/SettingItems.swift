@@ -380,6 +380,24 @@ enum SettingItems {
             path: ["Notifications", "Device Alarms"]
         ),
         SettingItem(
+            title: "Alert Severity",
+            view: .alertSeverity,
+            searchContents: [
+                "Critical",
+                "Time-Sensitive",
+                "Normal",
+                "Override Silence",
+                "Occlusion",
+                "Pump Fault",
+                "Reservoir",
+                "Battery",
+                "Sensor",
+                "Not Looping",
+                "Per-Alert Severity"
+            ],
+            path: ["Notifications", "Alert Severity"]
+        ),
+        SettingItem(
             title: "Day & Night Windows",
             view: .alarmWindows,
             searchContents: ["Day Starts", "Night Starts", "Day & Night"],

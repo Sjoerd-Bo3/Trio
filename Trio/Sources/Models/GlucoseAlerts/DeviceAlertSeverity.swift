@@ -22,6 +22,17 @@ enum DeviceAlertSeverity: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// The `Alert.InterruptionLevel` this tier maps to at fire time. Inverse
+    /// of `init?(level:)` — used by the per-alert severity override to rewrite
+    /// an alert's level to the user's chosen tier.
+    var interruptionLevel: Alert.InterruptionLevel {
+        switch self {
+        case .critical: return .critical
+        case .timeSensitive: return .timeSensitive
+        case .normal: return .active
+        }
+    }
+
     var displayName: String {
         switch self {
         case .critical: return String(localized: "Critical")
