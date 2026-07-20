@@ -449,6 +449,7 @@
 		BD1179832F4E22C100F90001 /* DeviceAlertSeverity.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1179842F4E22C100F90001 /* DeviceAlertSeverity.swift */; };
 		BD1179852F4E22C100F90001 /* DeviceAlertSeverityConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1179862F4E22C100F90001 /* DeviceAlertSeverityConfig.swift */; };
 		BD1179872F4E22C100F90001 /* DeviceAlertsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1179882F4E22C100F90001 /* DeviceAlertsStore.swift */; };
+		BD5E0A0100000A0000000001 /* AlertSeverityOverrideStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD5E0A0100000A0000000002 /* AlertSeverityOverrideStore.swift */; };
 		BD1179892F4E22C100F90001 /* DeviceAlarmsDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD11798A2F4E22C100F90001 /* DeviceAlarmsDataFlow.swift */; };
 		BD11798B2F4E22C100F90001 /* DeviceAlarmsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD11798C2F4E22C100F90001 /* DeviceAlarmsProvider.swift */; };
 		BD11798D2F4E22C100F90001 /* DeviceAlarmsStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD11798E2F4E22C100F90001 /* DeviceAlarmsStateModel.swift */; };
@@ -701,6 +702,7 @@
 		DD1745152C54388A00211FAC /* TherapySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1745142C54388A00211FAC /* TherapySettingsView.swift */; };
 		DD1745172C54389F00211FAC /* FeatureSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1745162C54389F00211FAC /* FeatureSettingsView.swift */; };
 		DD1745192C543B5700211FAC /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1745182C543B5700211FAC /* NotificationsView.swift */; };
+		BD5E0A0200000A0000000001 /* AlertSeverityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD5E0A0200000A0000000002 /* AlertSeverityView.swift */; };
 		DD17451D2C543C5F00211FAC /* ServicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD17451C2C543C5F00211FAC /* ServicesView.swift */; };
 		DD1745202C55523E00211FAC /* SMBSettingsDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD17451F2C55523E00211FAC /* SMBSettingsDataFlow.swift */; };
 		DD1745222C55524800211FAC /* SMBSettingsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1745212C55524800211FAC /* SMBSettingsProvider.swift */; };
@@ -1493,6 +1495,7 @@
 		BD1179842F4E22C100F90001 /* DeviceAlertSeverity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAlertSeverity.swift; sourceTree = "<group>"; };
 		BD1179862F4E22C100F90001 /* DeviceAlertSeverityConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAlertSeverityConfig.swift; sourceTree = "<group>"; };
 		BD1179882F4E22C100F90001 /* DeviceAlertsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAlertsStore.swift; sourceTree = "<group>"; };
+		BD5E0A0100000A0000000002 /* AlertSeverityOverrideStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertSeverityOverrideStore.swift; sourceTree = "<group>"; };
 		BD11798A2F4E22C100F90001 /* DeviceAlarmsDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAlarmsDataFlow.swift; sourceTree = "<group>"; };
 		BD11798C2F4E22C100F90001 /* DeviceAlarmsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAlarmsProvider.swift; sourceTree = "<group>"; };
 		BD11798E2F4E22C100F90001 /* DeviceAlarmsStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAlarmsStateModel.swift; sourceTree = "<group>"; };
@@ -1748,6 +1751,7 @@
 		DD1745142C54388A00211FAC /* TherapySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TherapySettingsView.swift; sourceTree = "<group>"; };
 		DD1745162C54389F00211FAC /* FeatureSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureSettingsView.swift; sourceTree = "<group>"; };
 		DD1745182C543B5700211FAC /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		BD5E0A0200000A0000000002 /* AlertSeverityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertSeverityView.swift; sourceTree = "<group>"; };
 		DD17451C2C543C5F00211FAC /* ServicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesView.swift; sourceTree = "<group>"; };
 		DD17451F2C55523E00211FAC /* SMBSettingsDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMBSettingsDataFlow.swift; sourceTree = "<group>"; };
 		DD1745212C55524800211FAC /* SMBSettingsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMBSettingsProvider.swift; sourceTree = "<group>"; };
@@ -3488,6 +3492,7 @@
 				BD11795D2F4E22C100F90001 /* GlucoseAlertCoordinator.swift */,
 				BD1179592F4E22C100F90001 /* GlucoseAlertsStore.swift */,
 				BD1179882F4E22C100F90001 /* DeviceAlertsStore.swift */,
+				BD5E0A0100000A0000000002 /* AlertSeverityOverrideStore.swift */,
 				BD1179AB2F4E22C100F90001 /* NotLoopingMonitor.swift */,
 				BD1179292F4E22C100F90001 /* TrioAlertCategory.swift */,
 				BD1179212F4E22C100F90001 /* TrioAlertManager.swift */,
@@ -4067,6 +4072,7 @@
 				DD1745162C54389F00211FAC /* FeatureSettingsView.swift */,
 				AABB00012C54389F00211FAC /* TreatmentsSettingsView.swift */,
 				DD1745182C543B5700211FAC /* NotificationsView.swift */,
+				BD5E0A0200000A0000000002 /* AlertSeverityView.swift */,
 				DD17451C2C543C5F00211FAC /* ServicesView.swift */,
 				DD1745362C55B74200211FAC /* AlgorithmSettings.swift */,
 			);
@@ -5267,6 +5273,7 @@ ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */,
 				BDA6CC882CAF219B00F942F9 /* TempTargetSetup.swift in Sources */,
 				383420D625FFE38C002D46C1 /* LoopView.swift in Sources */,
 				DD1745192C543B5700211FAC /* NotificationsView.swift in Sources */,
+				BD5E0A0200000A0000000001 /* AlertSeverityView.swift in Sources */,
 				3811DEAD25C9D88300A708ED /* UserDefaults+Cache.swift in Sources */,
 				CEB434E728B9053300B70274 /* LoopUIColorPalette+Default.swift in Sources */,
 				19F95FF329F10FBC00314DDC /* StatDataFlow.swift in Sources */,
@@ -5364,6 +5371,7 @@ ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */,
 				BD1179832F4E22C100F90001 /* DeviceAlertSeverity.swift in Sources */,
 				BD1179852F4E22C100F90001 /* DeviceAlertSeverityConfig.swift in Sources */,
 				BD1179872F4E22C100F90001 /* DeviceAlertsStore.swift in Sources */,
+				BD5E0A0100000A0000000001 /* AlertSeverityOverrideStore.swift in Sources */,
 				BD1179892F4E22C100F90001 /* DeviceAlarmsDataFlow.swift in Sources */,
 				BD11798B2F4E22C100F90001 /* DeviceAlarmsProvider.swift in Sources */,
 				BD11798D2F4E22C100F90001 /* DeviceAlarmsStateModel.swift in Sources */,

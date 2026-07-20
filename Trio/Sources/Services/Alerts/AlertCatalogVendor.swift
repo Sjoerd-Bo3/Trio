@@ -78,6 +78,40 @@ extension Alert {
             case .unspecified: return ""
             }
         }
+
+        /// Stable string key for persisting a per-concept severity override.
+        /// Must never change once shipped — it's the storage key.
+        var storableKey: String {
+            switch self {
+            case .occlusion: return "occlusion"
+            case .reservoirLow: return "reservoirLow"
+            case .reservoirEmpty: return "reservoirEmpty"
+            case .pumpBatteryLow: return "pumpBatteryLow"
+            case .pumpBatteryEmpty: return "pumpBatteryEmpty"
+            case .rileyLinkBatteryLow: return "rileyLinkBatteryLow"
+            case .hardwareFault: return "hardwareFault"
+            case .insulinLimitWarning: return "insulinLimitWarning"
+            case .insulinLimitReached: return "insulinLimitReached"
+            case .suspendInProgressReminder: return "suspendInProgressReminder"
+            case .insulinResumeReminder: return "insulinResumeReminder"
+            case .deviceExpirationReminder: return "deviceExpirationReminder"
+            case .deviceExpired: return "deviceExpired"
+            case .deviceShutdownImminent: return "deviceShutdownImminent"
+            case .setupIncomplete: return "setupIncomplete"
+            case .timeChange: return "timeChange"
+            case .pairingFailed: return "pairingFailed"
+            case .userBloodGlucoseReminder: return "userBloodGlucoseReminder"
+            case .basalProfileMismatch: return "basalProfileMismatch"
+            case .cgmExpiringSoon: return "cgmExpiringSoon"
+            case .cgmExpired: return "cgmExpired"
+            case .cgmReplacementNeeded: return "cgmReplacementNeeded"
+            case .cgmReconnectNeeded: return "cgmReconnectNeeded"
+            case .notLooping: return "notLooping"
+            case .algorithmError: return "algorithmError"
+            case .glucoseDataStale: return "glucoseDataStale"
+            case .unspecified: return "unspecified"
+            }
+        }
     }
 
     struct CatalogEntry: Identifiable, Equatable {
