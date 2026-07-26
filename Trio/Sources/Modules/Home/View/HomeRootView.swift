@@ -356,11 +356,17 @@ extension Home {
                 }
                 .tint(Color.tabBar)
 
-                treatmentButton
-                    // measured slot center; stays at screen center if the probe finds nothing
-                    .offset(x: treatmentSlotOffsetX)
-                    // the floating bar tracks the screen edge, not the safe area
-                    .padding(.bottom, 28)
+                // Pin the button a fixed distance above the physical screen bottom
+                // so it's immune to safe-area changes (keyboard, accessories);
+                // horizontal position still tracks the measured tab slot.
+                GeometryReader { geo in
+                    treatmentButton
+                        .position(
+                            x: geo.size.width / 2 + treatmentSlotOffsetX,
+                            y: geo.size.height - 52
+                        )
+                }
+                .ignoresSafeArea(.all, edges: .bottom)
             }
             .background(TabBarSlotProbe { treatmentSlotOffsetX = $0 })
             .ignoresSafeArea(.container, edges: .bottom)
