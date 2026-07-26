@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - Build-Experiment
+      - chore/auto-dev-sync
       - feat/profiles-rebased
       - merge/profiles-into-build-experiment
       - feat/quick-bolus-1248
