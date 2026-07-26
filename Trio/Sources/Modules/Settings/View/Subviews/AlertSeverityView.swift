@@ -14,7 +14,7 @@ struct AlertSeverityView: View {
     @Environment(AppState.self) private var appState
 
     private struct Row: Identifiable {
-        let concept: Alert.CatalogConcept
+        let concept: LoopKit.Alert.CatalogConcept
         let defaultSeverity: DeviceAlertSeverity
         let category: String
         var id: String { concept.storableKey }
