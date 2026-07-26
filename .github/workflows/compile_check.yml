@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - Build-Experiment
       - feat/profiles-rebased
       - merge/profiles-into-build-experiment
       - feat/quick-bolus-1248
