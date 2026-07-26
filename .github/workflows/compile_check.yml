@@ -30,6 +30,9 @@ on:
       - feat/progress-border-translucent
       - sync/dev-updates
       - feat/per-alert-severity
+      - sync/dev-updates-2
+      - feat/chart-stack-updates
+      - feat/floating-treatment-button-fix
       - feat/critical-alerts-entitlement
     paths-ignore:
       - '**.md'
