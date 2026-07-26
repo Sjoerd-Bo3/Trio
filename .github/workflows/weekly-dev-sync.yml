@@ -1,0 +1,104 @@
+name: Weekly upstream dev sync
+
+# Durable, autonomous weekly sync of upstream Trio `dev` into the fork's
+# Build-Experiment branch. This file lives on the default branch (dev) because
+# GitHub only runs `schedule:` workflows from the default branch — even though
+# the job operates on Build-Experiment.
+#
+# Behaviour each run:
+#   - Nothing new upstream        -> no-op.
+#   - New commits, clean merge     -> push a sync branch, open a PR to
+#                                     Build-Experiment, and enable auto-merge so
+#                                     it merges once the compile check is green.
+#   - New commits, merge conflict  -> open an issue asking for a manual merge;
+#                                     never leaves a half-merged state.
+#
+# ONE-TIME SETUP (only the repo owner can do these):
+#   1. Add a repository secret `SYNC_PAT`: a fine-grained PAT with
+#      contents:write + pull-requests:write. Required because pushes made with
+#      the default GITHUB_TOKEN do NOT trigger other workflows, so the compile
+#      check would never run on the sync branch and auto-merge could never see a
+#      green build. With SYNC_PAT the sync-branch push triggers the compile check.
+#   2. Settings -> General -> Pull Requests -> enable "Allow auto-merge".
+#   3. Add a branch protection rule on Build-Experiment that requires the
+#      "Build for Simulator" status check. This is what makes auto-merge WAIT
+#      for the compile check instead of merging immediately.
+#   Without these the workflow still opens the weekly PR; you just merge it by hand.
+
+on:
+  schedule:
+    - cron: '23 6 * * 1' # Mondays ~06:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: weekly-dev-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Build-Experiment
+        uses: actions/checkout@v5
+        with:
+          ref: Build-Experiment
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "trio-dev-sync"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Fetch upstream dev
+        run: git fetch https://github.com/nightscout/Trio.git dev:refs/remotes/upstream/dev
+
+      - name: Count new upstream commits
+        id: check
+        run: echo "count=$(git rev-list --count HEAD..upstream/dev)" >> "$GITHUB_OUTPUT"
+
+      - name: Up to date
+        if: steps.check.outputs.count == '0'
+        run: echo "Build-Experiment is already current with upstream dev — nothing to do."
+
+      - name: Merge upstream dev onto sync branch
+        if: steps.check.outputs.count != '0'
+        id: merge
+        run: |
+          git checkout -B chore/auto-dev-sync Build-Experiment
+          if git merge --no-ff --no-edit upstream/dev; then
+            echo "result=clean" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=conflict" >> "$GITHUB_OUTPUT"
+            git merge --abort
+          fi
+
+      - name: Push sync branch and open / auto-merge PR
+        if: steps.check.outputs.count != '0' && steps.merge.outputs.result == 'clean'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          git push -f origin chore/auto-dev-sync
+          if ! gh pr view chore/auto-dev-sync --json number >/dev/null 2>&1; then
+            gh pr create \
+              --base Build-Experiment \
+              --head chore/auto-dev-sync \
+              --title "Weekly upstream dev sync (${{ steps.check.outputs.count }} new commits)" \
+              --body "Automated weekly merge of upstream dev into Build-Experiment. Merges itself once the compile check passes. The merge preserves fork customizations; if anything conflicts, this run opens an issue for a manual merge instead."
+          fi
+          gh pr merge chore/auto-dev-sync --auto --merge \
+            || echo "Auto-merge not enabled (needs 'Allow auto-merge' + a required check on Build-Experiment). PR left open for manual merge."
+
+      - name: Conflict — open a review issue
+        if: steps.check.outputs.count != '0' && steps.merge.outputs.result == 'conflict'
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Weekly dev sync needs a manual merge" \
+            --body "Upstream dev has ${{ steps.check.outputs.count }} new commit(s) that do not merge cleanly into Build-Experiment. A manual merge is needed this week."
