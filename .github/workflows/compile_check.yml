@@ -30,6 +30,7 @@ on:
       - feat/progress-border-translucent
       - sync/dev-updates
       - feat/per-alert-severity
+      - feat/chart-stack-updates
     paths-ignore:
       - '**.md'
       - '**/README'
