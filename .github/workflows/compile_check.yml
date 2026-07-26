@@ -33,6 +33,7 @@ on:
       - sync/dev-updates-2
       - feat/chart-stack-updates
       - feat/floating-treatment-button-fix
+      - feat/critical-alerts-entitlement
     paths-ignore:
       - '**.md'
       - '**/README'
