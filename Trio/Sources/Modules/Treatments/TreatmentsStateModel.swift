@@ -774,8 +774,8 @@ extension Treatments {
                 && glucoseStorage.isGlucoseDataFresh(glucoseFromPersistence.first?.date)
             // determinationDidUpdate normally clears this in a few seconds; these
             // are just safety nets. Short when nothing is coming (stale CGM / open
-            // loop), a bit longer only when a determination is genuinely expected.
-            let timeout: Duration = expectsDetermination ? .seconds(10) : .seconds(5)
+            // loop), the full hold only when a determination is genuinely expected.
+            let timeout: Duration = expectsDetermination ? .seconds(20) : .seconds(5)
             awaitDeterminationWatchdog?.cancel()
             awaitDeterminationWatchdog = Task { [weak self] in
                 try? await Task.sleep(for: timeout)
