@@ -45,6 +45,9 @@ extension Treatments {
         var minPredBG: Decimal = 0
         var lastLoopDate: Date?
         var isAwaitingDeterminationResult: Bool = false
+        /// Safety net for the "Updating IOB" overlay: if no determination arrives
+        /// (stale CGM, pump offline, oref failure), this dismisses it after a bound.
+        @ObservationIgnored private var awaitDeterminationWatchdog: Task<Void, Never>?
         var carbRatio: Decimal = 0
 
         var addButtonPressed: Bool = false
@@ -628,7 +631,7 @@ extension Treatments {
                 if authenticated {
                     // show loading animation
                     await MainActor.run {
-                        self.isAwaitingDeterminationResult = true
+                        self.beginAwaitingDetermination()
                     }
                     await apsManager.enactBolus(amount: maxAmount, isSMB: false, callback: nil)
                 }
@@ -660,7 +663,7 @@ extension Treatments {
                 if authenticated {
                     // show loading animation
                     await MainActor.run {
-                        self.isAwaitingDeterminationResult = true
+                        self.beginAwaitingDetermination()
                     }
                     // store external dose to pump history
                     await pumpHistoryStorage.storeExternalInsulinEvent(amount: amount, timestamp: date)
@@ -707,7 +710,7 @@ extension Treatments {
                 // only perform determine basal sync if the user doesn't use the pump bolus, otherwise the enact bolus func in the APSManger does a sync
                 if amount <= 0 {
                     await MainActor.run {
-                        self.isAwaitingDeterminationResult = true
+                        self.beginAwaitingDetermination()
                     }
                     try await apsManager.determineBasalSync()
                 }
@@ -755,6 +758,35 @@ extension Treatments {
         func addToSummation() {
             summation.append(selection?.dish ?? "")
         }
+
+        /// Show the "Updating IOB" overlay and arm a watchdog so it can't hang
+        /// forever waiting for a determination that never arrives — e.g. stale
+        /// CGM, pump offline, or an oref failure. The treatment itself has
+        /// already been enacted; this only unblocks the UI.
+        @MainActor func beginAwaitingDetermination() {
+            isAwaitingDeterminationResult = true
+            // A determination only follows a manual dose while looping on fresh
+            // CGM. Without it (open loop, or CGM dropped) none will ever arrive,
+            // so release the overlay quickly instead of holding the full safety
+            // timeout — the bolus itself is unaffected and its progress still
+            // shows on Home.
+            let expectsDetermination = settings.settings.closedLoop
+                && glucoseStorage.isGlucoseDataFresh(glucoseFromPersistence.first?.date)
+            // determinationDidUpdate normally clears this in a few seconds; these
+            // are just safety nets. Short when nothing is coming (stale CGM / open
+            // loop), the full hold only when a determination is genuinely expected.
+            let timeout: Duration = expectsDetermination ? .seconds(20) : .seconds(5)
+            awaitDeterminationWatchdog?.cancel()
+            awaitDeterminationWatchdog = Task { [weak self] in
+                try? await Task.sleep(for: timeout)
+                guard let self, !Task.isCancelled else { return }
+                await MainActor.run {
+                    guard self.isAwaitingDeterminationResult else { return }
+                    self.isAwaitingDeterminationResult = false
+                    if self.addButtonPressed { self.hideModal() }
+                }
+            }
+        }
     }
 }
 
@@ -767,6 +799,7 @@ extension Treatments.StateModel: DeterminationObserver, BolusFailureObserver {
 
         DispatchQueue.main.async {
             debug(.bolusState, "determinationDidUpdate fired")
+            self.awaitDeterminationWatchdog?.cancel()
             self.isAwaitingDeterminationResult = false
             if self.addButtonPressed {
                 self.hideModal()
@@ -779,6 +812,7 @@ extension Treatments.StateModel: DeterminationObserver, BolusFailureObserver {
             // A dismissed instance may still observe until dealloc — don't hide an unrelated modal.
             guard self.isActive else { return }
             debug(.bolusState, "bolusDidFail fired")
+            self.awaitDeterminationWatchdog?.cancel()
             self.isAwaitingDeterminationResult = false
             if self.addButtonPressed {
                 self.hideModal()
