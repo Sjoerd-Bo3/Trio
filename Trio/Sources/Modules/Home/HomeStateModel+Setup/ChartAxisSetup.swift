@@ -35,8 +35,10 @@ extension Home.StateModel {
         }
 
         // keep the low threshold (and target) inside the domain: RuleMarks
-        // below the floor would clamp onto the plot edge
-        minYAxisValue = min(minOverall, lowGlucose - 20)
+        // below the floor would clamp onto the plot edge. A small margin below
+        // the low line is enough — a larger one leaves a heavy empty band under
+        // the plot when glucose sits well above the low threshold.
+        minYAxisValue = min(minOverall, lowGlucose - 10)
         maxYAxisValue = maxYValue
     }
 
