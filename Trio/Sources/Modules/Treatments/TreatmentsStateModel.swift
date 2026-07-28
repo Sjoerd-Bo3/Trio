@@ -770,8 +770,13 @@ extension Treatments {
             // so release the overlay quickly instead of holding the full safety
             // timeout — the bolus itself is unaffected and its progress still
             // shows on Home.
+            // Only a fresh *CGM* reading keeps the loop running; a manual
+            // fingerprick doesn't, so it must not count as "a determination is
+            // coming" (otherwise a fingerprick with no CGM would hold the full
+            // timeout).
+            let lastCGMDate = glucoseFromPersistence.first(where: { !$0.isManual })?.date
             let expectsDetermination = settings.settings.closedLoop
-                && glucoseStorage.isGlucoseDataFresh(glucoseFromPersistence.first?.date)
+                && glucoseStorage.isGlucoseDataFresh(lastCGMDate)
             // determinationDidUpdate normally clears this in a few seconds; these
             // are just safety nets. Short when nothing is coming (stale CGM / open
             // loop), the full hold only when a determination is genuinely expected.
