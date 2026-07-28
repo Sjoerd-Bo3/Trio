@@ -765,9 +765,17 @@ extension Treatments {
         /// already been enacted; this only unblocks the UI.
         @MainActor func beginAwaitingDetermination() {
             isAwaitingDeterminationResult = true
+            // A determination only follows a manual dose while looping on fresh
+            // CGM. Without it (open loop, or CGM dropped) none will ever arrive,
+            // so release the overlay quickly instead of holding the full safety
+            // timeout — the bolus itself is unaffected and its progress still
+            // shows on Home.
+            let expectsDetermination = settings.settings.closedLoop
+                && glucoseStorage.isGlucoseDataFresh(glucoseFromPersistence.first?.date)
+            let timeout: Duration = expectsDetermination ? .seconds(20) : .seconds(5)
             awaitDeterminationWatchdog?.cancel()
             awaitDeterminationWatchdog = Task { [weak self] in
-                try? await Task.sleep(for: .seconds(20))
+                try? await Task.sleep(for: timeout)
                 guard let self, !Task.isCancelled else { return }
                 await MainActor.run {
                     guard self.isAwaitingDeterminationResult else { return }
