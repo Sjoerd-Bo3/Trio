@@ -207,8 +207,15 @@ public struct TextFieldWithToolBar: View {
                         localText = ""
                         isZeroCleared = true
                     }
-                    // Set initial focus if requested
-                    isFocused = initialFocus
+                    // Set initial focus if requested. Deferring past the sheet's
+                    // present animation makes the keyboard reliably come up —
+                    // setting @FocusState at onAppear alone often no-ops inside a
+                    // sheet/Form because the field isn't ready to accept focus yet.
+                    if initialFocus {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            isFocused = true
+                        }
+                    }
                 }
             if unitsText != nil {
                 Text(unitsText ?? "").foregroundColor(unitsTextColor)
