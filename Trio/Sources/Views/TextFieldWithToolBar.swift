@@ -71,6 +71,7 @@ public struct TextFieldWithToolBar: View {
         HStack {
             TextField(placeholder, text: $localText)
                 .focused($isFocused)
+                .defaultFocus($isFocused, initialFocus)
                 .multilineTextAlignment(textAlignment)
                 .foregroundColor(textColor)
                 .keyboardType(keyboardType)
@@ -207,8 +208,6 @@ public struct TextFieldWithToolBar: View {
                         localText = ""
                         isZeroCleared = true
                     }
-                    // Set initial focus if requested
-                    isFocused = initialFocus
                 }
             if unitsText != nil {
                 Text(unitsText ?? "").foregroundColor(unitsTextColor)

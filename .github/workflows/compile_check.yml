@@ -10,6 +10,7 @@ on:
     branches:
       - Build-Experiment
       - chore/auto-dev-sync
+      - fix/glucose-entry-autofocus
       - fix/bolus-updating-iob-stuck
       - sync/dev-updates-3
       - feat/profiles-rebased
