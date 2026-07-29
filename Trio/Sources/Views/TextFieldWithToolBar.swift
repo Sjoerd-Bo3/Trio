@@ -71,6 +71,11 @@ public struct TextFieldWithToolBar: View {
         HStack {
             TextField(placeholder, text: $localText)
                 .focused($isFocused)
+                // Platform-native initial focus: hooks into the focus engine, so
+                // it lands reliably even inside a sheet/Form (unlike setting
+                // @FocusState from onAppear, which fires before the field can take
+                // focus). No-op when initialFocus is false.
+                .defaultFocus($isFocused, initialFocus)
                 .multilineTextAlignment(textAlignment)
                 .foregroundColor(textColor)
                 .keyboardType(keyboardType)
@@ -207,15 +212,8 @@ public struct TextFieldWithToolBar: View {
                         localText = ""
                         isZeroCleared = true
                     }
-                    // Set initial focus if requested. Deferring past the sheet's
-                    // present animation makes the keyboard reliably come up —
-                    // setting @FocusState at onAppear alone often no-ops inside a
-                    // sheet/Form because the field isn't ready to accept focus yet.
-                    if initialFocus {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            isFocused = true
-                        }
-                    }
+                    // Initial focus is handled by `.defaultFocus` on the field,
+                    // which lands reliably inside sheets — no onAppear timing hacks.
                 }
             if unitsText != nil {
                 Text(unitsText ?? "").foregroundColor(unitsTextColor)
