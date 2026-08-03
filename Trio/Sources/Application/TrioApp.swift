@@ -40,11 +40,6 @@ extension Notification.Name {
     @State private var showOnboardingCompletedSplash = false
     @State private var showMigrationError: Bool = false
 
-    // Telemetry: one-shot guard so the consent migration sheet is presented
-    // at most once per process even if scene activates repeatedly.
-    @State private var showTelemetryMigrationSheet = false
-    @State private var hasCheckedTelemetryMigration = false
-
     // TDD history backfill: one-shot guard so the Nightscout import prompt is
     // presented at most once per process even if the scene activates repeatedly.
     @State private var showTDDBackfillSheet = false
@@ -356,10 +351,6 @@ extension Notification.Name {
                     self.showOnboardingCompletedSplash = true
                 }
             }
-            .sheet(isPresented: $showTelemetryMigrationSheet) {
-                TelemetryMigrationSheetView()
-                    .interactiveDismissDisabled(true)
-            }
             .sheet(isPresented: $showTDDBackfillSheet) {
                 TDDBackfillConsentSheetView(runBackfill: { progress in
                     guard let nightscout = resolver.resolve(NightscoutManager.self) else { return 0 }
@@ -385,41 +376,16 @@ extension Notification.Name {
                 if initState.complete {
                     performCleanupIfNecessary()
                 }
-                presentTelemetryMigrationSheetIfNeeded()
                 presentTDDBackfillSheetIfNeeded()
             }
         }
     }
 
-    /// Presents the one-time telemetry consent sheet for users who completed
-    /// onboarding before telemetry existed. The condition (`onboardingCompleted
-    /// == true` and no telemetry decision yet) is checked once per process —
-    /// the in-app dismiss handler sets `telemetryConsentDecisionMade`, so a
-    /// re-foreground after the user picks will no longer match.
-    private func presentTelemetryMigrationSheetIfNeeded() {
-        guard !hasCheckedTelemetryMigration else { return }
-        hasCheckedTelemetryMigration = true
-
-        let onboarded = PropertyPersistentFlags.shared.onboardingCompleted == true
-        let telemetryDecided = PropertyPersistentFlags.shared.telemetryConsentDecisionMade == true
-        guard onboarded, !telemetryDecided else { return }
-
-        // Defer one runloop so SwiftUI has finished settling on whatever root
-        // view was just shown (loading screen, splash, main view).
-        DispatchQueue.main.async {
-            showTelemetryMigrationSheet = true
-        }
-    }
-
     /// Presents the one-time TDD history backfill prompt for users on the update that introduced the
     /// 1-year insulin view. Shown once per install (gated by `tddBackfillConsentDecisionMade`) and
-    /// only when Nightscout is configured, since the import reads from the user's own server. Yields
-    /// to the telemetry sheet if that is up, retrying on a later activation.
+    /// only when Nightscout is configured, since the import reads from the user's own server.
     private func presentTDDBackfillSheetIfNeeded() {
         guard !hasCheckedTDDBackfill else { return }
-
-        // Don't compete with the telemetry consent sheet; try again on a later activation.
-        guard !showTelemetryMigrationSheet else { return }
 
         hasCheckedTDDBackfill = true
 
