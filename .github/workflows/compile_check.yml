@@ -41,6 +41,7 @@ on:
       - feat/chart-stack-updates
       - feat/floating-treatment-button-fix
       - feat/critical-alerts-entitlement
+      - sync/dev-updates-6
     paths-ignore:
       - '**.md'
       - '**/README'

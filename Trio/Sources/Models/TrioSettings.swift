@@ -107,6 +107,23 @@ struct TrioSettings: JSON, Equatable, Encodable {
     }
 }
 
+/// Used to decode settings keys that no longer have a matching stored property (e.g. renamed keys kept for migration).
+private struct LegacyCodingKey: CodingKey {
+    let stringValue: String
+    init(stringValue: String) { self.stringValue = stringValue }
+    var intValue: Int? { nil }
+    init?(intValue _: Int) { nil }
+}
+
+/// The established pattern for migrating a renamed `TrioSettings` key: add the new property with its
+/// default value, decode the new key first, and fall back to this for the old key's persisted value so
+/// existing users keep their setting under the new name. Reuse this (rather than hand-rolling a legacy
+/// container) for any future `TrioSettings` key rename.
+private func decodeLegacyBool(from decoder: Decoder, legacyKey: String) -> Bool? {
+    guard let legacyContainer = try? decoder.container(keyedBy: LegacyCodingKey.self) else { return nil }
+    return try? legacyContainer.decode(Bool.self, forKey: LegacyCodingKey(stringValue: legacyKey))
+}
+
 extension TrioSettings: Decodable {
     /// Custom decoder to handle incomplete JSON and provide default values for missing fields
     init(from decoder: Decoder) throws {
