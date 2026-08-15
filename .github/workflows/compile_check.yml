@@ -42,6 +42,7 @@ on:
       - feat/floating-treatment-button-fix
       - feat/critical-alerts-entitlement
       - sync/dev-updates-6
+      - sync/dev-updates-7
     paths-ignore:
       - '**.md'
       - '**/README'
