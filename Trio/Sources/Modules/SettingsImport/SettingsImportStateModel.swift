@@ -72,7 +72,19 @@ extension SettingsImport {
             if backup.presets?.tempTargets?.isNotEmpty == true { categories.insert(.tempTargetPresets) }
             if backup.presets?.overrides?.isNotEmpty == true { categories.insert(.overridePresets) }
             if backup.presets?.meals?.isNotEmpty == true { categories.insert(.mealPresets) }
+            if backup.profilePresets?.isNotEmpty == true { categories.insert(.profilePresets) }
             return categories
+        }
+
+        private var currentProfilePresets: [ProfilePreset] {
+            storage.retrieve(OpenAPS.Trio.profilePresets, as: [ProfilePreset].self) ?? []
+        }
+
+        private var activeProfilePresetName: String? {
+            guard let activePresetId = storage.retrieve(OpenAPS.Trio.activeProfilePresetId, as: String.self) else {
+                return nil
+            }
+            return currentProfilePresets.first { $0.id == activePresetId }?.name
         }
 
         var presetCategorySelected: Bool {
@@ -119,6 +131,9 @@ extension SettingsImport {
                         )
                     )
                 }
+            }
+            if backup.profilePresets?.isNotEmpty == true {
+                notes.append(String(localized: "The active profile is never switched by an import."))
             }
             return notes
         }
@@ -245,6 +260,14 @@ extension SettingsImport {
                     activeNames: [],
                     strategy: conflictStrategy,
                     name: \.dish
+                ).changes
+            }
+            if let profilePresets = backup.profilePresets {
+                newChangeSet.presetChanges[.profilePresets] = SettingsImportApplier.mergeProfilePresets(
+                    existing: currentProfilePresets,
+                    imported: profilePresets,
+                    activeName: activeProfilePresetName,
+                    strategy: conflictStrategy
                 ).changes
             }
 
@@ -440,6 +463,16 @@ extension SettingsImport {
                     context: viewContext
                 )
                 collectedWarnings.append(contentsOf: presetWarnings)
+            }
+            if categories.contains(.profilePresets), let importedProfilePresets = backup.profilePresets {
+                let mergeResult = SettingsImportApplier.mergeProfilePresets(
+                    existing: currentProfilePresets,
+                    imported: importedProfilePresets,
+                    activeName: activeProfilePresetName,
+                    strategy: conflictStrategy
+                )
+                collectedWarnings.append(contentsOf: mergeResult.warnings)
+                storage.save(mergeResult.result, as: OpenAPS.Trio.profilePresets)
             }
 
             // 7. UserDefaults-backed extras.

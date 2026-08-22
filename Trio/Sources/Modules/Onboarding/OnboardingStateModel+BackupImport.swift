@@ -233,6 +233,17 @@ extension Onboarding.StateModel {
                 )
             }
         }
+
+        if let importedProfilePresets = backup.profilePresets, importedProfilePresets.isNotEmpty {
+            let existing = fileStorage.retrieve(OpenAPS.Trio.profilePresets, as: [ProfilePreset].self) ?? []
+            let mergeResult = SettingsImportApplier.mergeProfilePresets(
+                existing: existing,
+                imported: importedProfilePresets,
+                activeName: nil,
+                strategy: .replaceSameNamed
+            )
+            fileStorage.save(mergeResult.result, as: OpenAPS.Trio.profilePresets)
+        }
     }
 }
 

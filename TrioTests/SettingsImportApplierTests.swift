@@ -354,6 +354,52 @@ import Testing
         #expect(resolution.changes.contains(PresetChange(name: "Sport", kind: .activeSkipped)))
     }
 
+    // MARK: - Profile presets
+
+    @Test("Profile presets merge by name; the active profile is protected") func testProfilePresetMerge() {
+        let existingSport = SettingsBackupTestFixtures.profilePreset(name: "Sport", basalRate: 0.5)
+        let existingNight = SettingsBackupTestFixtures.profilePreset(name: "Night", basalRate: 0.7)
+        let importedSport = SettingsBackupTestFixtures.profilePreset(name: "Sport", basalRate: 0.9)
+        let importedNew = SettingsBackupTestFixtures.profilePreset(name: "New", basalRate: 1.1)
+
+        let mergeResult = SettingsImportApplier.mergeProfilePresets(
+            existing: [existingSport, existingNight],
+            imported: [importedSport, importedNew],
+            activeName: "Night",
+            strategy: .replaceSameNamed
+        )
+
+        let byName = Dictionary(mergeResult.result.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        #expect(byName.count == 3)
+        #expect(byName["Sport"]?.basalProfile.first?.rate == 0.9)
+        #expect(byName["Night"]?.basalProfile.first?.rate == 0.7)
+        #expect(byName["New"]?.basalProfile.first?.rate == 1.1)
+
+        let activeMergeResult = SettingsImportApplier.mergeProfilePresets(
+            existing: [existingNight],
+            imported: [SettingsBackupTestFixtures.profilePreset(name: "Night", basalRate: 1.5)],
+            activeName: "Night",
+            strategy: .replaceAll
+        )
+        #expect(activeMergeResult.result.first?.basalProfile.first?.rate == 0.7)
+        #expect(activeMergeResult.changes.contains(PresetChange(name: "Night", kind: .activeSkipped)))
+    }
+
+    @Test("Profile presets with incomplete therapy are skipped with a warning") func testProfilePresetValidation() {
+        var broken = SettingsBackupTestFixtures.profilePreset(name: "Broken")
+        broken.basalProfile = []
+
+        let mergeResult = SettingsImportApplier.mergeProfilePresets(
+            existing: [],
+            imported: [broken],
+            activeName: nil,
+            strategy: .replaceSameNamed
+        )
+
+        #expect(mergeResult.result.isEmpty)
+        #expect(mergeResult.warnings.count == 1)
+    }
+
     @Test("Duplicate names inside the file collapse to the last occurrence") func testDuplicateNamesInFile() {
         let resolution = SettingsImportApplier.resolvePresetConflicts(
             imported: [("Sport", 140), ("Sport", 150)],

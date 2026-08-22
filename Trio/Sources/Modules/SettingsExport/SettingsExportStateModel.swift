@@ -1330,6 +1330,12 @@ extension SettingsExport {
                 context: viewContext
             ).presets
 
+            let profilePresets = storage.retrieve(OpenAPS.Trio.profilePresets, as: [ProfilePreset].self)
+            backup.profilePresets = profilePresets
+            if let activePresetId = storage.retrieve(OpenAPS.Trio.activeProfilePresetId, as: String.self) {
+                backup.activeProfilePresetName = profilePresets?.first { $0.id == activePresetId }?.name
+            }
+
             backup.userDefaults = SettingsBackup.UserDefaultsValues(
                 colorSchemePreference: UserDefaults.standard.string(forKey: "colorSchemePreference"),
                 isTrioRemoteControlEnabled: UserDefaults.standard.bool(forKey: "isTrioRemoteControlEnabled")

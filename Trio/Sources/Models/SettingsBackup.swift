@@ -14,6 +14,7 @@ enum SettingsBackupCategory: String, CaseIterable, Identifiable {
     case tempTargetPresets
     case overridePresets
     case mealPresets
+    case profilePresets
 
     var displayName: String {
         switch self {
@@ -35,6 +36,8 @@ enum SettingsBackupCategory: String, CaseIterable, Identifiable {
             return String(localized: "Override Presets")
         case .mealPresets:
             return String(localized: "Meal Presets")
+        case .profilePresets:
+            return String(localized: "Profile Presets")
         }
     }
 }
@@ -62,6 +65,11 @@ struct SettingsBackup: JSON, Equatable, Encodable {
     var presets: Presets?
     var userDefaults: UserDefaultsValues?
     var credentials: Credentials?
+
+    /// Full profile presets (therapy schedules plus optional SMB/dynamic settings each). The
+    /// ACTIVE profile is exported by name for display only — an import never switches profiles.
+    var profilePresets: [ProfilePreset]?
+    var activeProfilePresetName: String?
 
     /// Device metadata. `pumpType`/`insulinType`/`cgmDisplayName` are informational only —
     /// the authoritative CGM selection lives in `trioSettings.cgm`/`.cgmPluginIdentifier`.
@@ -152,6 +160,8 @@ extension SettingsBackup {
         case presets
         case userDefaults
         case credentials
+        case profilePresets
+        case activeProfilePresetName
     }
 }
 
@@ -177,6 +187,8 @@ extension SettingsBackup: Decodable {
         backup.presets = try? container.decode(Presets.self, forKey: .presets)
         backup.userDefaults = try? container.decode(UserDefaultsValues.self, forKey: .userDefaults)
         backup.credentials = try? container.decode(Credentials.self, forKey: .credentials)
+        backup.profilePresets = try? container.decode([ProfilePreset].self, forKey: .profilePresets)
+        backup.activeProfilePresetName = try? container.decode(String.self, forKey: .activeProfilePresetName)
 
         self = backup
     }

@@ -32,7 +32,7 @@ enum SettingsBackupTestFixtures {
         settings.eA1cDisplayUnit = .mmolMol
         settings.high = 200
         settings.low = 80
-        settings.glucoseColorScheme = .dynamicColor
+        settings.glucoseColorScheme = .staticColor
         settings.xGridLines = false
         settings.yGridLines = false
         settings.hideInsulinBadge = true
@@ -66,6 +66,8 @@ enum SettingsBackupTestFixtures {
         settings.primaryAttributeChoice = .isf
         settings.secondaryAttributeChoice = .eventualBG
         settings.isWatchfaceDataEnabled = true
+        settings.showForecastWatch = true
+        settings.homeStatsPanelFace = .distributionBar
         return settings
     }
 
@@ -199,12 +201,32 @@ enum SettingsBackupTestFixtures {
             colorSchemePreference: "dark",
             isTrioRemoteControlEnabled: true
         )
+        backup.profilePresets = [profilePreset(name: "Weekend", basalRate: 0.9)]
+        backup.activeProfilePresetName = "Weekend"
         backup.credentials = SettingsBackup.Credentials(
             nightscoutURL: "https://example.nightscout.test",
             nightscoutSecret: "supersecret",
             remoteControlSharedSecret: "sharedsecret"
         )
         return backup
+    }
+
+    static func profilePreset(name: String, basalRate: Decimal = 0.8) -> ProfilePreset {
+        ProfilePreset(
+            name: name,
+            basalProfile: [BasalProfileEntry(start: "00:00:00", minutes: 0, rate: basalRate)],
+            insulinSensitivities: InsulinSensitivities(
+                units: .mgdL,
+                userPreferredUnits: .mgdL,
+                sensitivities: [InsulinSensitivityEntry(sensitivity: 50, offset: 0, start: "00:00:00")]
+            ),
+            carbRatios: CarbRatios(units: .grams, schedule: [CarbRatioEntry(start: "00:00:00", offset: 0, ratio: 10)]),
+            bgTargets: BGTargets(
+                units: .mgdL,
+                userPreferredUnits: .mgdL,
+                targets: [BGTargetEntry(low: 100, high: 100, start: "00:00:00", offset: 0)]
+            )
+        )
     }
 
     /// Counts stored properties whose values differ between two instances of the same type.

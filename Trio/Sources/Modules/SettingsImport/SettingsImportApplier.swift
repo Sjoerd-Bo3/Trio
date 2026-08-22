@@ -371,6 +371,7 @@ enum SettingsImportApplier {
             display: BackupDisplay.bool
         ),
         BackupField(String(localized: "Show COB/IOB Chart"), .features, \.showCobIobChart, display: BackupDisplay.bool),
+        BackupField(String(localized: "Home Stats Panel"), .features, \.homeStatsPanelFace, display: { v, _ in v.displayName }),
         BackupField(String(localized: "Hide Insulin Badge"), .features, \.hideInsulinBadge, display: BackupDisplay.bool),
         BackupField(String(localized: "Bolus Display Threshold"), .features, \.bolusDisplayThreshold, display: { v, _ in v.displayName }),
 
@@ -400,6 +401,7 @@ enum SettingsImportApplier {
             \.isWatchfaceDataEnabled,
             display: BackupDisplay.bool
         ),
+        BackupField(String(localized: "Show Forecast on Watch"), .features, \.showForecastWatch, display: BackupDisplay.bool),
 
         // Notifications
         BackupField(String(localized: "Show Glucose App Badge"), .notifications, \.glucoseBadge, display: BackupDisplay.bool),
@@ -910,6 +912,58 @@ enum SettingsImportApplier {
 
         guard entryChanges.isNotEmpty else { return nil }
         return TherapyScheduleChange(label: label, entryChanges: entryChanges)
+    }
+
+    // MARK: - Profile presets
+
+    struct ProfilePresetMergeResult {
+        let result: [ProfilePreset]
+        let changes: [PresetChange]
+        let warnings: [String]
+    }
+
+    /// Merges imported profile presets into the existing list per the conflict strategy.
+    /// The currently active profile is never deleted or replaced (its stored id is referenced by
+    /// the activation state), and presets with empty therapy schedules are skipped. An import
+    /// never switches the active profile.
+    static func mergeProfilePresets(
+        existing: [ProfilePreset],
+        imported: [ProfilePreset],
+        activeName: String?,
+        strategy: PresetConflictStrategy
+    ) -> ProfilePresetMergeResult {
+        var warnings: [String] = []
+
+        let validImported = imported.filter { preset in
+            let isValid = preset.basalProfile.isNotEmpty && preset.insulinSensitivities.sensitivities.isNotEmpty &&
+                preset.carbRatios.schedule.isNotEmpty && preset.bgTargets.targets.isNotEmpty
+            if !isValid {
+                warnings.append(
+                    String(localized: "Profile preset \"\(preset.name)\" has incomplete therapy settings and was skipped.")
+                )
+            }
+            return isValid
+        }
+
+        var resolution = resolvePresetConflicts(
+            imported: validImported,
+            existingNames: existing.map(\.name),
+            activeNames: activeName.map { [$0] } ?? [],
+            strategy: strategy,
+            name: \.name
+        )
+
+        let namesToDelete = Set(resolution.namesToDelete)
+        let result = existing.filter { !namesToDelete.contains($0.name) } + resolution.toStore
+
+        for change in resolution.changes where change.kind == .activeSkipped {
+            resolution.warnings.append(
+                String(localized: "Profile preset \"\(change.name)\" is currently active and was not changed.")
+            )
+        }
+        warnings.append(contentsOf: resolution.warnings)
+
+        return ProfilePresetMergeResult(result: result, changes: resolution.changes, warnings: warnings)
     }
 
     // MARK: - Preset conflict resolution
