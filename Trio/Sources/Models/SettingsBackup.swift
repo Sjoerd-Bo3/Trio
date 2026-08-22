@@ -214,10 +214,30 @@ extension SettingsBackup {
     }
 }
 
-extension InsulinSensitivities: Equatable {}
-extension InsulinSensitivityEntry: Equatable {}
-extension CarbRatios: Equatable {}
-extension CarbRatioEntry: Equatable {}
-extension BGTargets: Equatable {}
-extension BGTargetEntry: Equatable {}
-extension PumpSettings: Equatable {}
+// Swift cannot synthesize Equatable in extensions outside the declaring file, so == is spelled
+// out for the container types the backup embeds. The schedule entry types already conform in
+// their declaring files.
+extension InsulinSensitivities: Equatable {
+    static func == (lhs: InsulinSensitivities, rhs: InsulinSensitivities) -> Bool {
+        lhs.units == rhs.units && lhs.userPreferredUnits == rhs.userPreferredUnits &&
+            lhs.sensitivities == rhs.sensitivities
+    }
+}
+
+extension CarbRatios: Equatable {
+    static func == (lhs: CarbRatios, rhs: CarbRatios) -> Bool {
+        lhs.units == rhs.units && lhs.schedule == rhs.schedule
+    }
+}
+
+extension BGTargets: Equatable {
+    static func == (lhs: BGTargets, rhs: BGTargets) -> Bool {
+        lhs.units == rhs.units && lhs.userPreferredUnits == rhs.userPreferredUnits && lhs.targets == rhs.targets
+    }
+}
+
+extension PumpSettings: Equatable {
+    static func == (lhs: PumpSettings, rhs: PumpSettings) -> Bool {
+        lhs.insulinActionCurve == rhs.insulinActionCurve && lhs.maxBolus == rhs.maxBolus && lhs.maxBasal == rhs.maxBasal
+    }
+}
