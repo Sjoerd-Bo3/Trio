@@ -314,6 +314,11 @@
 		3EF667132FE48509009FB31A /* BasalDeliveryState+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF667122FE48502009FB31A /* BasalDeliveryState+Extension.swift */; };
 		3F23E18680094E6DA98628E4 /* QuickPickBolusesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A54068ABDAE4898B243DF14 /* QuickPickBolusesView.swift */; };
 		41740E936552456AAC0EDAC3 /* SettingsSearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3919BBB515547118D684CA2 /* SettingsSearchTests.swift */; };
+		A15B00312F30AA0100AB0C31 /* SettingsBackupTestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00412F30AA0100AB0C41 /* SettingsBackupTestFixtures.swift */; };
+		A15B00322F30AA0100AB0C32 /* SettingsBackupCodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00422F30AA0100AB0C42 /* SettingsBackupCodableTests.swift */; };
+		A15B00332F30AA0100AB0C33 /* SettingsImportApplierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00432F30AA0100AB0C43 /* SettingsImportApplierTests.swift */; };
+		A15B00342F30AA0100AB0C34 /* SettingsBackupE2ETests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00442F30AA0100AB0C44 /* SettingsBackupE2ETests.swift */; };
+		A15B00352F30AA0100AB0C35 /* SettingsImportPresetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00452F30AA0100AB0C45 /* SettingsImportPresetTests.swift */; };
 		45252C95D220E796FDB3B022 /* ConfigEditorDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8A87AA037BD079BA3528BA /* ConfigEditorDataFlow.swift */; };
 		45717281F743594AA9D87191 /* ConfigEditorRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920DDB21E5D0EB813197500D /* ConfigEditorRootView.swift */; };
 		49090A8D2E9FE8D200D0F5DB /* GarminWatchSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49090A8C2E9FE8D200D0F5DB /* GarminWatchSettings.swift */; };
@@ -1428,6 +1433,11 @@
 		B015AFE12E500000000D7351 /* BolusSafetyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BolusSafetyValidator.swift; sourceTree = "<group>"; };
 		B015AFE42E500000000D7351 /* BolusSafetyValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BolusSafetyValidatorTests.swift; sourceTree = "<group>"; };
 		B3919BBB515547118D684CA2 /* SettingsSearchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchTests.swift; sourceTree = "<group>"; };
+		A15B00412F30AA0100AB0C41 /* SettingsBackupTestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupTestFixtures.swift; sourceTree = "<group>"; };
+		A15B00422F30AA0100AB0C42 /* SettingsBackupCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupCodableTests.swift; sourceTree = "<group>"; };
+		A15B00432F30AA0100AB0C43 /* SettingsImportApplierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportApplierTests.swift; sourceTree = "<group>"; };
+		A15B00442F30AA0100AB0C44 /* SettingsBackupE2ETests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupE2ETests.swift; sourceTree = "<group>"; };
+		A15B00452F30AA0100AB0C45 /* SettingsImportPresetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportPresetTests.swift; sourceTree = "<group>"; };
 		B6E925122EB3932A0076D719 /* OmnipodKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = OmnipodKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9B5C0607505A38F256BF99A /* CGMSettingsDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CGMSettingsDataFlow.swift; sourceTree = "<group>"; };
 		BA49538D56989D8DA6FCF538 /* TargetsEditorDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TargetsEditorDataFlow.swift; sourceTree = "<group>"; };
@@ -3043,6 +3053,10 @@
 				CE1F6DD82BADF4620064EB8D /* PluginManagerTests.swift */,
 				3B5CD2C72D4AECD500CE213C /* OpenAPSSwiftTests */,
 				B3919BBB515547118D684CA2 /* SettingsSearchTests.swift */,
+				A15B00412F30AA0100AB0C41 /* SettingsBackupTestFixtures.swift */,
+				A15B00422F30AA0100AB0C42 /* SettingsBackupCodableTests.swift */,
+				A15B00432F30AA0100AB0C43 /* SettingsImportApplierTests.swift */,
+				A15B00442F30AA0100AB0C44 /* SettingsBackupE2ETests.swift */,
 				BD8FC0532D66186000B95AED /* TestError.swift */,
 				C39FF1EC12CF4B1EBB13BE26 /* NightscoutUploadSerializerTests.swift */,
 				BD8FC0702D661B0000B95AED /* TidepoolTherapySettingsTests.swift */,
@@ -3694,6 +3708,7 @@
 				BD8FC05A2D6618AF00B95AED /* DeterminationStorageTests.swift */,
 				BD8FC05F2D6619DB00B95AED /* CarbsStorageTests.swift */,
 				BD8FC0612D6619E600B95AED /* OverrideStorageTests.swift */,
+				A15B00452F30AA0100AB0C45 /* SettingsImportPresetTests.swift */,
 				BD8FC0632D6619EF00B95AED /* TempTargetStorageTests.swift */,
 				BD8FC0652D661A0000B95AED /* GlucoseStorageTests.swift */,
 			);
@@ -5762,6 +5777,11 @@
 				DD30BA002E0745C400DA677C /* DetermineBasalDeltaCalculationTests.swift in Sources */,
 				BD8FC05E2D6618CE00B95AED /* BolusCalculatorTests.swift in Sources */,
 				41740E936552456AAC0EDAC3 /* SettingsSearchTests.swift in Sources */,
+				A15B00312F30AA0100AB0C31 /* SettingsBackupTestFixtures.swift in Sources */,
+				A15B00322F30AA0100AB0C32 /* SettingsBackupCodableTests.swift in Sources */,
+				A15B00332F30AA0100AB0C33 /* SettingsImportApplierTests.swift in Sources */,
+				A15B00342F30AA0100AB0C34 /* SettingsBackupE2ETests.swift in Sources */,
+				A15B00352F30AA0100AB0C35 /* SettingsImportPresetTests.swift in Sources */,
 				B015AFE52E500000000D7351 /* BolusSafetyValidatorTests.swift in Sources */,
 				BD8FC0712D661B0000B95AED /* TidepoolTherapySettingsTests.swift in Sources */,
 				CA03000000000000000010C2 /* AlertCatalogRegistryOmniFaultTests.swift in Sources */,
