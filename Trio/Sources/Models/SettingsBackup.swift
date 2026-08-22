@@ -202,10 +202,47 @@ extension SettingsBackup {
     }
 }
 
-extension InsulinSensitivities: Equatable {}
-extension InsulinSensitivityEntry: Equatable {}
-extension CarbRatios: Equatable {}
-extension CarbRatioEntry: Equatable {}
-extension BGTargets: Equatable {}
-extension BGTargetEntry: Equatable {}
-extension PumpSettings: Equatable {}
+// Swift cannot synthesize Equatable in extensions outside the declaring file, so == is spelled
+// out for the therapy types the backup embeds.
+extension InsulinSensitivities: Equatable {
+    static func == (lhs: InsulinSensitivities, rhs: InsulinSensitivities) -> Bool {
+        lhs.units == rhs.units && lhs.userPreferredUnits == rhs.userPreferredUnits &&
+            lhs.sensitivities == rhs.sensitivities
+    }
+}
+
+extension InsulinSensitivityEntry: Equatable {
+    static func == (lhs: InsulinSensitivityEntry, rhs: InsulinSensitivityEntry) -> Bool {
+        lhs.sensitivity == rhs.sensitivity && lhs.offset == rhs.offset && lhs.start == rhs.start
+    }
+}
+
+extension CarbRatios: Equatable {
+    static func == (lhs: CarbRatios, rhs: CarbRatios) -> Bool {
+        lhs.units == rhs.units && lhs.schedule == rhs.schedule
+    }
+}
+
+extension CarbRatioEntry: Equatable {
+    static func == (lhs: CarbRatioEntry, rhs: CarbRatioEntry) -> Bool {
+        lhs.start == rhs.start && lhs.offset == rhs.offset && lhs.ratio == rhs.ratio
+    }
+}
+
+extension BGTargets: Equatable {
+    static func == (lhs: BGTargets, rhs: BGTargets) -> Bool {
+        lhs.units == rhs.units && lhs.userPreferredUnits == rhs.userPreferredUnits && lhs.targets == rhs.targets
+    }
+}
+
+extension BGTargetEntry: Equatable {
+    static func == (lhs: BGTargetEntry, rhs: BGTargetEntry) -> Bool {
+        lhs.low == rhs.low && lhs.high == rhs.high && lhs.start == rhs.start && lhs.offset == rhs.offset
+    }
+}
+
+extension PumpSettings: Equatable {
+    static func == (lhs: PumpSettings, rhs: PumpSettings) -> Bool {
+        lhs.insulinActionCurve == rhs.insulinActionCurve && lhs.maxBolus == rhs.maxBolus && lhs.maxBasal == rhs.maxBasal
+    }
+}
