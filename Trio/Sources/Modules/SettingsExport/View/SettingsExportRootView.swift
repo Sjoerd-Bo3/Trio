@@ -9,7 +9,7 @@ extension SettingsExport {
         @State private var showSettingsExport = false
         @State private var showExportError = false
         @State private var exportErrorMessage = ""
-        @State private var exportedFileURL: URL?
+        @State private var exportedFileURLs: [URL] = []
 
         @Environment(\.colorScheme) var colorScheme
         @Environment(AppState.self) var appState
@@ -18,6 +18,9 @@ extension SettingsExport {
             List {
                 Section(
                     header: Text("Export Categories"),
+                    footer: Text(
+                        "Category selection applies to the CSV report. The JSON backup file always contains all settings and can be restored via Import Settings."
+                    ),
                     content: {
                         // Select All toggle
                         HStack {
@@ -70,6 +73,29 @@ extension SettingsExport {
                 ).listRowBackground(Color.chart)
 
                 Section {
+                    Toggle(isOn: $state.includeCredentials) {
+                        Text("Include Credentials")
+                    }
+                    Toggle(isOn: $state.includeDevicePairing) {
+                        Text("Include Device Pairing")
+                    }
+                } header: {
+                    Text("Sensitive Data")
+                } footer: {
+                    if state.includeCredentials || state.includeDevicePairing {
+                        Text(
+                            "The JSON backup will contain sensitive data — your Nightscout URL and secret, remote control secret, and/or pump and CGM pairing keys. Only share it with people you trust, and only use device pairing to move to a new phone."
+                        )
+                        .foregroundColor(.orange)
+                    } else {
+                        Text(
+                            "Off by default so backups stay safe to share. Turn on to include your Nightscout credentials or your pump/CGM pairing for a phone migration."
+                        )
+                    }
+                }
+                .listRowBackground(Color.chart)
+
+                Section {
                     Button(action: {
                         Task {
                             let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)
@@ -77,33 +103,17 @@ extension SettingsExport {
                             state.isExporting = true
 
                             switch await state.exportSelectedSettings() {
-                            case let .success(fileURL):
-                                if FileManager.default.fileExists(atPath: fileURL.path) {
-                                    do {
-                                        let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
-                                        let fileSize = attributes[.size] as? Int ?? 0
-
-                                        if fileSize > 0 {
-                                            exportedFileURL = fileURL
-                                            // Stop spinner on successful export
-                                            state.isExporting = false
-                                            showSettingsExport = true
-                                        } else {
-                                            exportErrorMessage = "Export file is empty (0 bytes)"
-                                            showExportError = true
-                                            state.isExporting = false
-                                        }
-                                    } catch {
-                                        exportErrorMessage = "Could not verify file attributes: \(error.localizedDescription)"
-                                        showExportError = true
-                                        // Stop spinner on error
-                                        state.isExporting = false
-                                    }
-                                } else {
-                                    exportErrorMessage = "Export file was created but could not be found at: \(fileURL.path)"
+                            case let .success(fileURLs):
+                                if let missing = fileURLs.first(where: { !FileManager.default.fileExists(atPath: $0.path) }) {
+                                    exportErrorMessage = "Export file was created but could not be found at: \(missing.path)"
                                     showExportError = true
                                     // Stop spinner on error
                                     state.isExporting = false
+                                } else {
+                                    exportedFileURLs = fileURLs
+                                    // Stop spinner on successful export
+                                    state.isExporting = false
+                                    showSettingsExport = true
                                 }
                             case let .failure(error):
                                 exportErrorMessage = error.localizedDescription
@@ -161,8 +171,8 @@ extension SettingsExport {
 //                )
 //            }
             .sheet(isPresented: $showSettingsExport) {
-                if let fileURL = exportedFileURL {
-                    ShareSheet(activityItems: [fileURL])
+                if exportedFileURLs.isNotEmpty {
+                    ShareSheet(activityItems: exportedFileURLs)
                 }
             }
             .alert("Export Error", isPresented: $showExportError) {

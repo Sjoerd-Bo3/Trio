@@ -26,7 +26,8 @@ extension Onboarding {
 
         private func updateCurrentChapter() {
             switch currentStep {
-            case .nightscout,
+            case .backupImport,
+                 .nightscout,
                  .unitSelection:
                 currentChapter = .prepareTrio
             case .basalRates,
@@ -75,6 +76,10 @@ extension Onboarding {
                 (currentStep == .nightscout && hasValidNightscoutConnection)
                 ||
                 (currentStep == .nightscout && didSelectNightscoutImportOption)
+                ||
+                (currentStep == .backupImport && state.backupImportOption == .noSelection)
+                ||
+                (currentStep == .backupImport && state.backupImportOption == .useImport && state.importedBackup == nil)
         }
 
         var body: some View {
@@ -335,6 +340,8 @@ struct OnboardingStepContent: View {
                                 }
                             case .overview:
                                 OverviewStepView()
+                            case .backupImport:
+                                TrioBackupImportStepView(state: state)
                             case .nightscout:
                                 switch currentNightscoutSubstep {
                                 case .setupSelection:

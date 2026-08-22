@@ -13,9 +13,3 @@ struct ExportSetting: Codable {
         self.unit = unit
     }
 }
-
-struct ExportSettingPayload: Codable {
-    let exportFormat: String
-    let exportDate: String
-    let settings: [ExportSetting]
-}
