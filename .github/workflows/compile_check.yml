@@ -43,6 +43,7 @@ on:
       - feat/critical-alerts-entitlement
       - sync/dev-updates-6
       - sync/dev-updates-7
+      - sync/dev-updates-8
     paths-ignore:
       - '**.md'
       - '**/README'
