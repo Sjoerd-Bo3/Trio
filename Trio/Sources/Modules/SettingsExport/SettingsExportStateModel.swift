@@ -11,6 +11,8 @@ extension SettingsExport {
         @Injected() private var storage: FileStorage!
         @Injected() var overrideStorage: OverrideStorage!
         @Injected() var tempTargetsStorage: TempTargetsStorage!
+        @Injected() private var keychain: Keychain!
+        @Injected() private var fetchGlucoseManager: FetchGlucoseManager!
 
         // Help Sheet
         var isHelpSheetPresented: Bool = false
@@ -48,6 +50,8 @@ extension SettingsExport {
         // Published state for UI binding
         @Published var selectedCategories: Set<ExportCategory> = Set(ExportCategory.allCases)
         @Published var isExporting: Bool = false
+        @Published var includeCredentials: Bool = false
+        @Published var includeDevicePairing: Bool = false
 
         enum ExportError: LocalizedError {
             case documentsDirectoryNotFound
@@ -78,12 +82,16 @@ extension SettingsExport {
         /// - Service configurations [optional]
         /// - Preset data [optional]
         ///
-        /// - Parameter categories: Set of categories to include in export. If nil, exports all categories.
-        /// - Parameter format: Export format to use. If nil, uses currently selected format.
-        /// - Returns: A Result containing either the file URL on success or an ExportError on failure
+        /// Alongside the CSV, a machine-readable JSON backup (`SettingsBackup`) is written with the
+        /// same timestamp. The JSON always contains every restorable section regardless of the
+        /// selected categories — it is the file Settings Import reads. Credentials and device
+        /// pairing state are only included when their opt-in toggles are on.
+        ///
+        /// - Parameter categories: Set of categories to include in the CSV. If nil, exports all categories.
+        /// - Returns: A Result containing either the file URLs (CSV + JSON) on success or an ExportError on failure
         func exportSettings(
             categories: Set<ExportCategory>? = nil
-        ) async -> Result<URL, ExportError> {
+        ) async -> Result<[URL], ExportError> {
             debug(.default, "🔄 EXPORT: Starting settings export...")
 
             await MainActor.run { isExporting = true }
@@ -1201,6 +1209,19 @@ extension SettingsExport {
                 }
             }
 
+            // Build the machine-readable JSON backup that Settings Import reads
+            let backup: SettingsBackup
+            do {
+                backup = try await buildBackup(
+                    includeCredentials: includeCredentials,
+                    includeDevicePairing: includeDevicePairing
+                )
+            } catch {
+                return .failure(.unknown("Failed to build settings backup: \(error.localizedDescription)"))
+            }
+            let sensitiveSuffix = includeCredentials || includeDevicePairing ? "_sensitive" : ""
+            let jsonFileURL = documentsDirectory.appendingPathComponent("TrioSettings_\(timestamp)\(sensitiveSuffix).json")
+
             // Convert data to the selected format and write to file
             do {
                 let content: String
@@ -1224,45 +1245,109 @@ extension SettingsExport {
                     .default,
                     "📝 EXPORT: Writing .CSV content (\(content.count) characters) to file: \(fileURL.path)"
                 )
-                debug(.default, "📝 EXPORT: Temporary directory: \(FileManager.default.temporaryDirectory.path)")
-                debug(.default, "📝 EXPORT: File URL: \(fileURL)")
 
                 try content.write(to: fileURL, atomically: true, encoding: .utf8)
-                debug(.default, "✅ EXPORT: Content written to file successfully")
+                let jsonData = try JSONCoding.encoder.encode(backup)
+                try jsonData.write(to: jsonFileURL, options: .atomic)
+                debug(.default, "✅ EXPORT: Content written to files successfully")
 
                 // Set file attributes for better sharing compatibility
-                try fileManager.setAttributes([
-                    .posixPermissions: 0o644,
-                    .extensionHidden: false
-                ], ofItemAtPath: fileURL.path)
+                for url in [fileURL, jsonFileURL] {
+                    try fileManager.setAttributes([
+                        .posixPermissions: 0o644,
+                        .extensionHidden: false
+                    ], ofItemAtPath: url.path)
+                }
                 debug(.default, "✅ EXPORT: File attributes set successfully")
 
-                // Verify file was written successfully
-                let fileExists = fileManager.fileExists(atPath: fileURL.path)
-                let fileAttributes = try? fileManager.attributesOfItem(atPath: fileURL.path)
-                let fileSize = (fileAttributes?[.size] as? NSNumber)?.intValue ?? 0
+                // Verify files were written successfully
+                for url in [fileURL, jsonFileURL] {
+                    let fileExists = fileManager.fileExists(atPath: url.path)
+                    let fileAttributes = try? fileManager.attributesOfItem(atPath: url.path)
+                    let fileSize = (fileAttributes?[.size] as? NSNumber)?.intValue ?? 0
 
-                debug(.default, "📊 EXPORT: File verification - Exists: \(fileExists), Size: \(fileSize) bytes")
+                    debug(.default, "📊 EXPORT: File verification - \(url.lastPathComponent) exists: \(fileExists), size: \(fileSize) bytes")
 
-                if !fileExists {
-                    debug(.default, "❌ EXPORT: CRITICAL - File does not exist after writing!")
-                    return .failure(.unknown("File was not created successfully"))
+                    if !fileExists {
+                        debug(.default, "❌ EXPORT: CRITICAL - File does not exist after writing!")
+                        return .failure(.unknown("File was not created successfully"))
+                    }
+
+                    if fileSize == 0 {
+                        debug(.default, "❌ EXPORT: CRITICAL - File exists but has 0 bytes!")
+                        return .failure(.unknown("File was created but is empty"))
+                    }
                 }
 
-                if fileSize == 0 {
-                    debug(.default, "❌ EXPORT: CRITICAL - File exists but has 0 bytes!")
-                    return .failure(.unknown("File was created but is empty"))
-                }
-
-                return .success(fileURL)
+                return .success([fileURL, jsonFileURL])
             } catch {
                 debug(.default, "Failed to write settings export file: \(error)")
                 return .failure(.fileWriteError(error))
             }
         }
 
+        /// Gathers every restorable setting into a `SettingsBackup`, reading from the same sources
+        /// as the CSV export: settings manager, therapy files, Core Data presets, UserDefaults —
+        /// plus Keychain credentials and raw device manager state when their opt-ins are on.
+        func buildBackup(includeCredentials: Bool, includeDevicePairing: Bool) async throws -> SettingsBackup {
+            var backup = SettingsBackup()
+            backup.exportDate = Date()
+            backup.appVersion = versionNumber
+            backup.buildNumber = buildNumber
+            backup.branch = branch
+
+            let trioSettings = settingsManager.settings
+            backup.trioSettings = trioSettings
+            backup.preferences = settingsManager.preferences
+            backup.pumpSettings = settingsManager.pumpSettings
+
+            var therapy = SettingsBackup.Therapy()
+            therapy.basalProfile = storage.retrieve(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
+            therapy.insulinSensitivities = storage.retrieve(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
+            therapy.carbRatios = storage.retrieve(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
+            therapy.bgTargets = storage.retrieve(OpenAPS.Settings.bgTargets, as: BGTargets.self)
+            backup.therapy = therapy
+
+            var devices = SettingsBackup.DeviceInfo()
+            if let pumpManager = provider.deviceManager.pumpManager {
+                devices.pumpType = pumpManager.localizedTitle
+                devices.insulinType = pumpManager.status.insulinType?.title
+                if includeDevicePairing {
+                    devices.pumpState = SettingsBackup.encodeManagerState(pumpManager.rawValue)
+                }
+            }
+            devices.cgmDisplayName = trioSettings.cgm == .plugin
+                ? (fetchGlucoseManager.cgmManager?.localizedTitle ?? trioSettings.cgmPluginIdentifier)
+                : trioSettings.cgm.displayName
+            if includeDevicePairing, let cgmManager = fetchGlucoseManager.cgmManager {
+                devices.cgmState = SettingsBackup.encodeManagerState(cgmManager.rawValue)
+            }
+            backup.devices = devices
+
+            backup.presets = try await SettingsBackupPresetLoader.load(
+                tempTargetsStorage: tempTargetsStorage,
+                overrideStorage: overrideStorage,
+                context: viewContext
+            ).presets
+
+            backup.userDefaults = SettingsBackup.UserDefaultsValues(
+                colorSchemePreference: UserDefaults.standard.string(forKey: "colorSchemePreference"),
+                isTrioRemoteControlEnabled: UserDefaults.standard.bool(forKey: "isTrioRemoteControlEnabled")
+            )
+
+            if includeCredentials {
+                var credentials = SettingsBackup.Credentials()
+                credentials.nightscoutURL = keychain.getValue(String.self, forKey: NightscoutConfig.Config.urlKey)
+                credentials.nightscoutSecret = keychain.getValue(String.self, forKey: NightscoutConfig.Config.secretKey)
+                credentials.remoteControlSharedSecret = UserDefaults.standard.string(forKey: "trioRemoteControlSharedSecret")
+                backup.credentials = credentials
+            }
+
+            return backup
+        }
+
         /// Exports settings using the currently selected categories and format
-        func exportSelectedSettings() async -> Result<URL, ExportError> {
+        func exportSelectedSettings() async -> Result<[URL], ExportError> {
             await exportSettings(categories: selectedCategories)
         }
 

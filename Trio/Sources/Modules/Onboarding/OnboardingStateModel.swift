@@ -20,6 +20,9 @@ extension Onboarding {
         @ObservationIgnored @Injected() var notificationsManager: UserNotificationsManager!
         @ObservationIgnored @Injected() var bluetoothManager: BluetoothStateManager!
         @ObservationIgnored @Injected() var apsManager: APSManager!
+        @ObservationIgnored @Injected() var tempTargetsStorage: TempTargetsStorage!
+        @ObservationIgnored @Injected() var overrideStorage: OverrideStorage!
+        @ObservationIgnored @Injected() var fetchGlucoseManager: FetchGlucoseManager!
 
         private let settingsProvider = PickerSettingsProvider.shared
 
@@ -112,6 +115,14 @@ extension Onboarding {
         var nightscoutImportStatus: ImportStatus = .none
         var isUploadEnabled: Bool = true
         var uploadGlucose: Bool = true
+
+        // MARK: - Trio Backup Restore
+
+        var backupImportOption: TrioBackupImportOption = .noSelection
+        var importedBackup: SettingsBackup?
+        var backupImportError: TrioBackupImportError?
+        var importBackupCredentials: Bool = false
+        var importBackupDevicePairing: Bool = false
 
         // MARK: - Units and Pump Omboarding Option
 
@@ -695,15 +706,20 @@ extension Onboarding {
         }
 
         /// Persists all onboarding data by applying settings and saving therapy values.
+        /// When a Trio backup was imported, its preferences are merged in first (so the
+        /// onboarding-reviewed values win for the fields onboarding covers), and the categories
+        /// onboarding has no screens for are applied at the end.
         func saveOnboardingData() {
             applyDiagnostics()
             applyToSettings()
+            applyBackupPreferencesBase()
             applyToPreferences()
             applyToPumpSettings()
             saveTargets()
             saveBasalProfile()
             saveCarbRatios()
             saveISFValues()
+            applyRemainingBackupCategories()
         }
 
         /// Persists the current diagnostics sharing option and applies it to Crashlytics + telemetry.
@@ -752,8 +768,10 @@ extension Onboarding {
         }
 
         /// Applies the selected delivery preferences to the app's settings.
+        /// With an imported backup, the merged backup preferences (set by
+        /// `applyBackupPreferencesBase()`) are the base so non-onboarding fields survive.
         func applyToPreferences() {
-            var preferences = Preferences()
+            var preferences = importedBackup != nil ? settingsManager.preferences : Preferences()
 
             // delivery limits (those that are preference-bound, not pump-settings-bound
             preferences.maxIOB = maxIOB

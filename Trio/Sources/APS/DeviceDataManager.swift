@@ -32,6 +32,7 @@ protocol DeviceDataManager: GlucoseSource {
 
     func heartbeat(date: Date)
     func createBolusProgressReporter() -> DoseProgressReporter?
+    func adoptPumpManager(fromRawValue rawValue: [String: Any]) -> Bool
     var alertHistoryStorage: AlertHistoryStorage! { get }
 }
 
@@ -259,6 +260,17 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
         } else {
             pumpManager = nil
         }
+    }
+
+    /// Adopts pump manager state restored from a settings backup. Assigning `pumpManager` wires
+    /// the delegate, persists the state, and re-syncs delivery limits — the same path as app start.
+    /// Returns false when the state cannot be reconstructed (unknown manager type or invalid state).
+    func adoptPumpManager(fromRawValue rawValue: [String: Any]) -> Bool {
+        guard let manager = pumpManagerFromRawValue(rawValue) else {
+            return false
+        }
+        pumpManager = manager
+        return true
     }
 
     func createBolusProgressReporter() -> DoseProgressReporter? {
