@@ -456,8 +456,14 @@ enum SettingItems {
         SettingItem(title: "Apple Health", view: .healthkit, path: ["Services"])
     ]
 
+    static let trioBackupItems = [
+        SettingItem(title: "Export Settings", view: .settingsExport, path: ["Trio Backup"]),
+        SettingItem(title: "Import Settings", view: .settingsImport, path: ["Trio Backup"])
+    ]
+
     static var allItems: [SettingItem] {
-        trioConfig + devicesItems + therapyItems + algorithmItems + trioFeaturesItems + notificationItems + serviceItems
+        trioConfig + devicesItems + therapyItems + algorithmItems + trioFeaturesItems + notificationItems + serviceItems +
+            trioBackupItems
     }
 
     static func filteredItems(searchText: String) -> [FilteredSettingItem] {

@@ -97,6 +97,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
     case welcome
     case startupInfo
     case overview
+    case backupImport
     case nightscout
     case unitSelection
     case glucoseTarget
@@ -127,6 +128,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
             return String(localized: "Startup Guide")
         case .overview:
             return String(localized: "Overview")
+        case .backupImport:
+            return String(localized: "Trio Backup")
         case .nightscout:
             return String(localized: "Nightscout")
         case .unitSelection:
@@ -172,6 +175,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
         case .overview:
             return String(
                 localized: "Trio's Onboarding takes about 15-30 minutes to complete. We'll guide you through each step."
+            )
+        case .backupImport:
+            return String(
+                localized: "If you have a Trio settings backup from a previous phone or installation, you can restore it now. You will still review every setting during onboarding."
             )
         case .nightscout:
             return String(
@@ -237,6 +244,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
             return "list.bullet.clipboard.fill"
         case .overview:
             return "checklist.unchecked"
+        case .backupImport:
+            return "arrow.counterclockwise.icloud.fill"
         case .nightscout:
             return "owl"
         case .unitSelection:
@@ -289,6 +298,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
         switch self {
         case .algorithmSettings,
              .autosensSettings,
+             .backupImport,
              .bluetooth,
              .completed,
              .deliveryLimits,

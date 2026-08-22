@@ -644,6 +644,16 @@
 		C2AA6CF72E1A734A00BF6C16 /* SettingsExportProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA6CF32E1A734A00BF6C16 /* SettingsExportProvider.swift */; };
 		C2AA6CF82E1A734A00BF6C16 /* SettingsExportDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA6CF22E1A734A00BF6C16 /* SettingsExportDataFlow.swift */; };
 		C2AA6CF92E1A734A00BF6C16 /* SettingsExportStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA6CF42E1A734A00BF6C16 /* SettingsExportStateModel.swift */; };
+		A15B00112F30AA0100AB0C11 /* SettingsBackup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00012F30AA0100AB0C01 /* SettingsBackup.swift */; };
+		A15B00122F30AA0100AB0C12 /* SettingsImportDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00022F30AA0100AB0C02 /* SettingsImportDataFlow.swift */; };
+		A15B00132F30AA0100AB0C13 /* SettingsImportProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00032F30AA0100AB0C03 /* SettingsImportProvider.swift */; };
+		A15B00142F30AA0100AB0C14 /* SettingsImportStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00042F30AA0100AB0C04 /* SettingsImportStateModel.swift */; };
+		A15B00152F30AA0100AB0C15 /* SettingsImportApplier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00052F30AA0100AB0C05 /* SettingsImportApplier.swift */; };
+		A15B00162F30AA0100AB0C16 /* SettingsBackupPresetLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00062F30AA0100AB0C06 /* SettingsBackupPresetLoader.swift */; };
+		A15B00172F30AA0100AB0C17 /* SettingsBackupPresetApplier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00072F30AA0100AB0C07 /* SettingsBackupPresetApplier.swift */; };
+		A15B00182F30AA0100AB0C18 /* SettingsImportRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00082F30AA0100AB0C08 /* SettingsImportRootView.swift */; };
+		A15B00192F30AA0100AB0C19 /* OnboardingStateModel+BackupImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B00092F30AA0100AB0C09 /* OnboardingStateModel+BackupImport.swift */; };
+		A15B001A2F30AA0100AB0C1A /* TrioBackupImportStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B000A2F30AA0100AB0C0A /* TrioBackupImportStepView.swift */; };
 		C2BA6B972F758E7500348E6A /* WatchNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BA6B962F758E7500348E6A /* WatchNotificationHandler.swift */; };
 		C2BA6B992F758E7600348E6A /* NotificationIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BA6B982F758E7600348E6A /* NotificationIdentifiers.swift */; };
 		C2BA6B9A2F7593C300348E6A /* NotificationIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BA6B982F758E7600348E6A /* NotificationIdentifiers.swift */; };
@@ -1714,6 +1724,16 @@
 		C2AA6CF22E1A734A00BF6C16 /* SettingsExportDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsExportDataFlow.swift; sourceTree = "<group>"; };
 		C2AA6CF32E1A734A00BF6C16 /* SettingsExportProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsExportProvider.swift; sourceTree = "<group>"; };
 		C2AA6CF42E1A734A00BF6C16 /* SettingsExportStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsExportStateModel.swift; sourceTree = "<group>"; };
+		A15B00012F30AA0100AB0C01 /* SettingsBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackup.swift; sourceTree = "<group>"; };
+		A15B00022F30AA0100AB0C02 /* SettingsImportDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportDataFlow.swift; sourceTree = "<group>"; };
+		A15B00032F30AA0100AB0C03 /* SettingsImportProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportProvider.swift; sourceTree = "<group>"; };
+		A15B00042F30AA0100AB0C04 /* SettingsImportStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportStateModel.swift; sourceTree = "<group>"; };
+		A15B00052F30AA0100AB0C05 /* SettingsImportApplier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportApplier.swift; sourceTree = "<group>"; };
+		A15B00062F30AA0100AB0C06 /* SettingsBackupPresetLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupPresetLoader.swift; sourceTree = "<group>"; };
+		A15B00072F30AA0100AB0C07 /* SettingsBackupPresetApplier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupPresetApplier.swift; sourceTree = "<group>"; };
+		A15B00082F30AA0100AB0C08 /* SettingsImportRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportRootView.swift; sourceTree = "<group>"; };
+		A15B00092F30AA0100AB0C09 /* OnboardingStateModel+BackupImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OnboardingStateModel+BackupImport.swift"; sourceTree = "<group>"; };
+		A15B000A2F30AA0100AB0C0A /* TrioBackupImportStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioBackupImportStepView.swift; sourceTree = "<group>"; };
 		C2BA6B962F758E7500348E6A /* WatchNotificationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNotificationHandler.swift; sourceTree = "<group>"; };
 		C2BA6B982F758E7600348E6A /* NotificationIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationIdentifiers.swift; sourceTree = "<group>"; };
 		C377490C77661D75E8C50649 /* ManualTempBasalRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ManualTempBasalRootView.swift; sourceTree = "<group>"; };
@@ -2379,6 +2399,7 @@
 				9E56E3626FAD933385101B76 /* History */,
 				195D80B22AF696EE00D25097 /* DynamicSettings */,
 				C2AA6CF52E1A734A00BF6C16 /* SettingsExport */,
+				A15B00212F30AA0100AB0C21 /* SettingsImport */,
 				DD17454C2C55CA0200211FAC /* GeneralSettings */,
 				BD1179602F4E22C100F90001 /* GlucoseAlerts */,
 				BD11799A2F4E22C100F90001 /* DeviceAlarms */,
@@ -2896,6 +2917,7 @@
 				583684072BD195A700070A60 /* Determination.swift */,
 				DDD6D4D22CDE90720029439A /* EstimatedA1cDisplayUnit.swift */,
 				DD3D60302F0377350021A33B /* ExportSetting.swift */,
+				A15B00012F30AA0100AB0C01 /* SettingsBackup.swift */,
 				DD6B7CB32C7B71F700B75029 /* ForecastDisplayType.swift */,
 				DD3078692D42F94000DE0490 /* GarminDevice.swift */,
 				49090A8C2E9FE8D200D0F5DB /* GarminWatchSettings.swift */,
@@ -3757,6 +3779,7 @@
 				BD8E6B202D9036CA00ABF8FA /* OnboardingProvider.swift */,
 				BD47FD1A2D88AB4A0043966B /* OnboardingStateModel.swift */,
 				DDF68FFB2D9ECF77008BF16C /* OnboardingStateModel+Nightscout.swift */,
+				A15B00092F30AA0100AB0C09 /* OnboardingStateModel+BackupImport.swift */,
 				BD47FD152D88AAD80043966B /* View */,
 			);
 			path = Onboarding;
@@ -3789,6 +3812,7 @@
 				DD3F1F842D9DD83B00DCE7B3 /* DeliveryLimitsStepView.swift */,
 				DD3F1F822D9DC78300DCE7B3 /* UnitSelectionStepView.swift */,
 				BD47FD162D88AAEF0043966B /* CompletedStepView.swift */,
+				A15B000A2F30AA0100AB0C0A /* TrioBackupImportStepView.swift */,
 			);
 			path = OnboardingSteps;
 			sourceTree = "<group>";
@@ -3986,6 +4010,28 @@
 				C2AA6CF42E1A734A00BF6C16 /* SettingsExportStateModel.swift */,
 			);
 			path = SettingsExport;
+			sourceTree = "<group>";
+		};
+		A15B00212F30AA0100AB0C21 /* SettingsImport */ = {
+			isa = PBXGroup;
+			children = (
+				A15B00222F30AA0100AB0C22 /* View */,
+				A15B00022F30AA0100AB0C02 /* SettingsImportDataFlow.swift */,
+				A15B00032F30AA0100AB0C03 /* SettingsImportProvider.swift */,
+				A15B00042F30AA0100AB0C04 /* SettingsImportStateModel.swift */,
+				A15B00052F30AA0100AB0C05 /* SettingsImportApplier.swift */,
+				A15B00062F30AA0100AB0C06 /* SettingsBackupPresetLoader.swift */,
+				A15B00072F30AA0100AB0C07 /* SettingsBackupPresetApplier.swift */,
+			);
+			path = SettingsImport;
+			sourceTree = "<group>";
+		};
+		A15B00222F30AA0100AB0C22 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				A15B00082F30AA0100AB0C08 /* SettingsImportRootView.swift */,
+			);
+			path = View;
 			sourceTree = "<group>";
 		};
 		C2C98283C436DB934D7E7994 /* Treatments */ = {
@@ -5588,6 +5634,16 @@ ECF21C66F4587B9A7FE37371 /* PresetChartViews.swift in Sources */,
 				C2AA6CF72E1A734A00BF6C16 /* SettingsExportProvider.swift in Sources */,
 				C2AA6CF82E1A734A00BF6C16 /* SettingsExportDataFlow.swift in Sources */,
 				C2AA6CF92E1A734A00BF6C16 /* SettingsExportStateModel.swift in Sources */,
+				A15B00112F30AA0100AB0C11 /* SettingsBackup.swift in Sources */,
+				A15B00122F30AA0100AB0C12 /* SettingsImportDataFlow.swift in Sources */,
+				A15B00132F30AA0100AB0C13 /* SettingsImportProvider.swift in Sources */,
+				A15B00142F30AA0100AB0C14 /* SettingsImportStateModel.swift in Sources */,
+				A15B00152F30AA0100AB0C15 /* SettingsImportApplier.swift in Sources */,
+				A15B00162F30AA0100AB0C16 /* SettingsBackupPresetLoader.swift in Sources */,
+				A15B00172F30AA0100AB0C17 /* SettingsBackupPresetApplier.swift in Sources */,
+				A15B00182F30AA0100AB0C18 /* SettingsImportRootView.swift in Sources */,
+				A15B00192F30AA0100AB0C19 /* OnboardingStateModel+BackupImport.swift in Sources */,
+				A15B001A2F30AA0100AB0C1A /* TrioBackupImportStepView.swift in Sources */,
 				3811DE4325C9D4A100A708ED /* SettingsProvider.swift in Sources */,
 				45252C95D220E796FDB3B022 /* ConfigEditorDataFlow.swift in Sources */,
 				CE7CA34E2A064973004BE681 /* AppShortcuts.swift in Sources */,
