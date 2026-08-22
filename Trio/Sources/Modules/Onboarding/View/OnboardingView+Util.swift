@@ -98,6 +98,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
     case startupInfo
     case overview
     case diagnostics
+    case backupImport
     case nightscout
     case unitSelection
     case glucoseTarget
@@ -130,6 +131,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
             return String(localized: "Overview")
         case .diagnostics:
             return String(localized: "Diagnostics")
+        case .backupImport:
+            return String(localized: "Trio Backup")
         case .nightscout:
             return String(localized: "Nightscout")
         case .unitSelection:
@@ -179,6 +182,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
         case .diagnostics:
             return String(
                 localized: "By default, Trio collects crash reports and other anonymized data related to errors, exceptions, and overall app performance."
+            )
+        case .backupImport:
+            return String(
+                localized: "If you have a Trio settings backup from a previous phone or installation, you can restore it now. You will still review every setting during onboarding."
             )
         case .nightscout:
             return String(
@@ -246,6 +253,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
             return "checklist.unchecked"
         case .diagnostics:
             return "waveform.badge.magnifyingglass"
+        case .backupImport:
+            return "arrow.counterclockwise.icloud.fill"
         case .nightscout:
             return "owl"
         case .unitSelection:
@@ -298,6 +307,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Equatable {
         switch self {
         case .algorithmSettings,
              .autosensSettings,
+             .backupImport,
              .bluetooth,
              .completed,
              .deliveryLimits,
