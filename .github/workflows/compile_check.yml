@@ -44,6 +44,7 @@ on:
       - sync/dev-updates-6
       - sync/dev-updates-7
       - sync/dev-updates-8
+      - feat/contact-image-background
     paths-ignore:
       - '**.md'
       - '**/README'
