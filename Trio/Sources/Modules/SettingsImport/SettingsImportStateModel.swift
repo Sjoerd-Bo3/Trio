@@ -395,6 +395,14 @@ extension SettingsImport {
                    provider.deviceManager.adoptPumpManager(fromRawValue: rawValue)
                 {
                     debug(.default, "✅ IMPORT: Adopted pump manager state from backup")
+                    // Kick a pump update right away so the Bluetooth connection (and, if the pump
+                    // requests it, the iOS pairing prompt) happens now instead of on the next loop.
+                    provider.deviceManager.heartbeat(date: Date())
+                    collectedWarnings.append(
+                        String(
+                            localized: "Pump pairing restored — Trio is connecting to your pump now. Check the pump status on the home screen."
+                        )
+                    )
                 } else {
                     collectedWarnings.append(
                         String(
