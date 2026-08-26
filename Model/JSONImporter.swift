@@ -107,8 +107,14 @@ class JSONImporter {
     ///   - An error if the file cannot be read or decoded.
     ///   - An error if the CoreData operation fails.
     func importGlucoseHistory(url: URL, now: Date) async throws {
-        let twentyFourHoursAgo = now - 24.hours.timeInterval
         let glucoseHistoryFull: [BloodGlucose] = try readJsonFile(url: url)
+        try await importGlucoseHistory(entries: glucoseHistoryFull, now: now)
+    }
+
+    /// Imports glucose entries that are already decoded — the settings-backup restore path.
+    /// Same window and deduplication rules as the file-based import.
+    func importGlucoseHistory(entries glucoseHistoryFull: [BloodGlucose], now: Date) async throws {
+        let twentyFourHoursAgo = now - 24.hours.timeInterval
         let existingDates = try await fetchDates(
             ofType: GlucoseStored.self,
             predicate: .predicateForDateBetween(start: twentyFourHoursAgo, end: now),
@@ -203,8 +209,14 @@ class JSONImporter {
     ///   - An error if the file cannot be read or decoded.
     ///   - An error if the CoreData operation fails.
     func importPumpHistory(url: URL, now: Date) async throws {
-        let twentyFourHoursAgo = now - 24.hours.timeInterval
         let pumpHistoryRaw: [PumpHistoryEvent] = try readJsonFile(url: url)
+        try await importPumpHistory(entries: pumpHistoryRaw, now: now)
+    }
+
+    /// Imports pump events that are already decoded — the settings-backup restore path.
+    /// Same window, pairing and deduplication rules as the file-based import.
+    func importPumpHistory(entries pumpHistoryRaw: [PumpHistoryEvent], now: Date) async throws {
+        let twentyFourHoursAgo = now - 24.hours.timeInterval
         let existingTimestamps = try await fetchDates(
             ofType: PumpEventStored.self,
             predicate: .predicateForTimestampBetween(start: twentyFourHoursAgo, end: now),
@@ -248,8 +260,14 @@ class JSONImporter {
     ///   - An error if the file cannot be read or decoded.
     ///   - An error if the CoreData operation fails.
     func importCarbHistory(url: URL, now: Date) async throws {
-        let twentyFourHoursAgo = now - 24.hours.timeInterval
         let carbHistoryFull: [CarbsEntry] = try readJsonFile(url: url)
+        try await importCarbHistory(entries: carbHistoryFull, now: now)
+    }
+
+    /// Imports carb entries that are already decoded — the settings-backup restore path.
+    /// Same window, FPU filtering and deduplication rules as the file-based import.
+    func importCarbHistory(entries carbHistoryFull: [CarbsEntry], now: Date) async throws {
+        let twentyFourHoursAgo = now - 24.hours.timeInterval
         let existingDates = try await fetchDates(
             ofType: CarbEntryStored.self,
             predicate: .predicateForDateBetween(start: twentyFourHoursAgo, end: now),

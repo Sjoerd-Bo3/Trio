@@ -244,6 +244,12 @@ extension Onboarding.StateModel {
             )
             fileStorage.save(mergeResult.result, as: OpenAPS.Trio.profilePresets)
         }
+
+        if let history = backup.history {
+            Task {
+                await SettingsBackupHistory.apply(history)
+            }
+        }
     }
 }
 

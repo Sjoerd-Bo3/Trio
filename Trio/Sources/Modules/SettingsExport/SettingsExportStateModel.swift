@@ -52,6 +52,7 @@ extension SettingsExport {
         @Published var isExporting: Bool = false
         @Published var includeCredentials: Bool = false
         @Published var includeDevicePairing: Bool = false
+        @Published var includeHistory: Bool = false
 
         enum ExportError: LocalizedError {
             case documentsDirectoryNotFound
@@ -1214,7 +1215,8 @@ extension SettingsExport {
             do {
                 backup = try await buildBackup(
                     includeCredentials: includeCredentials,
-                    includeDevicePairing: includeDevicePairing
+                    includeDevicePairing: includeDevicePairing,
+                    includeHistory: includeHistory
                 )
             } catch {
                 return .failure(.unknown("Failed to build settings backup: \(error.localizedDescription)"))
@@ -1288,8 +1290,13 @@ extension SettingsExport {
 
         /// Gathers every restorable setting into a `SettingsBackup`, reading from the same sources
         /// as the CSV export: settings manager, therapy files, Core Data presets, UserDefaults —
-        /// plus Keychain credentials and raw device manager state when their opt-ins are on.
-        func buildBackup(includeCredentials: Bool, includeDevicePairing: Bool) async throws -> SettingsBackup {
+        /// plus Keychain credentials, raw device manager state and treatment history when their
+        /// opt-ins are on.
+        func buildBackup(
+            includeCredentials: Bool,
+            includeDevicePairing: Bool,
+            includeHistory: Bool = false
+        ) async throws -> SettingsBackup {
             var backup = SettingsBackup()
             backup.exportDate = Date()
             backup.appVersion = versionNumber
@@ -1347,6 +1354,10 @@ extension SettingsExport {
                 credentials.nightscoutSecret = keychain.getValue(String.self, forKey: NightscoutConfig.Config.secretKey)
                 credentials.remoteControlSharedSecret = UserDefaults.standard.string(forKey: "trioRemoteControlSharedSecret")
                 backup.credentials = credentials
+            }
+
+            if includeHistory {
+                backup.history = try await SettingsBackupHistory.export()
             }
 
             return backup

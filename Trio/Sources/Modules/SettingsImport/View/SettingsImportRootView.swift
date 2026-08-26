@@ -249,6 +249,23 @@ extension SettingsImport {
                                 .font(.caption)
                         }
                     }
+                    if category == .history {
+                        ForEach(state.changeSet.historyCounts) { historyCount in
+                            HStack {
+                                Text(historyCount.label)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text("\(historyCount.count)")
+                                    .foregroundColor(.secondary)
+                                    .font(.subheadline)
+                            }
+                        }
+                        Text(
+                            "Existing entries are never duplicated. Glucose, pump and carb entries older than 24 hours are skipped; TDD covers the last \(SettingsBackupHistory.tddExportDays) days."
+                        )
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    }
                 },
                 label: {
                     HStack {
@@ -271,16 +288,23 @@ extension SettingsImport {
 
                         Spacer()
 
-                        Text(
-                            changeCount == 0
-                                ? String(localized: "no changes")
-                                : String(localized: "\(changeCount) change(s)")
-                        )
-                        .font(.caption)
-                        .foregroundColor(changeCount == 0 ? .secondary : .blue)
+                        Text(categoryBadge(category, changeCount: changeCount))
+                            .font(.caption)
+                            .foregroundColor(changeCount == 0 ? .secondary : .blue)
                     }
                 }
             )
+        }
+
+        private func categoryBadge(_ category: SettingsBackupCategory, changeCount: Int) -> String {
+            if category == .history {
+                return changeCount == 0
+                    ? String(localized: "no recent entries")
+                    : String(localized: "\(changeCount) entry(s)")
+            }
+            return changeCount == 0
+                ? String(localized: "no changes")
+                : String(localized: "\(changeCount) change(s)")
         }
 
         private func changeRow(_ change: ImportChange) -> some View {

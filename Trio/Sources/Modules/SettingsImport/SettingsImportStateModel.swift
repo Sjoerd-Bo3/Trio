@@ -73,6 +73,12 @@ extension SettingsImport {
             if backup.presets?.overrides?.isNotEmpty == true { categories.insert(.overridePresets) }
             if backup.presets?.meals?.isNotEmpty == true { categories.insert(.mealPresets) }
             if backup.profilePresets?.isNotEmpty == true { categories.insert(.profilePresets) }
+            if let history = backup.history,
+               history.glucose?.isNotEmpty == true || history.pumpHistory?.isNotEmpty == true ||
+               history.carbs?.isNotEmpty == true || history.tdd?.isNotEmpty == true
+            {
+                categories.insert(.history)
+            }
             return categories
         }
 
@@ -269,6 +275,9 @@ extension SettingsImport {
                     activeName: activeProfilePresetName,
                     strategy: conflictStrategy
                 ).changes
+            }
+            if let history = backup.history {
+                newChangeSet.historyCounts = SettingsBackupHistory.previewCounts(history)
             }
 
             changeSet = newChangeSet
@@ -483,7 +492,13 @@ extension SettingsImport {
                 storage.save(mergeResult.result, as: OpenAPS.Trio.profilePresets)
             }
 
-            // 7. UserDefaults-backed extras.
+            // 7. Treatment history — the importers deduplicate by date, so a re-import is a no-op.
+            if categories.contains(.history), let history = backup.history {
+                let historyWarnings = await SettingsBackupHistory.apply(history)
+                collectedWarnings.append(contentsOf: historyWarnings)
+            }
+
+            // 8. UserDefaults-backed extras.
             if categories.contains(.features), let userDefaultsValues = backup.userDefaults {
                 if let colorScheme = userDefaultsValues.colorSchemePreference {
                     UserDefaults.standard.set(colorScheme, forKey: "colorSchemePreference")
@@ -493,7 +508,7 @@ extension SettingsImport {
                 }
             }
 
-            // 8. Credentials — consumers read these lazily, so no observer poke is needed.
+            // 9. Credentials — consumers read these lazily, so no observer poke is needed.
             if importCredentials, let credentials = backup.credentials {
                 if let url = credentials.nightscoutURL {
                     keychain.setValue(url, forKey: NightscoutConfig.Config.urlKey)
@@ -509,7 +524,7 @@ extension SettingsImport {
                 )
             }
 
-            // 9. Match the therapy editors' post-save behavior. profile.json needs no manual
+            // 10. Match the therapy editors' post-save behavior. profile.json needs no manual
             // rebuild: the loop regenerates it at the start of every cycle.
             Task.detached(priority: .low) {
                 do {

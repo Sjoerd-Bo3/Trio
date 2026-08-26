@@ -15,6 +15,7 @@ enum SettingsBackupCategory: String, CaseIterable, Identifiable {
     case overridePresets
     case mealPresets
     case profilePresets
+    case history
 
     var displayName: String {
         switch self {
@@ -38,6 +39,8 @@ enum SettingsBackupCategory: String, CaseIterable, Identifiable {
             return String(localized: "Meal Presets")
         case .profilePresets:
             return String(localized: "Profile Presets")
+        case .history:
+            return String(localized: "History")
         }
     }
 }
@@ -70,6 +73,28 @@ struct SettingsBackup: JSON, Equatable, Encodable {
     /// ACTIVE profile is exported by name for display only — an import never switches profiles.
     var profilePresets: [ProfilePreset]?
     var activeProfilePresetName: String?
+
+    /// Optional treatment history (export toggle, off by default): the last 24 hours of glucose,
+    /// pump events and carbs, plus 10 days of hourly TDD samples for Dynamic ISF continuity.
+    /// Import deduplicates by date, and the 24-hour categories only land when the backup is
+    /// fresh enough.
+    var history: History?
+
+    struct History: JSON, Equatable {
+        var glucose: [BloodGlucose]?
+        var pumpHistory: [PumpHistoryEvent]?
+        var carbs: [CarbsEntry]?
+        var tdd: [TDDEntry]?
+    }
+
+    struct TDDEntry: JSON, Equatable {
+        var date: Date
+        var total: Decimal
+        var bolus: Decimal
+        var tempBasal: Decimal
+        var scheduledBasal: Decimal
+        var weightedAverage: Decimal?
+    }
 
     /// Device metadata. `pumpType`/`insulinType`/`cgmDisplayName` are informational only —
     /// the authoritative CGM selection lives in `trioSettings.cgm`/`.cgmPluginIdentifier`.
@@ -162,6 +187,7 @@ extension SettingsBackup {
         case credentials
         case profilePresets
         case activeProfilePresetName
+        case history
     }
 }
 
@@ -189,6 +215,7 @@ extension SettingsBackup: Decodable {
         backup.credentials = try? container.decode(Credentials.self, forKey: .credentials)
         backup.profilePresets = try? container.decode([ProfilePreset].self, forKey: .profilePresets)
         backup.activeProfilePresetName = try? container.decode(String.self, forKey: .activeProfilePresetName)
+        backup.history = try? container.decode(History.self, forKey: .history)
 
         self = backup
     }

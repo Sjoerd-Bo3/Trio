@@ -96,6 +96,19 @@ extension SettingsExport {
                 .listRowBackground(Color.chart)
 
                 Section {
+                    Toggle(isOn: $state.includeHistory) {
+                        Text("Include Treatment History")
+                    }
+                } header: {
+                    Text("Treatment History")
+                } footer: {
+                    Text(
+                        "Adds the last 24 hours of glucose, pump and carb history plus \(SettingsBackupHistory.tddExportDays) days of TDD data to the JSON backup, so a restored phone continues with your recent data. Import the backup within 24 hours for the full history."
+                    )
+                }
+                .listRowBackground(Color.chart)
+
+                Section {
                     Button(action: {
                         Task {
                             let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)

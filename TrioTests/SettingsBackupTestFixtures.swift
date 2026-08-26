@@ -203,12 +203,92 @@ enum SettingsBackupTestFixtures {
         )
         backup.profilePresets = [profilePreset(name: "Weekend", basalRate: 0.9)]
         backup.activeProfilePresetName = "Weekend"
+        backup.history = history(around: backup.exportDate!)
         backup.credentials = SettingsBackup.Credentials(
             nightscoutURL: "https://example.nightscout.test",
             nightscoutSecret: "supersecret",
             remoteControlSharedSecret: "sharedsecret"
         )
         return backup
+    }
+
+    /// One entry per history category, dated shortly before `date` so the fixture is importable
+    /// when `date` is treated as "now".
+    static func history(around date: Date) -> SettingsBackup.History {
+        let glucoseDate = date.addingTimeInterval(-10 * 60)
+        let bolusDate = date.addingTimeInterval(-30 * 60)
+        let tempBasalDate = date.addingTimeInterval(-60 * 60)
+        let carbsDate = date.addingTimeInterval(-45 * 60)
+
+        return SettingsBackup.History(
+            glucose: [
+                BloodGlucose(
+                    id: "11111111-1111-1111-1111-111111111111",
+                    sgv: 120,
+                    direction: .flat,
+                    date: Decimal(Int64(glucoseDate.timeIntervalSince1970 * 1000)),
+                    dateString: glucoseDate,
+                    glucose: nil,
+                    type: "sgv"
+                )
+            ],
+            pumpHistory: [
+                PumpHistoryEvent(
+                    id: "bolus-1",
+                    type: .bolus,
+                    timestamp: bolusDate,
+                    amount: 1.5,
+                    duration: 0,
+                    isSMB: true,
+                    isExternal: false
+                ),
+                PumpHistoryEvent(
+                    id: "temp-1",
+                    type: .tempBasalDuration,
+                    timestamp: tempBasalDate,
+                    durationMin: 30
+                ),
+                PumpHistoryEvent(
+                    id: "_temp-1",
+                    type: .tempBasal,
+                    timestamp: tempBasalDate,
+                    rate: 0.85,
+                    temp: .absolute
+                )
+            ],
+            carbs: [
+                CarbsEntry(
+                    id: "22222222-2222-2222-2222-222222222222",
+                    createdAt: carbsDate,
+                    actualDate: carbsDate,
+                    carbs: 45,
+                    fat: 10,
+                    protein: 5,
+                    note: "Lunch",
+                    enteredBy: CarbsEntry.local,
+                    isFPU: false,
+                    fpuID: nil
+                )
+            ],
+            tdd: [
+                SettingsBackup.TDDEntry(
+                    date: date.addingTimeInterval(-2 * 60 * 60),
+                    total: 38.5,
+                    bolus: 20,
+                    tempBasal: 10,
+                    scheduledBasal: 8.5,
+                    weightedAverage: 37.2
+                ),
+                SettingsBackup.TDDEntry(
+                    date: date.addingTimeInterval(-26 * 60 * 60),
+                    total: 41,
+                    bolus: 22,
+                    tempBasal: 11,
+                    scheduledBasal: 8,
+                    weightedAverage: nil
+                )
+            ]
+        )
     }
 
     static func profilePreset(name: String, basalRate: Decimal = 0.8) -> ProfilePreset {
