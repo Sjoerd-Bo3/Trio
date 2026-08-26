@@ -126,10 +126,21 @@ struct TrioBackupImportStepView: View {
                     .font(.footnote)
                     .foregroundStyle(Color.secondary)
             }
-            if backup.history != nil {
-                Text("Includes treatment history — your glucose, insulin and carb history will be restored.")
-                    .font(.footnote)
-                    .foregroundStyle(Color.secondary)
+            if let history = backup.history {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Includes treatment history — this will be restored:")
+                        .font(.footnote)
+                        .foregroundStyle(Color.secondary)
+                    ForEach(SettingsBackupHistory.previewCounts(history)) { historyCount in
+                        HStack {
+                            Text(historyCount.label)
+                            Spacer()
+                            Text("\(historyCount.count)")
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(Color.secondary)
+                    }
+                }
             }
 
             if backup.credentials != nil {
