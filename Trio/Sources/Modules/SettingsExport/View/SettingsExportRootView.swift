@@ -103,7 +103,7 @@ extension SettingsExport {
                     Text("Treatment History")
                 } footer: {
                     Text(
-                        "Adds the last 24 hours of glucose, pump and carb history plus \(SettingsBackupHistory.tddExportDays) days of TDD data to the JSON backup, so a restored phone continues with your recent data. Import the backup within 24 hours for the full history."
+                        "Adds your full treatment history to the JSON backup: every glucose reading, pump event and carb entry Trio still holds (about 3 months), plus the TDD data behind Dynamic ISF and the one-year statistics. Makes the backup file considerably larger."
                     )
                 }
                 .listRowBackground(Color.chart)

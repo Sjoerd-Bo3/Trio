@@ -127,7 +127,7 @@ struct TrioBackupImportStepView: View {
                     .foregroundStyle(Color.secondary)
             }
             if backup.history != nil {
-                Text("Includes treatment history — recent glucose, insulin and carb entries will be restored.")
+                Text("Includes treatment history — your glucose, insulin and carb history will be restored.")
                     .font(.footnote)
                     .foregroundStyle(Color.secondary)
             }

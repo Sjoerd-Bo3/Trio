@@ -1357,7 +1357,7 @@ extension SettingsExport {
             }
 
             if includeHistory {
-                backup.history = try await SettingsBackupHistory.export()
+                backup.history = try await SettingsBackupHistory.export(fileStorage: storage)
             }
 
             return backup

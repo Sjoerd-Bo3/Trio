@@ -75,7 +75,8 @@ extension SettingsImport {
             if backup.profilePresets?.isNotEmpty == true { categories.insert(.profilePresets) }
             if let history = backup.history,
                history.glucose?.isNotEmpty == true || history.pumpHistory?.isNotEmpty == true ||
-               history.carbs?.isNotEmpty == true || history.tdd?.isNotEmpty == true
+               history.carbs?.isNotEmpty == true || history.tdd?.isNotEmpty == true ||
+               history.tddDaily?.isNotEmpty == true
             {
                 categories.insert(.history)
             }
@@ -494,7 +495,7 @@ extension SettingsImport {
 
             // 7. Treatment history — the importers deduplicate by date, so a re-import is a no-op.
             if categories.contains(.history), let history = backup.history {
-                let historyWarnings = await SettingsBackupHistory.apply(history)
+                let historyWarnings = await SettingsBackupHistory.apply(history, fileStorage: storage)
                 collectedWarnings.append(contentsOf: historyWarnings)
             }
 

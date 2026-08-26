@@ -247,7 +247,7 @@ extension Onboarding.StateModel {
 
         if let history = backup.history {
             Task {
-                await SettingsBackupHistory.apply(history)
+                await SettingsBackupHistory.apply(history, fileStorage: fileStorage)
             }
         }
     }

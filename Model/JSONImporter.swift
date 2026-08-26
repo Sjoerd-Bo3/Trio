@@ -108,23 +108,23 @@ class JSONImporter {
     ///   - An error if the CoreData operation fails.
     func importGlucoseHistory(url: URL, now: Date) async throws {
         let glucoseHistoryFull: [BloodGlucose] = try readJsonFile(url: url)
-        try await importGlucoseHistory(entries: glucoseHistoryFull, now: now)
+        try await importGlucoseHistory(entries: glucoseHistoryFull, now: now, start: now - 24.hours.timeInterval)
     }
 
     /// Imports glucose entries that are already decoded — the settings-backup restore path.
-    /// Same window and deduplication rules as the file-based import.
-    func importGlucoseHistory(entries glucoseHistoryFull: [BloodGlucose], now: Date) async throws {
-        let twentyFourHoursAgo = now - 24.hours.timeInterval
+    /// Same deduplication rules as the file-based import; `start` bounds the accepted window
+    /// (the migration passes 24 hours ago, a backup restore passes `.distantPast`).
+    func importGlucoseHistory(entries glucoseHistoryFull: [BloodGlucose], now: Date, start: Date) async throws {
         let existingDates = try await fetchDates(
             ofType: GlucoseStored.self,
-            predicate: .predicateForDateBetween(start: twentyFourHoursAgo, end: now),
+            predicate: .predicateForDateBetween(start: start, end: now),
             sortKey: "date",
             dateKeyPath: \.date
         )
 
-        // only import glucose values from the last 24 hours that don't exist
+        // only import glucose values inside the window that don't exist yet
         let glucoseHistory = glucoseHistoryFull
-            .filter { $0.dateString >= twentyFourHoursAgo && $0.dateString <= now && !existingDates.contains($0.dateString) }
+            .filter { $0.dateString >= start && $0.dateString <= now && !existingDates.contains($0.dateString) }
 
         // Create a background context for batch processing
         let backgroundContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
@@ -210,21 +210,21 @@ class JSONImporter {
     ///   - An error if the CoreData operation fails.
     func importPumpHistory(url: URL, now: Date) async throws {
         let pumpHistoryRaw: [PumpHistoryEvent] = try readJsonFile(url: url)
-        try await importPumpHistory(entries: pumpHistoryRaw, now: now)
+        try await importPumpHistory(entries: pumpHistoryRaw, now: now, start: now - 24.hours.timeInterval)
     }
 
     /// Imports pump events that are already decoded — the settings-backup restore path.
-    /// Same window, pairing and deduplication rules as the file-based import.
-    func importPumpHistory(entries pumpHistoryRaw: [PumpHistoryEvent], now: Date) async throws {
-        let twentyFourHoursAgo = now - 24.hours.timeInterval
+    /// Same pairing and deduplication rules as the file-based import; `start` bounds the
+    /// accepted window (the migration passes 24 hours ago, a backup restore passes `.distantPast`).
+    func importPumpHistory(entries pumpHistoryRaw: [PumpHistoryEvent], now: Date, start: Date) async throws {
         let existingTimestamps = try await fetchDates(
             ofType: PumpEventStored.self,
-            predicate: .predicateForTimestampBetween(start: twentyFourHoursAgo, end: now),
+            predicate: .predicateForTimestampBetween(start: start, end: now),
             sortKey: "timestamp",
             dateKeyPath: \.timestamp
         )
         let pumpHistoryFiltered = pumpHistoryRaw
-            .filter { $0.timestamp >= twentyFourHoursAgo && $0.timestamp <= now && !existingTimestamps.contains($0.timestamp) }
+            .filter { $0.timestamp >= start && $0.timestamp <= now && !existingTimestamps.contains($0.timestamp) }
 
         let pumpHistory = try combineTempBasalAndDuration(pumpHistory: pumpHistoryFiltered)
         try checkForInconsistencies(pumpHistory: pumpHistory)
@@ -261,26 +261,26 @@ class JSONImporter {
     ///   - An error if the CoreData operation fails.
     func importCarbHistory(url: URL, now: Date) async throws {
         let carbHistoryFull: [CarbsEntry] = try readJsonFile(url: url)
-        try await importCarbHistory(entries: carbHistoryFull, now: now)
+        try await importCarbHistory(entries: carbHistoryFull, now: now, start: now - 24.hours.timeInterval)
     }
 
     /// Imports carb entries that are already decoded — the settings-backup restore path.
-    /// Same window, FPU filtering and deduplication rules as the file-based import.
-    func importCarbHistory(entries carbHistoryFull: [CarbsEntry], now: Date) async throws {
-        let twentyFourHoursAgo = now - 24.hours.timeInterval
+    /// Same FPU filtering and deduplication rules as the file-based import; `start` bounds the
+    /// accepted window (the migration passes 24 hours ago, a backup restore passes `.distantPast`).
+    func importCarbHistory(entries carbHistoryFull: [CarbsEntry], now: Date, start: Date) async throws {
         let existingDates = try await fetchDates(
             ofType: CarbEntryStored.self,
-            predicate: .predicateForDateBetween(start: twentyFourHoursAgo, end: now),
+            predicate: .predicateForDateBetween(start: start, end: now),
             sortKey: "date",
             dateKeyPath: \.date
         )
 
-        // Only import carb entries from the last 24 hours that do not exist yet in Core Data
+        // Only import carb entries inside the window that do not exist yet in Core Data
         // Only import "true" carb entries; ignore all FPU entries (aka carb equivalents)
         let carbHistory = carbHistoryFull
             .filter {
                 let dateToCheck = $0.actualDate ?? $0.createdAt
-                return dateToCheck >= twentyFourHoursAgo && dateToCheck <= now && !existingDates.contains(dateToCheck) && $0
+                return dateToCheck >= start && dateToCheck <= now && !existingDates.contains(dateToCheck) && $0
                     .isFPU ?? false == false }
 
         // Create a background context for batch processing

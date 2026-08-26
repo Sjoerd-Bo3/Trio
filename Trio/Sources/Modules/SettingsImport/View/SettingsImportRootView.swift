@@ -261,7 +261,7 @@ extension SettingsImport {
                             }
                         }
                         Text(
-                            "Existing entries are never duplicated. Glucose, pump and carb entries older than 24 hours are skipped; TDD covers the last \(SettingsBackupHistory.tddExportDays) days."
+                            "The backup carries everything the old phone still held — Trio keeps about 3 months of treatment data, plus daily insulin totals for the one-year statistics. Existing entries are never duplicated."
                         )
                         .font(.footnote)
                         .foregroundColor(.secondary)

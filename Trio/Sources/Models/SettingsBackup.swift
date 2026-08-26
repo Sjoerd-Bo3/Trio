@@ -74,10 +74,10 @@ struct SettingsBackup: JSON, Equatable, Encodable {
     var profilePresets: [ProfilePreset]?
     var activeProfilePresetName: String?
 
-    /// Optional treatment history (export toggle, off by default): the last 24 hours of glucose,
-    /// pump events and carbs, plus 10 days of hourly TDD samples for Dynamic ISF continuity.
-    /// Import deduplicates by date, and the 24-hour categories only land when the backup is
-    /// fresh enough.
+    /// Optional treatment history (export toggle, off by default): every glucose reading, pump
+    /// event and carb entry the device still holds (Trio retains about 90 days), hourly TDD
+    /// samples for Dynamic ISF continuity, and the daily-TDD archive that feeds the one-year
+    /// insulin statistics. Import deduplicates by date, so nothing is ever duplicated.
     var history: History?
 
     struct History: JSON, Equatable {
@@ -85,6 +85,8 @@ struct SettingsBackup: JSON, Equatable, Encodable {
         var pumpHistory: [PumpHistoryEvent]?
         var carbs: [CarbsEntry]?
         var tdd: [TDDEntry]?
+        /// Daily TDD totals keyed by `"yyyy-MM-dd"` — the `TDDArchive` contents.
+        var tddDaily: [String: Double]?
     }
 
     struct TDDEntry: JSON, Equatable {

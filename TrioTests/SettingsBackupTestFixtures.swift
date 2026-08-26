@@ -212,10 +212,11 @@ enum SettingsBackupTestFixtures {
         return backup
     }
 
-    /// One entry per history category, dated shortly before `date` so the fixture is importable
-    /// when `date` is treated as "now".
+    /// Entries per history category, dated relative to `date` — including one glucose reading
+    /// days in the past, since the backup carries the full history the device still holds.
     static func history(around date: Date) -> SettingsBackup.History {
         let glucoseDate = date.addingTimeInterval(-10 * 60)
+        let oldGlucoseDate = date.addingTimeInterval(-3 * 24 * 60 * 60)
         let bolusDate = date.addingTimeInterval(-30 * 60)
         let tempBasalDate = date.addingTimeInterval(-60 * 60)
         let carbsDate = date.addingTimeInterval(-45 * 60)
@@ -228,6 +229,15 @@ enum SettingsBackupTestFixtures {
                     direction: .flat,
                     date: Decimal(Int64(glucoseDate.timeIntervalSince1970 * 1000)),
                     dateString: glucoseDate,
+                    glucose: nil,
+                    type: "sgv"
+                ),
+                BloodGlucose(
+                    id: "33333333-3333-3333-3333-333333333333",
+                    sgv: 145,
+                    direction: .fortyFiveUp,
+                    date: Decimal(Int64(oldGlucoseDate.timeIntervalSince1970 * 1000)),
+                    dateString: oldGlucoseDate,
                     glucose: nil,
                     type: "sgv"
                 )
@@ -287,6 +297,10 @@ enum SettingsBackupTestFixtures {
                     scheduledBasal: 8,
                     weightedAverage: nil
                 )
+            ],
+            tddDaily: [
+                TDDArchiveStore.dayKey(for: date.addingTimeInterval(-5 * 24 * 60 * 60)): 39.5,
+                TDDArchiveStore.dayKey(for: date.addingTimeInterval(-10 * 24 * 60 * 60)): 42.0
             ]
         )
     }
