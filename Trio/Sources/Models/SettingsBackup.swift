@@ -252,6 +252,8 @@ extension SettingsBackup {
             rawValue.keys.contains { $0.localizedCaseInsensitiveContains("rileyLink") }
 
         if identifier.hasPrefix("Medtrum") {
+            // Session token and crypto live in the state; the pump is found by scanning for its
+            // serial number, so nothing is phone-bound.
             return String(localized: "Medtrum: the pump reconnects automatically on the new phone.")
         }
         if identifier.hasPrefix("Omni") {
@@ -260,7 +262,11 @@ extension SettingsBackup {
                     localized: "Omnipod (Eros): the pod session transfers, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones."
                 )
             }
-            return String(localized: "Omnipod DASH: the pod reconnects automatically on the new phone.")
+            // The DASH/O5 pod is bound to a phone-local Bluetooth identifier and a paired pod no
+            // longer advertises as pairable, so the running pod cannot follow to a new phone.
+            return String(
+                localized: "Omnipod DASH: a running pod cannot move to a new phone — deactivate it and activate a new pod under Devices > Insulin Pump."
+            )
         }
         if identifier.hasPrefix("Minimed") {
             return String(
@@ -268,8 +274,10 @@ extension SettingsBackup {
             )
         }
         if identifier.hasPrefix("Dana") {
+            // DanaKit reconnects only by a phone-local Bluetooth identifier, so the restored
+            // state cannot re-establish the link on a new phone.
             return String(
-                localized: "Dana: expect to pair again from the pump's own menu — its Bluetooth bond cannot be transferred to a new phone."
+                localized: "Dana: the pump will not reconnect on its own — remove it and set it up again under Devices > Insulin Pump (Dana RS asks for its PINs again, Dana-i pairs again)."
             )
         }
         return String(
@@ -285,14 +293,44 @@ extension SettingsBackup {
         }
 
         let lowered = identifier.lowercased()
-        if lowered.contains("dex") || lowered.contains("g7") || lowered.contains("g6") || lowered.contains("g5") {
+        // G7 before the generic Dexcom match: Trio only listens along, the Dexcom app owns the
+        // pairing, and the sensor is found by its advertised name — no prompt, no re-pairing.
+        if lowered.contains("g7") {
+            return String(
+                localized: "Dexcom G7: reconnects automatically — pairing is handled by the Dexcom app, so set that up on the new phone as well."
+            )
+        }
+        if lowered.contains("dex") || lowered.contains("g6") || lowered.contains("g5") {
             return String(
                 localized: "Dexcom: iOS will show a Bluetooth pairing request when the transmitter reconnects — accept it and the session continues."
             )
         }
+        if lowered.contains("libreloop") {
+            // The receiver identity transfers with the backup; one NFC scan makes the running
+            // sensor accept the new phone as its receiver.
+            return String(
+                localized: "Libre 3: scan the existing sensor once with NFC after the restore — the transferred receiver identity makes it accept the new phone."
+            )
+        }
+        if lowered.contains("libretransmitter") {
+            // This plugin's exportable state is empty; its pairing lives outside the backup.
+            return String(
+                localized: "LibreTransmitter: pairing cannot travel in a backup for this plugin — set up your bridge or sensor again under Devices > CGM."
+            )
+        }
         if lowered.contains("libre") {
             return String(
-                localized: "Libre: sensors pair to a single device — the current sensor may need to be re-activated on the new phone, or start streaming again with the next sensor."
+                localized: "Libre: sensors pair to a single device — be prepared to re-pair the sensor on the new phone."
+            )
+        }
+        if lowered.contains("accuchek") {
+            return String(
+                localized: "AccuChek: reconnects automatically — older sensors may show an iOS pairing request once."
+            )
+        }
+        if lowered.contains("eversense") {
+            return String(
+                localized: "Eversense: reconnects automatically — the transmitter may show an iOS pairing request once."
             )
         }
         return String(

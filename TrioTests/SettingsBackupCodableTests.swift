@@ -113,20 +113,24 @@ import Testing
             return try #require(SettingsBackup.cgmPairingNote(forManagerState: encoded))
         }
 
+        // Identifier strings as the kits actually write them into their rawValue.
         #expect(try pumpNote(["managerIdentifier": "Medtrum", "state": ["pumpSN": 123]]).contains("automatically"))
         // The universal Omnipod manager: a RileyLink key in the state means Eros, none means DASH.
         #expect(try pumpNote([
             "managerIdentifier": "Omni",
             "state": ["podState": ["address": 1], "rileyLinkConnectionManagerState": ["autoConnectIDs": ["x"]]]
         ]).contains("RileyLink"))
-        #expect(try pumpNote(["managerIdentifier": "Omni", "state": ["podState": ["address": 1]]]).contains("automatically"))
-        #expect(try pumpNote(["managerIdentifier": "Minimed", "state": ["pumpID": "123456"]]).contains("RileyLink"))
-        #expect(try pumpNote(["managerIdentifier": "Dana", "state": ["deviceName": "DANA-I"]]).contains("pair"))
+        #expect(try pumpNote(["managerIdentifier": "Omni", "state": ["podState": ["address": 1]]]).contains("new pod"))
+        #expect(try pumpNote(["managerIdentifier": "Minimed500", "state": ["pumpID": "123456"]]).contains("RileyLink"))
+        #expect(try pumpNote(["managerIdentifier": "Dana", "state": ["deviceName": "DANA-I"]]).contains("will not reconnect"))
         #expect(try pumpNote(["managerIdentifier": "FuturePump", "state": ["a": 1]]).contains("untested"))
 
-        #expect(try cgmNote(["managerIdentifier": "DexcomG6"]).contains("pairing request"))
-        #expect(try cgmNote(["managerIdentifier": "G7CGMManager"]).contains("pairing request"))
-        #expect(try cgmNote(["managerIdentifier": "LibreTransmitter"]).contains("single device"))
+        #expect(try cgmNote(["managerIdentifier": "DexG6Transmitter"]).contains("pairing request"))
+        #expect(try cgmNote(["managerIdentifier": "G7CGMManager"]).contains("automatically"))
+        #expect(try cgmNote(["managerIdentifier": "LibreLoopCGMManager"]).contains("NFC"))
+        #expect(try cgmNote(["managerIdentifier": "LibreTransmitterManagerV3"]).contains("cannot travel"))
+        #expect(try cgmNote(["managerIdentifier": "AccuChek"]).contains("automatically"))
+        #expect(try cgmNote(["managerIdentifier": "EversenseKit"]).contains("automatically"))
         #expect(try cgmNote(["managerIdentifier": "SomeNewCGM"]).contains("untested"))
     }
 }
