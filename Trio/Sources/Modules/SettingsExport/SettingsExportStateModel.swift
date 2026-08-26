@@ -1326,7 +1326,11 @@ extension SettingsExport {
             devices.cgmDisplayName = trioSettings.cgm == .plugin
                 ? (fetchGlucoseManager.cgmManager?.localizedTitle ?? trioSettings.cgmPluginIdentifier)
                 : trioSettings.cgm.displayName
-            if includeDevicePairing, let cgmManager = fetchGlucoseManager.cgmManager {
+            // Some plugins (LibreTransmitter) keep their pairing outside the manager state and
+            // export an empty dictionary — skip those instead of promising a restorable pairing.
+            if includeDevicePairing, let cgmManager = fetchGlucoseManager.cgmManager,
+               (cgmManager.rawValue["state"] as? [String: Any])?.isEmpty == false
+            {
                 devices.cgmState = SettingsBackup.encodeManagerState(cgmManager.rawValue)
             }
             backup.devices = devices
