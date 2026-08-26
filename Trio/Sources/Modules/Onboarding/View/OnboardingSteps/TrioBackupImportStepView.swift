@@ -111,6 +111,11 @@ struct TrioBackupImportStepView: View {
                 }
             }
 
+            Text(
+                "The next onboarding steps are prefilled from this backup. Continue and review every screen — check each value before you confirm it. Nothing is saved until you finish onboarding."
+            )
+            .font(.footnote)
+
             if let exportDate = backup.exportDate {
                 Text("Created: \(DateFormatter.localizedString(from: exportDate, dateStyle: .medium, timeStyle: .short))")
                     .font(.footnote)
