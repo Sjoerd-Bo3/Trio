@@ -15,6 +15,7 @@ enum SettingsBackupCategory: String, CaseIterable, Identifiable {
     case overridePresets
     case mealPresets
     case profilePresets
+    case history
 
     var displayName: String {
         switch self {
@@ -38,6 +39,8 @@ enum SettingsBackupCategory: String, CaseIterable, Identifiable {
             return String(localized: "Meal Presets")
         case .profilePresets:
             return String(localized: "Profile Presets")
+        case .history:
+            return String(localized: "History")
         }
     }
 }
@@ -70,6 +73,30 @@ struct SettingsBackup: JSON, Equatable, Encodable {
     /// ACTIVE profile is exported by name for display only — an import never switches profiles.
     var profilePresets: [ProfilePreset]?
     var activeProfilePresetName: String?
+
+    /// Optional treatment history (export toggle, off by default): every glucose reading, pump
+    /// event and carb entry the device still holds (Trio retains about 90 days), hourly TDD
+    /// samples for Dynamic ISF continuity, and the daily-TDD archive that feeds the one-year
+    /// insulin statistics. Import deduplicates by date, so nothing is ever duplicated.
+    var history: History?
+
+    struct History: JSON, Equatable {
+        var glucose: [BloodGlucose]?
+        var pumpHistory: [PumpHistoryEvent]?
+        var carbs: [CarbsEntry]?
+        var tdd: [TDDEntry]?
+        /// Daily TDD totals keyed by `"yyyy-MM-dd"` — the `TDDArchive` contents.
+        var tddDaily: [String: Double]?
+    }
+
+    struct TDDEntry: JSON, Equatable {
+        var date: Date
+        var total: Decimal
+        var bolus: Decimal
+        var tempBasal: Decimal
+        var scheduledBasal: Decimal
+        var weightedAverage: Decimal?
+    }
 
     /// Device metadata. `pumpType`/`insulinType`/`cgmDisplayName` are informational only —
     /// the authoritative CGM selection lives in `trioSettings.cgm`/`.cgmPluginIdentifier`.
@@ -162,6 +189,7 @@ extension SettingsBackup {
         case credentials
         case profilePresets
         case activeProfilePresetName
+        case history
     }
 }
 
@@ -189,12 +217,89 @@ extension SettingsBackup: Decodable {
         backup.credentials = try? container.decode(Credentials.self, forKey: .credentials)
         backup.profilePresets = try? container.decode([ProfilePreset].self, forKey: .profilePresets)
         backup.activeProfilePresetName = try? container.decode(String.self, forKey: .activeProfilePresetName)
+        backup.history = try? container.decode(History.self, forKey: .history)
 
         self = backup
     }
 }
 
 extension SettingsBackup {
+    /// What restoring the backup's device pairing on a NEW phone will actually do, per device
+    /// type — shown wherever the pairing opt-in is offered, and after a restore. Two things can
+    /// never travel in a backup: iOS Bluetooth bonds and CoreBluetooth peripheral identifiers
+    /// (both are per-phone), so the outcome depends on where each manager keeps its pairing.
+    static func devicePairingNotes(for devices: DeviceInfo?) -> [String] {
+        var notes: [String] = []
+        if let pumpState = devices?.pumpState, let note = pumpPairingNote(forManagerState: pumpState) {
+            notes.append(note)
+        }
+        if let cgmState = devices?.cgmState, let note = cgmPairingNote(forManagerState: cgmState) {
+            notes.append(note)
+        }
+        return notes
+    }
+
+    static func pumpPairingNote(forManagerState base64: String) -> String? {
+        guard let rawValue = decodeManagerState(base64),
+              let identifier = rawValue["managerIdentifier"] as? String
+        else {
+            return nil
+        }
+
+        // RileyLink selections are CoreBluetooth identifiers, which are phone-local.
+        let state = rawValue["state"] as? [String: Any] ?? rawValue
+        let usesRileyLink = state.keys.contains { $0.localizedCaseInsensitiveContains("rileyLink") } ||
+            rawValue.keys.contains { $0.localizedCaseInsensitiveContains("rileyLink") }
+
+        if identifier.hasPrefix("Medtrum") {
+            return String(localized: "Medtrum: the pump reconnects automatically on the new phone.")
+        }
+        if identifier.hasPrefix("Omni") {
+            if usesRileyLink {
+                return String(
+                    localized: "Omnipod (Eros): the pod session transfers, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones."
+                )
+            }
+            return String(localized: "Omnipod DASH: the pod reconnects automatically on the new phone.")
+        }
+        if identifier.hasPrefix("Minimed") {
+            return String(
+                localized: "Medtronic: the pump settings transfer, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones."
+            )
+        }
+        if identifier.hasPrefix("Dana") {
+            return String(
+                localized: "Dana: expect to pair again from the pump's own menu — its Bluetooth bond cannot be transferred to a new phone."
+            )
+        }
+        return String(
+            localized: "\(identifier): restoring this pump type's pairing is untested — be prepared to pair manually under Devices > Insulin Pump."
+        )
+    }
+
+    static func cgmPairingNote(forManagerState base64: String) -> String? {
+        guard let rawValue = decodeManagerState(base64),
+              let identifier = rawValue["managerIdentifier"] as? String
+        else {
+            return nil
+        }
+
+        let lowered = identifier.lowercased()
+        if lowered.contains("dex") || lowered.contains("g7") || lowered.contains("g6") || lowered.contains("g5") {
+            return String(
+                localized: "Dexcom: iOS will show a Bluetooth pairing request when the transmitter reconnects — accept it and the session continues."
+            )
+        }
+        if lowered.contains("libre") {
+            return String(
+                localized: "Libre: sensors pair to a single device — the current sensor may need to be re-activated on the new phone, or start streaming again with the next sensor."
+            )
+        }
+        return String(
+            localized: "\(identifier): restoring this CGM type's pairing is untested — be prepared to re-add it under Devices > CGM."
+        )
+    }
+
     /// Raw pump/CGM manager state dictionaries are property-list values; JSON carries them as
     /// base64-encoded binary plists.
     static func encodeManagerState(_ rawValue: [String: Any]) -> String? {

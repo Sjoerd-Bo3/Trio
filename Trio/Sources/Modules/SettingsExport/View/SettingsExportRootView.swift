@@ -96,6 +96,19 @@ extension SettingsExport {
                 .listRowBackground(Color.chart)
 
                 Section {
+                    Toggle(isOn: $state.includeHistory) {
+                        Text("Include Treatment History")
+                    }
+                } header: {
+                    Text("Treatment History")
+                } footer: {
+                    Text(
+                        "Adds your full treatment history to the JSON backup: every glucose reading, pump event and carb entry Trio still holds (about 3 months), plus the TDD data behind Dynamic ISF and the one-year statistics. Makes the backup file considerably larger."
+                    )
+                }
+                .listRowBackground(Color.chart)
+
+                Section {
                     Button(action: {
                         Task {
                             let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)

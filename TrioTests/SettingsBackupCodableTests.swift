@@ -102,4 +102,31 @@ import Testing
         #expect(SettingsBackup.decodeManagerState("not-base64-!!!") == nil)
         #expect(SettingsBackup.decodeManagerState(Data("plain text".utf8).base64EncodedString()) == nil)
     }
+
+    @Test("Device pairing notes match the manager type") func testDevicePairingNotes() throws {
+        func pumpNote(_ rawValue: [String: Any]) throws -> String {
+            let encoded = try #require(SettingsBackup.encodeManagerState(rawValue))
+            return try #require(SettingsBackup.pumpPairingNote(forManagerState: encoded))
+        }
+        func cgmNote(_ rawValue: [String: Any]) throws -> String {
+            let encoded = try #require(SettingsBackup.encodeManagerState(rawValue))
+            return try #require(SettingsBackup.cgmPairingNote(forManagerState: encoded))
+        }
+
+        #expect(try pumpNote(["managerIdentifier": "Medtrum", "state": ["pumpSN": 123]]).contains("automatically"))
+        // The universal Omnipod manager: a RileyLink key in the state means Eros, none means DASH.
+        #expect(try pumpNote([
+            "managerIdentifier": "Omni",
+            "state": ["podState": ["address": 1], "rileyLinkConnectionManagerState": ["autoConnectIDs": ["x"]]]
+        ]).contains("RileyLink"))
+        #expect(try pumpNote(["managerIdentifier": "Omni", "state": ["podState": ["address": 1]]]).contains("automatically"))
+        #expect(try pumpNote(["managerIdentifier": "Minimed", "state": ["pumpID": "123456"]]).contains("RileyLink"))
+        #expect(try pumpNote(["managerIdentifier": "Dana", "state": ["deviceName": "DANA-I"]]).contains("pair"))
+        #expect(try pumpNote(["managerIdentifier": "FuturePump", "state": ["a": 1]]).contains("untested"))
+
+        #expect(try cgmNote(["managerIdentifier": "DexcomG6"]).contains("pairing request"))
+        #expect(try cgmNote(["managerIdentifier": "G7CGMManager"]).contains("pairing request"))
+        #expect(try cgmNote(["managerIdentifier": "LibreTransmitter"]).contains("single device"))
+        #expect(try cgmNote(["managerIdentifier": "SomeNewCGM"]).contains("untested"))
+    }
 }

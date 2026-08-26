@@ -87,7 +87,13 @@ struct ImportChangeSet {
     var therapyChanges: [TherapyScheduleChange] = []
     var presetChanges: [SettingsBackupCategory: [PresetChange]] = [:]
 
+    /// Informational rows for the history category: entries recent enough to be imported.
+    var historyCounts: [SettingsBackupHistory.HistoryCount] = []
+
     func changeCount(for category: SettingsBackupCategory) -> Int {
+        if category == .history {
+            return historyCounts.reduce(0) { $0 + $1.count }
+        }
         var count = settingChanges[category]?.count ?? 0
         if category == .therapy {
             count += therapyChanges.reduce(0) { $0 + $1.entryChanges.count }

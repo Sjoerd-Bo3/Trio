@@ -111,6 +111,11 @@ struct TrioBackupImportStepView: View {
                 }
             }
 
+            Text(
+                "The next onboarding steps are prefilled from this backup. Continue and review every screen — check each value before you confirm it. Nothing is saved until you finish onboarding."
+            )
+            .font(.footnote)
+
             if let exportDate = backup.exportDate {
                 Text("Created: \(DateFormatter.localizedString(from: exportDate, dateStyle: .medium, timeStyle: .short))")
                     .font(.footnote)
@@ -125,6 +130,22 @@ struct TrioBackupImportStepView: View {
                 Text("Pump: \(pumpType)")
                     .font(.footnote)
                     .foregroundStyle(Color.secondary)
+            }
+            if let history = backup.history {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Includes treatment history — this will be restored:")
+                        .font(.footnote)
+                        .foregroundStyle(Color.secondary)
+                    ForEach(SettingsBackupHistory.previewCounts(history)) { historyCount in
+                        HStack {
+                            Text(historyCount.label)
+                            Spacer()
+                            Text("\(historyCount.count)")
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(Color.secondary)
+                    }
+                }
             }
 
             if backup.credentials != nil {
@@ -142,6 +163,11 @@ struct TrioBackupImportStepView: View {
                     Text("Only restore pairing if the previous phone no longer runs Trio. Two phones controlling one pump is dangerous.")
                         .font(.footnote)
                         .foregroundStyle(Color.orange)
+                    ForEach(SettingsBackup.devicePairingNotes(for: backup.devices), id: \.self) { note in
+                        Text(note)
+                            .font(.footnote)
+                            .foregroundStyle(Color.secondary)
+                    }
                 }
             }
         }

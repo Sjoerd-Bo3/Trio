@@ -249,6 +249,23 @@ extension SettingsImport {
                                 .font(.caption)
                         }
                     }
+                    if category == .history {
+                        ForEach(state.changeSet.historyCounts) { historyCount in
+                            HStack {
+                                Text(historyCount.label)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text("\(historyCount.count)")
+                                    .foregroundColor(.secondary)
+                                    .font(.subheadline)
+                            }
+                        }
+                        Text(
+                            "The backup carries everything the old phone still held — Trio keeps about 3 months of treatment data, plus daily insulin totals for the one-year statistics. Existing entries are never duplicated."
+                        )
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    }
                 },
                 label: {
                     HStack {
@@ -271,16 +288,23 @@ extension SettingsImport {
 
                         Spacer()
 
-                        Text(
-                            changeCount == 0
-                                ? String(localized: "no changes")
-                                : String(localized: "\(changeCount) change(s)")
-                        )
-                        .font(.caption)
-                        .foregroundColor(changeCount == 0 ? .secondary : .blue)
+                        Text(categoryBadge(category, changeCount: changeCount))
+                            .font(.caption)
+                            .foregroundColor(changeCount == 0 ? .secondary : .blue)
                     }
                 }
             )
+        }
+
+        private func categoryBadge(_ category: SettingsBackupCategory, changeCount: Int) -> String {
+            if category == .history {
+                return changeCount == 0
+                    ? String(localized: "no recent entries")
+                    : String(localized: "\(changeCount) entry(s)")
+            }
+            return changeCount == 0
+                ? String(localized: "no changes")
+                : String(localized: "\(changeCount) change(s)")
         }
 
         private func changeRow(_ change: ImportChange) -> some View {
@@ -334,10 +358,15 @@ extension SettingsImport {
                 Text("Sensitive Data")
             } footer: {
                 if state.importDevicePairing {
-                    Text(
-                        "Only restore device pairing if the previous phone no longer runs Trio. Two phones controlling one pump is dangerous."
-                    )
-                    .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(
+                            "Only restore device pairing if the previous phone no longer runs Trio. Two phones controlling one pump is dangerous."
+                        )
+                        .foregroundColor(.orange)
+                        ForEach(SettingsBackup.devicePairingNotes(for: state.backup?.devices), id: \.self) { note in
+                            Text(note)
+                        }
+                    }
                 } else {
                     Text("The backup contains sensitive data. Choose what to restore.")
                 }
