@@ -158,6 +158,11 @@ struct TrioBackupImportStepView: View {
                     Text("Only restore pairing if the previous phone no longer runs Trio. Two phones controlling one pump is dangerous.")
                         .font(.footnote)
                         .foregroundStyle(Color.orange)
+                    ForEach(SettingsBackup.devicePairingNotes(for: backup.devices), id: \.self) { note in
+                        Text(note)
+                            .font(.footnote)
+                            .foregroundStyle(Color.secondary)
+                    }
                 }
             }
         }

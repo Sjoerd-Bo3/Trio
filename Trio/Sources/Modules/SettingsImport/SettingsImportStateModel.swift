@@ -413,6 +413,9 @@ extension SettingsImport {
                             localized: "Pump pairing restored — Trio is connecting to your pump now. Check the pump status on the home screen."
                         )
                     )
+                    if let note = SettingsBackup.pumpPairingNote(forManagerState: pumpStateBase64) {
+                        collectedWarnings.append(note)
+                    }
                 } else {
                     collectedWarnings.append(
                         String(
@@ -431,6 +434,9 @@ extension SettingsImport {
                 }
                 if adopted {
                     debug(.default, "✅ IMPORT: Adopted CGM manager state from backup")
+                    if let note = SettingsBackup.cgmPairingNote(forManagerState: cgmStateBase64) {
+                        collectedWarnings.append(note)
+                    }
                 } else {
                     collectedWarnings.append(
                         String(localized: "CGM pairing could not be restored. Add your CGM manually under Devices > CGM.")

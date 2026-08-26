@@ -224,6 +224,82 @@ extension SettingsBackup: Decodable {
 }
 
 extension SettingsBackup {
+    /// What restoring the backup's device pairing on a NEW phone will actually do, per device
+    /// type — shown wherever the pairing opt-in is offered, and after a restore. Two things can
+    /// never travel in a backup: iOS Bluetooth bonds and CoreBluetooth peripheral identifiers
+    /// (both are per-phone), so the outcome depends on where each manager keeps its pairing.
+    static func devicePairingNotes(for devices: DeviceInfo?) -> [String] {
+        var notes: [String] = []
+        if let pumpState = devices?.pumpState, let note = pumpPairingNote(forManagerState: pumpState) {
+            notes.append(note)
+        }
+        if let cgmState = devices?.cgmState, let note = cgmPairingNote(forManagerState: cgmState) {
+            notes.append(note)
+        }
+        return notes
+    }
+
+    static func pumpPairingNote(forManagerState base64: String) -> String? {
+        guard let rawValue = decodeManagerState(base64),
+              let identifier = rawValue["managerIdentifier"] as? String
+        else {
+            return nil
+        }
+
+        // RileyLink selections are CoreBluetooth identifiers, which are phone-local.
+        let state = rawValue["state"] as? [String: Any] ?? rawValue
+        let usesRileyLink = state.keys.contains { $0.localizedCaseInsensitiveContains("rileyLink") } ||
+            rawValue.keys.contains { $0.localizedCaseInsensitiveContains("rileyLink") }
+
+        if identifier.hasPrefix("Medtrum") {
+            return String(localized: "Medtrum: the pump reconnects automatically on the new phone.")
+        }
+        if identifier.hasPrefix("Omni") {
+            if usesRileyLink {
+                return String(
+                    localized: "Omnipod (Eros): the pod session transfers, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones."
+                )
+            }
+            return String(localized: "Omnipod DASH: the pod reconnects automatically on the new phone.")
+        }
+        if identifier.hasPrefix("Minimed") {
+            return String(
+                localized: "Medtronic: the pump settings transfer, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones."
+            )
+        }
+        if identifier.hasPrefix("Dana") {
+            return String(
+                localized: "Dana: expect to pair again from the pump's own menu — its Bluetooth bond cannot be transferred to a new phone."
+            )
+        }
+        return String(
+            localized: "\(identifier): restoring this pump type's pairing is untested — be prepared to pair manually under Devices > Insulin Pump."
+        )
+    }
+
+    static func cgmPairingNote(forManagerState base64: String) -> String? {
+        guard let rawValue = decodeManagerState(base64),
+              let identifier = rawValue["managerIdentifier"] as? String
+        else {
+            return nil
+        }
+
+        let lowered = identifier.lowercased()
+        if lowered.contains("dex") || lowered.contains("g7") || lowered.contains("g6") || lowered.contains("g5") {
+            return String(
+                localized: "Dexcom: iOS will show a Bluetooth pairing request when the transmitter reconnects — accept it and the session continues."
+            )
+        }
+        if lowered.contains("libre") {
+            return String(
+                localized: "Libre: sensors pair to a single device — the current sensor may need to be re-activated on the new phone, or start streaming again with the next sensor."
+            )
+        }
+        return String(
+            localized: "\(identifier): restoring this CGM type's pairing is untested — be prepared to re-add it under Devices > CGM."
+        )
+    }
+
     /// Raw pump/CGM manager state dictionaries are property-list values; JSON carries them as
     /// base64-encoded binary plists.
     static func encodeManagerState(_ rawValue: [String: Any]) -> String? {

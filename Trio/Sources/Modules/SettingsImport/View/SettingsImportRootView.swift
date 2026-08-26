@@ -358,10 +358,15 @@ extension SettingsImport {
                 Text("Sensitive Data")
             } footer: {
                 if state.importDevicePairing {
-                    Text(
-                        "Only restore device pairing if the previous phone no longer runs Trio. Two phones controlling one pump is dangerous."
-                    )
-                    .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(
+                            "Only restore device pairing if the previous phone no longer runs Trio. Two phones controlling one pump is dangerous."
+                        )
+                        .foregroundColor(.orange)
+                        ForEach(SettingsBackup.devicePairingNotes(for: state.backup?.devices), id: \.self) { note in
+                            Text(note)
+                        }
+                    }
                 } else {
                     Text("The backup contains sensitive data. Choose what to restore.")
                 }
