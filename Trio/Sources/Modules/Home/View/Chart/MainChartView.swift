@@ -261,9 +261,14 @@ extension MainChartView {
     /// markers `CarbView` pins to the old baseline) render fully instead of straddling the
     /// plot edge. Also gives the plot visual breathing room at top and bottom.
     var paddedGlucoseYDomain: ClosedRange<Decimal> {
-        let padding: Decimal = 25 // mg/dL
-        let lower = state.minYAxisValue - padding
-        let upper = state.maxYAxisValue + padding
+        // Asymmetric so the plot doesn't leave a heavy empty band beneath the
+        // data (especially when glucose runs high). This build doesn't use
+        // carbs/FPUs, so the bottom needs only a hair of room to keep the
+        // lowest point and the low-threshold line off the plot edge.
+        let topPadding: Decimal = 15 // mg/dL
+        let bottomPadding: Decimal = 3 // mg/dL
+        let lower = state.minYAxisValue - bottomPadding
+        let upper = state.maxYAxisValue + topPadding
         return units == .mgdL ? lower ... upper : lower.asMmolL ... upper.asMmolL
     }
 }
