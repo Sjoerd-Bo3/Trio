@@ -4,6 +4,15 @@ import Testing
 @testable import Trio
 
 @Suite("Settings Import Applier Tests") struct SettingsImportApplierTests {
+    // MARK: - Pre-injection safety
+
+    @Test("State model getters read from the view are safe before dependency injection") func testPreInjectionSafety() {
+        // SwiftUI evaluates the confirmation dialog's message closure on the first body pass,
+        // before onAppear runs configureView — the closedLoopActive getter crashed there on an
+        // implicitly unwrapped nil settingsManager (TestFlight build 217).
+        #expect(SettingsImport.StateModel().closedLoopActive == false)
+    }
+
     // MARK: - Mapping totality
 
     @Test("Every TrioSettings field is mapped or explicitly excluded") func testTrioSettingsTotality() {

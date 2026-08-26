@@ -102,8 +102,11 @@ extension SettingsImport {
             (backup?.schemaVersion ?? 0) > SettingsBackup.currentSchemaVersion
         }
 
+        /// SwiftUI evaluates the confirmation dialog's message closure on the FIRST body pass,
+        /// before `onAppear` has run `configureView` and injected the dependencies — so this
+        /// getter must never implicitly unwrap them (TestFlight build 217 crashed here).
         var closedLoopActive: Bool {
-            settingsManager.settings.closedLoop
+            settingsManager?.settings.closedLoop ?? false
         }
 
         var willAdoptPumpState: Bool {
