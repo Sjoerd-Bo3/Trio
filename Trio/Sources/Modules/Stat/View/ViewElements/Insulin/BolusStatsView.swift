@@ -96,6 +96,7 @@ struct BolusStatsView: View {
                 }
             }
             .font(.headline)
+            .accessibilityElement(children: .combine)
 
             Spacer()
 
@@ -349,6 +350,8 @@ struct BolusStatsView: View {
         )
         .chartXVisibleDomain(length: StatChartUtils.visibleDomainLength(for: selectedInterval))
         .frame(height: 280)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Bolus insulin bar chart"))
     }
 }
 

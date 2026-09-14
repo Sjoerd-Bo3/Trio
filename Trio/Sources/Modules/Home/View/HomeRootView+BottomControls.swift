@@ -57,6 +57,7 @@ extension Home.RootView {
             .foregroundStyle(tint)
             .frame(width: 30, height: 30)
             .background(Circle().fill(tint.opacity(0.18)))
+            .accessibilityHidden(true)
     }
 
 
@@ -217,25 +218,41 @@ extension Home.RootView {
         }
     }
 
+    @ViewBuilder func adjustmentsCancelView(_ cancelAction: @escaping () -> Void) -> some View {
+        Image(systemName: "xmark.app")
+            .font(.title)
+            .onTapGesture {
+                cancelAction()
+            }
+            .accessibilityLabel(Text("Stop adjustment"))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { cancelAction() }
+    }
 
     @ViewBuilder func adjustmentsCancelTempTargetView() -> some View {
         Image(systemName: "xmark.app")
             .font(.title)
-            .confirmationDialog(
+            .glassActionSheet(
                 "Stop the Temp Target \"\(latestTempTarget.first?.name ?? "")\"?",
                 isPresented: $isConfirmStopTempTargetShown,
-                titleVisibility: .visible
-            ) {
-                Button("Stop", role: .destructive) {
-                    Task {
-                        guard let objectID = latestTempTarget.first?.objectID else { return }
-                        await state.cancelTempTarget(withID: objectID)
+                actions: [
+                    GlassSheetAction("Stop", role: .destructive) {
+                        Task {
+                            guard let objectID = latestTempTarget.first?.objectID else { return }
+                            await state.cancelTempTarget(withID: objectID)
+                        }
                     }
-                }
-                Button("Cancel", role: .cancel) {}
-            }
+                ]
+            )
             .padding(.trailing, 8)
             .onTapGesture {
+                if !latestTempTarget.isEmpty {
+                    isConfirmStopTempTargetShown = true
+                }
+            }
+            .accessibilityLabel(Text("Stop temp target"))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction {
                 if !latestTempTarget.isEmpty {
                     isConfirmStopTempTargetShown = true
                 }
@@ -245,21 +262,27 @@ extension Home.RootView {
     @ViewBuilder func adjustmentsCancelOverrideView() -> some View {
         Image(systemName: "xmark.app")
             .font(.title)
-            .confirmationDialog(
+            .glassActionSheet(
                 "Stop the Override \"\(latestOverride.first?.name ?? "")\"?",
                 isPresented: $isConfirmStopOverridePresented,
-                titleVisibility: .visible
-            ) {
-                Button("Stop", role: .destructive) {
-                    Task {
-                        guard let objectID = latestOverride.first?.objectID else { return }
-                        await state.cancelOverride(withID: objectID)
+                actions: [
+                    GlassSheetAction("Stop", role: .destructive) {
+                        Task {
+                            guard let objectID = latestOverride.first?.objectID else { return }
+                            await state.cancelOverride(withID: objectID)
+                        }
                     }
-                }
-                Button("Cancel", role: .cancel) {}
-            }
+                ]
+            )
             .padding(.trailing, 8)
             .onTapGesture {
+                if !latestOverride.isEmpty {
+                    isConfirmStopOverridePresented = true
+                }
+            }
+            .accessibilityLabel(Text("Stop override"))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction {
                 if !latestOverride.isEmpty {
                     isConfirmStopOverridePresented = true
                 }
@@ -356,8 +379,71 @@ extension Home.RootView {
                 adjustmentPanel(tint: nil, fraction: nil) {
                     noActiveAdjustmentsView()
                 }
+            }.padding(.horizontal, 10)
+                .glassActionSheet(
+                    "Adjustment to Stop",
+                    message: Text("Select Adjustment"),
+                    isPresented: $showCancelConfirmDialog,
+                    actions: [
+                        GlassSheetAction("Stop Override", role: .destructive) {
+                            Task {
+                                guard let objectID = latestOverride.first?.objectID else { return }
+                                await state.cancelOverride(withID: objectID)
+                            }
+                        },
+                        GlassSheetAction("Stop Temp Target", role: .destructive) {
+                            Task {
+                                guard let objectID = latestTempTarget.first?.objectID else { return }
+                                await state.cancelTempTarget(withID: objectID)
+                            }
+                        },
+                        GlassSheetAction("Stop All Adjustments", role: .destructive) {
+                            Task {
+                                guard let overrideObjectID = latestOverride.first?.objectID else { return }
+                                await state.cancelOverride(withID: overrideObjectID)
+
+                                guard let tempTargetObjectID = latestTempTarget.first?.objectID else { return }
+                                await state.cancelTempTarget(withID: tempTargetObjectID)
+                            }
+                        }
+                    ]
+                )
+        }
+        .frame(height: HomeLayout.bottomPanelHeight)
+        .glassPanel(
+            tint: isConcurrent ? nil : tint,
+            tintOpacity: 0.12,
+            strokeOpacity: isConcurrent ? 0 : (tint == nil ? 0.08 : 0.30)
+        )
+        .overlay(
+            // concurrent halves get a bicolor rim the single-tint chrome can't express
+            isConcurrent
+                ? GlassChrome.panelShape.strokeBorder(
+                    LinearGradient(
+                        colors: [Color.purple.opacity(0.30), Color.loopGreen.opacity(0.30)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    lineWidth: 1
+                )
+                : nil
+        )
+        .overlay(alignment: .bottom) {
+            // anchored like the bolus progress bar so both panels match
+            Group {
+                if isConcurrent {
+                    HStack(spacing: 6) {
+                        remainingBar(overrideRemainingFraction, tint: .purple)
+                        remainingBar(tempTargetRemainingFraction, tint: .loopGreen)
+                    }
+                } else if let tint = tint {
+                    remainingBar(overrideRemainingFraction ?? tempTargetRemainingFraction, tint: tint)
+                }
             }
         }
+        .accessibilityHint(Text(String(localized: "Opens adjustments", comment: "Accessibility hint")))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { selectedTab = 2 }
         .padding(.horizontal, 10)
     }
 
@@ -379,6 +465,7 @@ extension Home.RootView {
             HStack {
                 Image(systemName: "cross.vial.fill")
                     .font(.system(size: 25))
+                    .accessibilityHidden(true)
 
                 Spacer()
 
@@ -390,6 +477,9 @@ extension Home.RootView {
                         .font(.caption)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }.padding(.leading, 5)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text(bolusLabel))
+                    .accessibilityValue(Text(bolusString))
 
                 Spacer()
 
@@ -401,6 +491,7 @@ extension Home.RootView {
                         Image(systemName: "xmark.app")
                             .font(.system(size: 25))
                     }
+                    .accessibilityLabel(Text("Cancel bolus"))
                 } else if state.bolusStatus == .initiating {
                     ProgressView()
                 }

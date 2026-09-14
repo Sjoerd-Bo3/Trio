@@ -46,6 +46,7 @@ on:
       - sync/dev-updates-8
       - feat/contact-image-background
       - claude/settings-import-build-experiment
+      - sync/dev-updates-9
     paths-ignore:
       - '**.md'
       - '**/README'

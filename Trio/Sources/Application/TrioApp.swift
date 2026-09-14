@@ -81,9 +81,7 @@ extension Notification.Name {
         _ = resolver.resolve(WatchManager.self)!
         _ = resolver.resolve(ContactImageManager.self)!
         _ = resolver.resolve(HealthKitManager.self)!
-        _ = resolver.resolve(WatchManager.self)!
         _ = resolver.resolve(GarminManager.self)!
-        _ = resolver.resolve(ContactImageManager.self)!
         _ = resolver.resolve(BluetoothStateManager.self)!
         _ = resolver.resolve(PluginManager.self)!
         _ = resolver.resolve(AlertPermissionsChecker.self)!
@@ -347,6 +345,9 @@ extension Notification.Name {
                         .onOpenURL(perform: handleURL)
                 }
             }
+            // Global upper bound on Dynamic Type: keep accessibility scaling but stop before the
+            // extreme sizes that shatter dense layouts. Fragile screens cap tighter (see Home, Statistics).
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .onReceive(Foundation.NotificationCenter.default.publisher(for: .onboardingCompleted)) { _ in
                 Task { @MainActor in
                     self.showOnboardingCompletedSplash = true

@@ -281,32 +281,58 @@ extension Treatments {
                                     Spacer()
                                     if !pushed {
                                         Button {
-                                            pushed = true
-                                        } label: { Text("Now") }.buttonStyle(.borderless).foregroundColor(.secondary)
-                                            .padding(.trailing, 5)
-                                    } else {
-                                        Button { state.date = state.date.addingTimeInterval(-15.minutes.timeInterval) }
-                                        label: { Image(systemName: "minus.circle") }.tint(.blue).buttonStyle(.borderless)
+                                            PropertyPersistentFlags.shared.hasSeenFatProteinOrderChange = true
+                                            withAnimation { showFatProteinOrderBanner = false }
+                                        } label: {
+                                            Image(systemName: "xmark.circle.fill")
+                                        }
+                                        .buttonStyle(.plain)
+                                        .accessibilityLabel(Text("Dismiss"))
+                                    }
+                                    .listRowBackground(Color.orange.opacity(0.75))
+                                    .transition(.opacity)
+                                }
+                            }
 
-                                        DatePicker(
-                                            "Time",
-                                            selection: $state.date,
-                                            displayedComponents: [.hourAndMinute]
-                                        ).controlSize(.mini)
-                                            .labelsHidden()
-                                            .onChange(of: state.date) { _, _ in
-                                                // Trigger simulation when date changes to update forecasts for backdated carbs
-                                                Task {
-                                                    // `updateForecasts()` does update the `simulatedDetermination` of type `Determination?` var on the main thread, so I can use this to pass its cob value into the bolus calc manager
-                                                    await state.updateForecasts()
-                                                    state.insulinCalculated = await state.calculateInsulin()
-                                                }
+                            // Time
+                            HStack {
+                                // Semi-hacky workaround to make sure the List renders the horizontal divider properly between the `Time` and `Note` rows within the Section
+                                HStack {
+                                    Text("")
+                                    Image(systemName: "clock").padding(.leading, -7)
+                                }
+
+                                Spacer()
+                                if !pushed {
+                                    Button {
+                                        pushed = true
+                                    } label: { Text("Now") }.buttonStyle(.borderless).foregroundColor(.secondary)
+                                        .padding(.trailing, 5)
+                                } else {
+                                    Button { state.date = state.date.addingTimeInterval(-15.minutes.timeInterval) }
+                                    label: { Image(systemName: "minus.circle") }.tint(.blue).buttonStyle(.borderless)
+                                        .accessibilityLabel(Text("15 minutes earlier"))
+
+                                    DatePicker(
+                                        "Time",
+                                        selection: $state.date,
+                                        displayedComponents: [.hourAndMinute]
+                                    ).controlSize(.mini)
+                                        .labelsHidden()
+                                        .onChange(of: state.date) { _, _ in
+                                            // Trigger simulation when date changes to update forecasts for backdated carbs
+                                            Task {
+                                                // `updateForecasts()` does update the `simulatedDetermination` of type `Determination?` var on the main thread, so I can use this to pass its cob value into the bolus calc manager
+                                                await state.updateForecasts()
+                                                state.insulinCalculated = await state.calculateInsulin()
                                             }
                                         Button {
                                             state.date = state.date.addingTimeInterval(15.minutes.timeInterval)
                                         }
                                         label: { Image(systemName: "plus.circle") }.tint(.blue).buttonStyle(.borderless)
                                     }
+                                    label: { Image(systemName: "plus.circle") }.tint(.blue).buttonStyle(.borderless)
+                                        .accessibilityLabel(Text("15 minutes later"))
                                 }
 
                                 // Notes
@@ -357,6 +383,20 @@ extension Treatments {
                                 }
 
                                 HStack {
+                                    Text("Recommendation")
+                                    Button(action: {
+                                        state.showInfo.toggle()
+                                    }, label: {
+                                        Image(systemName: "info.circle")
+                                    })
+                                        .foregroundStyle(.blue)
+                                        .buttonStyle(PlainButtonStyle())
+                                        .accessibilityLabel(Text("About the recommendation"))
+                                }
+                                Spacer()
+                                Button {
+                                    state.amount = state.insulinCalculated
+                                } label: {
                                     HStack {
                                         Text("Recommendation")
                                         Button(action: {
@@ -367,15 +407,16 @@ extension Treatments {
                                             .foregroundStyle(.blue)
                                             .buttonStyle(PlainButtonStyle())
                                     }
-                                    Spacer()
-                                    Button {
-                                        state.amount = state.insulinCalculated
-                                    } label: {
-                                        HStack {
-                                            Text(
-                                                formatter
-                                                    .string(from: Double(state.insulinCalculated) as NSNumber) ?? ""
-                                            )
+                                }
+                                .disabled(state.insulinCalculated == 0 || state.amount == state.insulinCalculated)
+                                .buttonStyle(.bordered).padding(.trailing, -10)
+                                .accessibilityLabel(Text(
+                                    "Use recommended bolus, "
+                                        + (formatter.string(from: Double(state.insulinCalculated) as NSNumber) ?? "")
+                                        + " " + String(localized: "units", comment: "Insulin units, spoken")
+                                ))
+                                .accessibilityHint(Text("Copies the recommended amount into the bolus field"))
+                            }
 
                                             Text(
                                                 String(
@@ -566,20 +607,20 @@ extension Treatments {
                     .listRowBackground(treatmentButtonBackground)
                     .shadow(radius: 3)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .confirmationDialog(
-                        bolusWarning.warningMessage + " Bolus \(state.amount.description) U?",
+                    .glassActionSheet(
+                        Text(bolusWarning.warningMessage + " Bolus \(state.amount.description) U?"),
                         isPresented: $showConfirmDialogForBolusing,
-                        titleVisibility: .visible
-                    ) {
-                        Button("Cancel", role: .cancel) {}
-                        Button(
-                            bolusWarning.warningMessage
-                                .isEmpty ? String(localized: "Enact Bolus") : String(localized: "Ignore Warning and Enact Bolus"),
-                            role: bolusWarning.warningMessage.isEmpty ? nil : .destructive
-                        ) {
-                            state.invokeTreatmentsTask()
-                        }
-                    }
+                        actions: [
+                            GlassSheetAction(
+                                verbatim: bolusWarning.warningMessage
+                                    .isEmpty ? String(localized: "Enact Bolus") :
+                                    String(localized: "Ignore Warning and Enact Bolus"),
+                                role: bolusWarning.warningMessage.isEmpty ? nil : .destructive
+                            ) {
+                                state.invokeTreatmentsTask()
+                            }
+                        ]
+                    )
                 }
             } header: {
                 if !bolusWarning.warningMessage.isEmpty {
