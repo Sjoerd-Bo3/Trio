@@ -203,11 +203,7 @@ extension Adjustments {
                         state.shouldDisplayPresetStartConfirmDialog = false
                         pendingPresetActivation = nil
                     }
-                } message: {
-                    if let activation = pendingPresetActivation {
-                        Text(activation.confirmationMessage)
-                    }
-                }
+                )
                 .alert(
                     Text("Activate Profile", comment: "Adjustments: profile activation alert title"),
                     isPresented: $state.showingProfileActivateConfirmation

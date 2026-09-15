@@ -202,84 +202,26 @@ extension Treatments {
             }
         }
 
-        /// Scrolls the currently focused input row so it stays visible above the on-screen keyboard.
-        ///
-        /// The treatments list grows or shrinks depending on user settings (e.g. the Reduced Bolus /
-        /// Super Bolus toggles add an extra row), so relying on the system's default keyboard avoidance
-        /// is unreliable: on some devices/configurations the bolus field ends up hidden behind the
-        /// keyboard. Explicitly scrolling the focused row into view guarantees the user can always see
-        /// what they are entering, regardless of which optional rows are shown. See issue #1115.
-        ///
-        /// - Parameters:
-        ///   - field: The field that just gained focus, or `nil` when focus was cleared.
-        ///   - proxy: The enclosing `ScrollViewReader`'s proxy used to perform the scroll.
-        private func scrollFocusedFieldIntoView(_ field: FocusedField?, proxy: ScrollViewProxy) {
-            guard let field else { return }
-
-            // Fat and Protein share a single row, which is tagged with `.fat`.
-            let targetID: FocusedField = (field == .protein) ? .fat : field
-
-            // Delay slightly so the keyboard's presentation animation has begun and the List has
-            // resized its scrollable area before we scroll, otherwise the target can land back
-            // underneath the keyboard.
-            //
-            // Anchor `.center`: a `.bottom` anchor tucks the row behind the keyboard's accessory
-            // toolbar (the trash / chevron / done bar), because the List's keyboard inset doesn't
-            // account for that bar's height. Centring the focused row in the remaining visible area
-            // reliably keeps the whole input clear of both the keyboard and its toolbar. See #1115.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation {
-                    proxy.scrollTo(targetID, anchor: .center)
-                }
-            }
-        }
-
         var body: some View {
             ZStack(alignment: .center) {
                 VStack {
-                    ScrollViewReader { proxy in
-                        List {
-                            Section {
-                                ForecastChart(state: state)
-                                    .padding(.vertical)
-                            }.listRowBackground(Color.chart)
+                    List {
+                        Section {
+                            ForecastChart(state: state)
+                                .padding(.vertical)
+                        }.listRowBackground(Color.chart)
 
-                            Section {
-                                carbsTextField()
-                                    .id(FocusedField.carbs)
+                        Section {
+                            carbsTextField()
 
-                                if state.useFPUconversion {
-                                    proteinAndFat()
-                                        .id(FocusedField.fat)
+                            if state.useFPUconversion {
+                                proteinAndFat()
 
-                                    if showFatProteinOrderBanner {
-                                        HStack {
-                                            Image(systemName: "arrow.left.arrow.right")
-                                            Text("The order of Fat and Protein inputs has changed.").font(.callout)
-                                            Spacer()
-                                            Button {
-                                                PropertyPersistentFlags.shared.hasSeenFatProteinOrderChange = true
-                                                withAnimation { showFatProteinOrderBanner = false }
-                                            } label: {
-                                                Image(systemName: "xmark.circle.fill")
-                                            }
-                                            .buttonStyle(.plain)
-                                        }
-                                        .listRowBackground(Color.orange.opacity(0.75))
-                                        .transition(.opacity)
-                                    }
-                                }
-
-                                // Time
-                                HStack {
-                                    // Semi-hacky workaround to make sure the List renders the horizontal divider properly between the `Time` and `Note` rows within the Section
+                                if showFatProteinOrderBanner {
                                     HStack {
-                                        Text("")
-                                        Image(systemName: "clock").padding(.leading, -7)
-                                    }
-
-                                    Spacer()
-                                    if !pushed {
+                                        Image(systemName: "arrow.left.arrow.right")
+                                        Text("The order of Fat and Protein inputs has changed.").font(.callout)
+                                        Spacer()
                                         Button {
                                             PropertyPersistentFlags.shared.hasSeenFatProteinOrderChange = true
                                             withAnimation { showFatProteinOrderBanner = false }
@@ -326,62 +268,63 @@ extension Treatments {
                                                 await state.updateForecasts()
                                                 state.insulinCalculated = await state.calculateInsulin()
                                             }
-                                        Button {
-                                            state.date = state.date.addingTimeInterval(15.minutes.timeInterval)
                                         }
-                                        label: { Image(systemName: "plus.circle") }.tint(.blue).buttonStyle(.borderless)
+                                    Button {
+                                        state.date = state.date.addingTimeInterval(15.minutes.timeInterval)
                                     }
                                     label: { Image(systemName: "plus.circle") }.tint(.blue).buttonStyle(.borderless)
                                         .accessibilityLabel(Text("15 minutes later"))
                                 }
+                            }
 
-                                // Notes
-                                HStack {
-                                    Image(systemName: "square.and.pencil")
-                                    TextFieldWithToolBarString(
-                                        text: $state.note,
-                                        placeholder: String(localized: "Note..."),
-                                        maxLength: 25
-                                    )
-                                }
-                            }.listRowBackground(Color.chart)
+                            // Notes
+                            HStack {
+                                Image(systemName: "square.and.pencil")
+                                TextFieldWithToolBarString(
+                                    text: $state.note,
+                                    placeholder: String(localized: "Note..."),
+                                    maxLength: 25
+                                )
+                            }
+                        }.listRowBackground(Color.chart)
 
-                            Section {
-                                if state.fattyMeals || state.sweetMeals {
-                                    HStack(spacing: 10) {
-                                        if state.fattyMeals {
-                                            Toggle(isOn: $state.useFattyMealCorrectionFactor) {
-                                                Text("Reduced Bolus")
-                                            }
-                                            .toggleStyle(RadioButtonToggleStyle())
-                                            .font(.footnote)
-                                            .onChange(of: state.useFattyMealCorrectionFactor) {
-                                                Task {
-                                                    state.insulinCalculated = await state.calculateInsulin()
-                                                    if state.useFattyMealCorrectionFactor {
-                                                        state.useSuperBolus = false
-                                                    }
+                        Section {
+                            if state.fattyMeals || state.sweetMeals {
+                                HStack(spacing: 10) {
+                                    if state.fattyMeals {
+                                        Toggle(isOn: $state.useFattyMealCorrectionFactor) {
+                                            Text("Reduced Bolus")
+                                        }
+                                        .toggleStyle(RadioButtonToggleStyle())
+                                        .font(.footnote)
+                                        .onChange(of: state.useFattyMealCorrectionFactor) {
+                                            Task {
+                                                state.insulinCalculated = await state.calculateInsulin()
+                                                if state.useFattyMealCorrectionFactor {
+                                                    state.useSuperBolus = false
                                                 }
                                             }
                                         }
-                                        if state.sweetMeals {
-                                            Toggle(isOn: $state.useSuperBolus) {
-                                                Text("Super Bolus")
-                                            }
-                                            .toggleStyle(RadioButtonToggleStyle())
-                                            .font(.footnote)
-                                            .onChange(of: state.useSuperBolus) {
-                                                Task {
-                                                    state.insulinCalculated = await state.calculateInsulin()
-                                                    if state.useSuperBolus {
-                                                        state.useFattyMealCorrectionFactor = false
-                                                    }
+                                    }
+                                    if state.sweetMeals {
+                                        Toggle(isOn: $state.useSuperBolus) {
+                                            Text("Super Bolus")
+                                        }
+                                        .toggleStyle(RadioButtonToggleStyle())
+                                        .font(.footnote)
+                                        .onChange(of: state.useSuperBolus) {
+                                            Task {
+                                                state.insulinCalculated = await state.calculateInsulin()
+                                                if state.useSuperBolus {
+                                                    state.useFattyMealCorrectionFactor = false
                                                 }
                                             }
                                         }
                                     }
                                 }
+                            }
 
+                            HStack {
                                 HStack {
                                     Text("Recommendation")
                                     Button(action: {
@@ -398,14 +341,18 @@ extension Treatments {
                                     state.amount = state.insulinCalculated
                                 } label: {
                                     HStack {
-                                        Text("Recommendation")
-                                        Button(action: {
-                                            state.showInfo.toggle()
-                                        }, label: {
-                                            Image(systemName: "info.circle")
-                                        })
-                                            .foregroundStyle(.blue)
-                                            .buttonStyle(PlainButtonStyle())
+                                        Text(
+                                            formatter
+                                                .string(from: Double(state.insulinCalculated) as NSNumber) ?? ""
+                                        )
+
+                                        Text(
+                                            String(
+                                                localized:
+                                                " U",
+                                                comment: "Unit in number of units delivered (keep the space character!)"
+                                            )
+                                        ).foregroundColor(.secondary)
                                     }
                                 }
                                 .disabled(state.insulinCalculated == 0 || state.amount == state.insulinCalculated)
@@ -418,55 +365,37 @@ extension Treatments {
                                 .accessibilityHint(Text("Copies the recommended amount into the bolus field"))
                             }
 
-                                            Text(
-                                                String(
-                                                    localized:
-                                                    " U",
-                                                    comment: "Unit in number of units delivered (keep the space character!)"
-                                                )
-                                            ).foregroundColor(.secondary)
+                            HStack {
+                                Text("Bolus")
+                                Spacer()
+                                TextFieldWithToolBar(
+                                    text: $state.amount,
+                                    placeholder: "0",
+                                    textColor: colorScheme == .dark ? .white : .blue,
+                                    maxLength: 5,
+                                    numberFormatter: formatter,
+                                    showArrows: true,
+                                    previousTextField: { focusedField = previousField(from: .bolus) },
+                                    nextTextField: { focusedField = nextField(from: .bolus) },
+                                    unitsText: String(localized: "U", comment: "Units for bolus amount")
+                                ).focused($focusedField, equals: .bolus)
+                                    .onChange(of: state.amount) {
+                                        Task {
+                                            await state.updateForecasts()
                                         }
                                     }
-                                    .disabled(state.insulinCalculated == 0 || state.amount == state.insulinCalculated)
-                                    .buttonStyle(.bordered).padding(.trailing, -10)
-                                }
+                            }
 
-                                HStack {
-                                    Text("Bolus")
-                                    Spacer()
-                                    TextFieldWithToolBar(
-                                        text: $state.amount,
-                                        placeholder: "0",
-                                        textColor: colorScheme == .dark ? .white : .blue,
-                                        maxLength: 5,
-                                        numberFormatter: formatter,
-                                        showArrows: true,
-                                        previousTextField: { focusedField = previousField(from: .bolus) },
-                                        nextTextField: { focusedField = nextField(from: .bolus) },
-                                        unitsText: String(localized: "U", comment: "Units for bolus amount")
-                                    ).focused($focusedField, equals: .bolus)
-                                        .onChange(of: state.amount) {
-                                            Task {
-                                                await state.updateForecasts()
-                                            }
-                                        }
-                                }
-                                .id(FocusedField.bolus)
+                            HStack {
+                                Text("External Insulin")
+                                Spacer()
+                                Toggle("", isOn: $state.externalInsulin).toggleStyle(CheckboxToggleStyle())
+                            }
+                        }.listRowBackground(Color.chart)
 
-                                HStack {
-                                    Text("External Insulin")
-                                    Spacer()
-                                    Toggle("", isOn: $state.externalInsulin).toggleStyle(CheckboxToggleStyle())
-                                }
-                            }.listRowBackground(Color.chart)
-
-                            treatmentButton
-                        }
-                        .listSectionSpacing(sectionSpacing)
-                        .onChange(of: focusedField) { _, newValue in
-                            scrollFocusedFieldIntoView(newValue, proxy: proxy)
-                        }
+                        treatmentButton
                     }
+                    .listSectionSpacing(sectionSpacing)
                 }
                 .blur(radius: state.isAwaitingDeterminationResult ? 5 : 0)
 
