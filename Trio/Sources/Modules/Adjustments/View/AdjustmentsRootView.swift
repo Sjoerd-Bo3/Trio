@@ -400,7 +400,7 @@ extension Adjustments {
             }
         }
 
-        var cancelAdjustmentButton: some View {
+        @ViewBuilder var cancelAdjustmentButton: some View {
             switch state.selectedTab {
             case .overrides:
                 Button(action: {
