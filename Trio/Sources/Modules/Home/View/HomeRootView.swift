@@ -447,14 +447,14 @@ extension Home {
                 .accessibilityAction {
                     state.showModal(for: .treatmentView)
                 }
-                .accessibilityAction(named: Text("Quick Pick Treatments")) {
-                    guard state.enableQuickPickTreatments else { return }
+                .accessibilityAction(named: Text("Quick-Pick Boluses")) {
+                    guard state.enableQuickBolus else { return }
                     Task {
-                        await state.loadQuickPickTreatmentSuggestions()
-                        if state.quickPickBolusSuggestions.isEmpty, state.quickPickCarbSuggestions.isEmpty {
-                            showQuickPickTreatmentsNoHistory = true
+                        await state.loadQuickBolusSuggestions()
+                        if state.quickBolusHistory.isEmpty {
+                            showQuickBolusNoHistory = true
                         } else {
-                            showQuickPickTreatmentsPicker = true
+                            showQuickBolusPicker = true
                         }
                     }
                 }
