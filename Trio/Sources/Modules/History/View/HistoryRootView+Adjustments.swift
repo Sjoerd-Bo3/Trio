@@ -139,6 +139,7 @@ extension History.RootView {
                     HStack {
                         Image(systemName: item.type.symbolName)
                             .foregroundStyle(item.type.iconColor)
+                            .accessibilityHidden(true)
                         Text(item.name)
                             .font(.headline)
                         if item.isDiverted {

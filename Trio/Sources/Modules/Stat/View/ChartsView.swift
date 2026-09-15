@@ -95,6 +95,8 @@ struct ChartsView: View {
                 ]
             )
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Glucose readings scatter chart"))
     }
 
     var tirChartLaying: some View {
@@ -151,6 +153,8 @@ struct ChartsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .center) // Align the entire VStack to center
         .padding(.horizontal, 5)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Time in range bar chart"))
     }
 
     var tirChartStanding: some View {
@@ -209,6 +213,8 @@ struct ChartsView: View {
                 comment: ""
             ) + " (> \(high.formatted(.number.grouping(.never).rounded().precision(.fractionLength(fraction)))))": .staticHigh
         ])
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Time in range bar chart"))
     }
 
     var groupedGlucoseStatsStanding: some View {

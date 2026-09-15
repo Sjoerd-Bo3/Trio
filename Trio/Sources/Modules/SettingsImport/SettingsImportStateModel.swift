@@ -380,12 +380,6 @@ extension SettingsImport {
                         )
                     )
                 }
-                if categories.contains(.devices), merged.cgm == .enlite, provider.deviceManager.pumpManager == nil {
-                    collectedWarnings.append(
-                        String(localized: "Medtronic Enlite needs a paired Medtronic pump before glucose readings arrive.")
-                    )
-                }
-
                 settingsManager.settings = merged
             }
 
