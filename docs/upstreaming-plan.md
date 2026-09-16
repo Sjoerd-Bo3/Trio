@@ -23,6 +23,14 @@ independently PR-able upstream.
 - `MARKETING_VERSION` driven from `$(APP_VERSION)` for every target
   (upstream hardcodes `1.0` on the Watch app and extensions, which App Store
   Connect rejects as a `CFBundleShortVersionString` mismatch)
+- `ci_scripts/ci_post_xcodebuild.sh` — writes the TestFlight "What to Test"
+  notes after an Xcode Cloud distribution build. It lists everything this branch
+  adds on top of `build/dev`, so each build documents exactly which fork
+  features are in it. Override the base with `WHATTOTEST_BASE_BRANCH`, or
+  prepend a manual note via `ci_scripts/whattotest_message.txt`.
+- `.github/workflows/compile_check.yml` — simulator compile check on
+  `build/altered` and `build/dev`, so a broken merge is caught without spending
+  an Xcode Cloud build. Feature branches are verified by merging them here.
 
 ## Workflow per feature
 
