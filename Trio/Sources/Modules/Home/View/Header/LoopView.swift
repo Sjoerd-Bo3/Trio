@@ -173,7 +173,10 @@ struct LoopView: View {
                         .stroke(style: StrokeStyle(lineWidth: ringLineWidth, lineCap: .round))
                 }
                 if isLooping {
-                    ProgressView()
+                    // A cycle is running: sweep a bright arc around the ring itself
+                    // instead of a plain centre spinner, so the motion reads as "the
+                    // loop is turning". The base ring (with its mode gaps) stays put.
+                    LoopRingSweep(lineWidth: ringLineWidth, color: color)
                 } else if let centerSymbol {
                     Image(systemName: centerSymbol)
                         .font(.system(size: ringDiameter * 0.6, weight: .bold))
@@ -215,6 +218,36 @@ struct LoopView: View {
             hasEnactedDetermination: determination.first?.timestamp != nil,
             secondsSinceLastLoop: timerDate.timeIntervalSince(lastLoopDate)
         )
+    }
+}
+
+/// A short, bright arc that continuously rotates around the loop ring while a loop
+/// cycle is in progress. Encapsulating the animation in its own view (with its own
+/// state) means it restarts cleanly every time it re-appears, i.e. each time
+/// `isLooping` flips back to true.
+private struct LoopRingSweep: View {
+    let lineWidth: CGFloat
+    let color: Color
+
+    @State private var angle: Double = 0
+
+    var body: some View {
+        Circle()
+            .trim(from: 0, to: 0.16)
+            .stroke(
+                AngularGradient(
+                    gradient: Gradient(colors: [color.opacity(0), color, Color.white.opacity(0.9)]),
+                    center: .center
+                ),
+                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+            )
+            .rotationEffect(.degrees(angle))
+            .onAppear {
+                withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+                    angle = 360
+                }
+            }
+            .accessibilityHidden(true)
     }
 }
 
