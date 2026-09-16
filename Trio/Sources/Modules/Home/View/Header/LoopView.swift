@@ -8,6 +8,9 @@ struct LoopView: View {
 
     fileprivate enum Config {
         static let lag: TimeInterval = 30
+        /// How long the sweep stays on after a cycle ends, so a loop that
+        /// finishes in a blink still reads as motion.
+        static let sweepLinger: TimeInterval = 2
     }
 
     let dosingMode: DosingMode
@@ -153,6 +156,9 @@ struct LoopView: View {
             .joined(separator: ", ")
     }
 
+    /// `isLooping` with a short linger, so the sweep outlives the cycle itself.
+    @State private var showSweep = false
+
     @ScaledMetric(relativeTo: .callout) private var compactRingDiameter: CGFloat = 18
     @ScaledMetric(relativeTo: .callout) private var expandedRingDiameter: CGFloat = 26
 
@@ -172,7 +178,7 @@ struct LoopView: View {
                         .trim(from: 0.5 + ringGap / 2, to: 1 - ringGap / 2)
                         .stroke(style: StrokeStyle(lineWidth: ringLineWidth, lineCap: .round))
                 }
-                if isLooping {
+                if showSweep {
                     // A cycle is running: sweep a bright arc around the ring itself
                     // instead of a plain centre spinner, so the motion reads as "the
                     // loop is turning". The base ring (with its mode gaps) stays put.
@@ -183,6 +189,17 @@ struct LoopView: View {
                 }
             }
             .frame(width: ringDiameter, height: ringDiameter)
+            // A loop cycle is over in a blink, which is too brief to register as
+            // motion. Hold the sweep on for a moment after it finishes so the
+            // ring visibly acknowledges that a loop ran.
+            .task(id: isLooping) {
+                if isLooping {
+                    showSweep = true
+                } else {
+                    try? await Task.sleep(for: .seconds(Config.sweepLinger))
+                    if !Task.isCancelled { showSweep = false }
+                }
+            }
             // A caption would imply an action that did not happen in open loop, LGS, or basal testing.
             // Show timestamp only in closed loop, when determination is enacted.
             if showsCaption {
