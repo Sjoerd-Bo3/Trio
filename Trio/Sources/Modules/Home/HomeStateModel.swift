@@ -856,6 +856,13 @@ extension Home {
             if let sim = glucoseSource as? GlucoseSimulatorSource {
                 return sim.simulatedSensorExpiresAt
             }
+            // xDrip over the shared app group has no native CGM manager, so the
+            // expiry it forwards in the payload is the only source we have.
+            if manager == nil,
+               let payloadExpiry = (glucoseSource as? AppGroupSource)?.cgmSensorExpiresAtFromPayload.value
+            {
+                return payloadExpiry
+            }
             guard let manager else { return nil }
             // Once a G7 enters grace period, `sensorExpiresAt` is in the past
             // and would collapse the bobble countdown to "<1m" while the arc
