@@ -93,10 +93,10 @@ def fit_reg(tr, feats, target):
 
 
 def fit_clf(tr, feats):
-    pos = tr.low60.sum()
-    m = lgb.LGBMClassifier(n_estimators=400, learning_rate=0.05, num_leaves=31, min_child_samples=50,
-                           subsample=0.8, subsample_freq=1, colsample_bytree=0.8,
-                           scale_pos_weight=max(1.0, (len(tr) - pos) / max(pos, 1)), verbose=-1)
+    # Strongly regularised and unweighted: with only a few hundred low events per
+    # month, class weighting and deep trees overfit and lose to oref.
+    m = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.03, num_leaves=15, min_child_samples=200,
+                           subsample=0.8, subsample_freq=1, colsample_bytree=0.8, verbose=-1)
     m.fit(tr[feats], tr.low60)
     return m
 
