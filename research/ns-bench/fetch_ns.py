@@ -9,7 +9,7 @@ documents (which carry full predBGs arrays) are dropped after compaction.
 Output (default ~/ns-data, deliberately outside the repo -- this is health data
 and must never be committed):
   entries.csv.gz       t_ms, sgv
-  devicestatus.csv.gz  t_ms, bg, iob, cob, pred_line, pred30, pred60, rate, smb
+  devicestatus.csv.gz  t_ms, bg, iob, cob, pred_line, pred30, pred60, predmin60, ztmin60, rate, smb
   treatments.csv.gz    t_ms, event, carbs, insulin, rate, duration
 
 Usage:
@@ -85,9 +85,11 @@ def compact_devicestatus(docs):
         preds = s.get("predBGs") or {}
         line = "COB" if (cob or 0) > 0 and preds.get("COB") else next((k for k in ("UAM", "IOB", "ZT") if preds.get(k)), "")
         p = preds.get(line) or []
+        zt = preds.get("ZT") or []
         en = o.get("enacted") or {}
         yield [t, s.get("bg", ""), "" if iob is None else iob, "" if cob is None else cob, line,
-               p[6] if len(p) > 6 else "", p[12] if len(p) > 12 else "", en.get("rate", ""), en.get("units", "")]
+               p[6] if len(p) > 6 else "", p[12] if len(p) > 12 else "", min(p[:13]) if len(p) > 12 else "",
+               min(zt[:13]) if len(zt) > 12 else "", en.get("rate", ""), en.get("units", "")]
 
 
 def compact_treatments(docs):
@@ -101,7 +103,7 @@ def compact_treatments(docs):
 KINDS = {
     "entries": ("/api/v1/entries/sgv.json", "date", ms, compact_entries, ["t_ms", "sgv"]),
     "devicestatus": ("/api/v1/devicestatus.json", "created_at", iso, compact_devicestatus,
-                     ["t_ms", "bg", "iob", "cob", "pred_line", "pred30", "pred60", "rate", "smb"]),
+                     ["t_ms", "bg", "iob", "cob", "pred_line", "pred30", "pred60", "predmin60", "ztmin60", "rate", "smb"]),
     "treatments": ("/api/v1/treatments.json", "created_at", iso, compact_treatments,
                    ["t_ms", "event", "carbs", "insulin", "rate", "duration"]),
 }
