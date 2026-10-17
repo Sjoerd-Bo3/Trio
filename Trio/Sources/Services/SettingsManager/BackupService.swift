@@ -67,6 +67,7 @@ struct BackupEntry: Identifiable {
     private var settingsManager: SettingsManager?
     private var deviceManager: DeviceDataManager?
     private var broadcaster: Broadcaster?
+    private var fetchGlucoseManager: FetchGlucoseManager?
 
     var isReady: Bool { storage != nil && settingsManager != nil && deviceManager != nil }
 
@@ -75,6 +76,7 @@ struct BackupEntry: Identifiable {
         settingsManager = resolver.resolve(SettingsManager.self)
         deviceManager = resolver.resolve(DeviceDataManager.self)
         broadcaster = resolver.resolve(Broadcaster.self)
+        fetchGlucoseManager = resolver.resolve(FetchGlucoseManager.self)
     }
 
     var hasPairedPump: Bool { deviceManager?.pumpManager != nil }
@@ -140,10 +142,26 @@ struct BackupEntry: Identifiable {
     @discardableResult func restoreDuringOnboarding(_ backup: TrioSettingsBackup) async throws -> RestoreReport {
         guard let settingsManager, let deviceManager else { throw BackupError.restoreFailed }
         guard deviceManager.pumpManager == nil else { throw BackupError.pumpNotReady }
-        let report = try await SettingsBackupRestore.applyDuringOnboarding(
+        let previous = settingsManager.settings
+        var report = try await SettingsBackupRestore.applyDuringOnboarding(
             backup, settingsManager: settingsManager, deviceManager: deviceManager
         )
         notifyObservers()
+        // The running glucose source only follows the CGM selection when told to. Pairing never travels in
+        // the core snapshot, so a restored plugin CGM still has to be set up on this phone.
+        let restored = settingsManager.settings
+        if restored.cgm != previous.cgm || restored.cgmPluginIdentifier != previous.cgmPluginIdentifier {
+            fetchGlucoseManager?.updateGlucoseSource(
+                cgmGlucoseSourceType: restored.cgm,
+                cgmGlucosePluginId: restored.cgmPluginIdentifier
+            )
+            if restored.cgm == .plugin {
+                let name = backup.deviceInfo?.cgmDisplayName ?? restored.cgmPluginIdentifier
+                report.warnings.append(
+                    String(localized: "The backup used the CGM \"\(name)\". Set it up again under Settings > Devices > CGM.")
+                )
+            }
+        }
         return report
     }
 

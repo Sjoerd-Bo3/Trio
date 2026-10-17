@@ -374,6 +374,7 @@ extension Notification.Name {
                         wasMigrationSuccessful: !initState.migrationFailed
                     )
                     .preferredColorScheme(colorScheme(for: .dark) ?? nil)
+                    .environment(appState)
                     .transition(.opacity)
                 } else {
                     Main.RootView(resolver: resolver)
