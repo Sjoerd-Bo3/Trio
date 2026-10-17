@@ -1,0 +1,333 @@
+import Foundation
+
+/// Schema-1 settings files written by earlier Trio builds. Read-only: `LegacyBackupAdapter` converts
+/// them into the current snapshot; nothing writes this format any more.
+///
+/// All values are stored raw, exactly as persisted on disk: glucose in mg/dL, multipliers as
+/// fractions (not percentages). Every section is optional so partial or future backups still
+/// decode; only `schemaVersion` is decoded strictly — its absence means the file is not a Trio
+/// backup at all.
+struct SettingsBackup: JSON, Equatable, Encodable {
+    static let currentSchemaVersion = 1
+
+    var schemaVersion: Int = SettingsBackup.currentSchemaVersion
+    var exportDate: Date?
+    var appVersion: String?
+    var buildNumber: String?
+    var branch: String?
+
+    var devices: DeviceInfo?
+    var trioSettings: TrioSettings?
+    var preferences: Preferences?
+    var pumpSettings: PumpSettings?
+    var therapy: Therapy?
+    var presets: Presets?
+    var userDefaults: UserDefaultsValues?
+    var credentials: Credentials?
+
+    /// Optional treatment history (export toggle, off by default): every glucose reading, pump
+    /// event and carb entry the device still holds (Trio retains about 90 days), hourly TDD
+    /// samples for Dynamic ISF continuity, and the daily-TDD archive that feeds the one-year
+    /// insulin statistics. Import deduplicates by date, so nothing is ever duplicated.
+    var history: History?
+
+    struct History: JSON, Equatable {
+        var glucose: [BloodGlucose]?
+        var pumpHistory: [PumpHistoryEvent]?
+        var carbs: [CarbsEntry]?
+        var tdd: [TDDEntry]?
+        /// Daily TDD totals keyed by `"yyyy-MM-dd"` — the `TDDArchive` contents.
+        var tddDaily: [String: Double]?
+    }
+
+    struct TDDEntry: JSON, Equatable {
+        var date: Date
+        var total: Decimal
+        var bolus: Decimal
+        var tempBasal: Decimal
+        var scheduledBasal: Decimal
+        var weightedAverage: Decimal?
+    }
+
+    /// Device metadata. `pumpType`/`insulinType`/`cgmDisplayName` are informational only —
+    /// the authoritative CGM selection lives in `trioSettings.cgm`/`.cgmPluginIdentifier`.
+    /// `pumpState`/`cgmState` are the raw manager state plists (base64-encoded) and are only
+    /// present when the user explicitly opted in to exporting device pairing data.
+    struct DeviceInfo: JSON, Equatable {
+        var pumpType: String?
+        var insulinType: String?
+        var cgmDisplayName: String?
+        var pumpState: String?
+        var cgmState: String?
+    }
+
+    struct Therapy: JSON, Equatable {
+        var basalProfile: [BasalProfileEntry]?
+        var insulinSensitivities: InsulinSensitivities?
+        var carbRatios: CarbRatios?
+        var bgTargets: BGTargets?
+    }
+
+    struct Presets: JSON, Equatable {
+        var tempTargets: [TempTargetPreset]?
+        var overrides: [OverridePreset]?
+        var meals: [MealPreset]?
+    }
+
+    /// Runtime attributes (`id`, `date`, `enabled`, `isUploadedToNS`) are intentionally not part
+    /// of the backup — they are regenerated on import, with `isPreset = true` and `enabled = false`.
+    struct TempTargetPreset: JSON, Equatable {
+        var name: String
+        var target: Decimal
+        var duration: Decimal
+        var halfBasalTarget: Decimal?
+        var orderPosition: Int?
+    }
+
+    struct OverridePreset: JSON, Equatable {
+        var name: String
+        var percentage: Double
+        var indefinite: Bool
+        var duration: Decimal
+        var target: Decimal?
+        var advancedSettings: Bool
+        var smbIsOff: Bool
+        var smbIsScheduledOff: Bool
+        var start: Decimal?
+        var end: Decimal?
+        var isfAndCr: Bool
+        var isf: Bool
+        var cr: Bool
+        var smbMinutes: Decimal?
+        var uamMinutes: Decimal?
+        var orderPosition: Int?
+    }
+
+    struct MealPreset: JSON, Equatable {
+        var dish: String
+        var carbs: Decimal
+        var fat: Decimal
+        var protein: Decimal
+    }
+
+    struct UserDefaultsValues: JSON, Equatable {
+        var colorSchemePreference: String?
+        var isTrioRemoteControlEnabled: Bool?
+    }
+
+    /// Only present when the user explicitly opted in to exporting credentials.
+    struct Credentials: JSON, Equatable {
+        var nightscoutURL: String?
+        var nightscoutSecret: String?
+        var remoteControlSharedSecret: String?
+    }
+}
+
+extension SettingsBackup {
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case exportDate
+        case appVersion
+        case buildNumber
+        case branch
+        case devices
+        case trioSettings
+        case preferences
+        case pumpSettings
+        case therapy
+        case presets
+        case userDefaults
+        case credentials
+        case history
+    }
+}
+
+extension SettingsBackup: Decodable {
+    /// `schemaVersion` is decoded strictly — a file without it is not a Trio backup. Every other
+    /// field decodes leniently so partial backups and files from newer Trio versions still load.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        var backup = SettingsBackup()
+        backup.schemaVersion = try container.decode(Int.self, forKey: .schemaVersion)
+
+        backup.exportDate = try? container.decode(Date.self, forKey: .exportDate)
+        backup.appVersion = try? container.decode(String.self, forKey: .appVersion)
+        backup.buildNumber = try? container.decode(String.self, forKey: .buildNumber)
+        backup.branch = try? container.decode(String.self, forKey: .branch)
+
+        backup.devices = try? container.decode(DeviceInfo.self, forKey: .devices)
+        backup.trioSettings = try? container.decode(TrioSettings.self, forKey: .trioSettings)
+        backup.preferences = try? container.decode(Preferences.self, forKey: .preferences)
+        backup.pumpSettings = try? container.decode(PumpSettings.self, forKey: .pumpSettings)
+        backup.therapy = try? container.decode(Therapy.self, forKey: .therapy)
+        backup.presets = try? container.decode(Presets.self, forKey: .presets)
+        backup.userDefaults = try? container.decode(UserDefaultsValues.self, forKey: .userDefaults)
+        backup.credentials = try? container.decode(Credentials.self, forKey: .credentials)
+        backup.history = try? container.decode(History.self, forKey: .history)
+
+        self = backup
+    }
+}
+
+extension SettingsBackup {
+    /// What restoring the backup's device pairing on a NEW phone will actually do, per device
+    /// type — shown wherever the pairing opt-in is offered, and after a restore. Two things can
+    /// never travel in a backup: iOS Bluetooth bonds and CoreBluetooth peripheral identifiers
+    /// (both are per-phone), so the outcome depends on where each manager keeps its pairing.
+    static func devicePairingNotes(for devices: DeviceInfo?) -> [String] {
+        var notes: [String] = []
+        if let pumpState = devices?.pumpState, let note = pumpPairingNote(forManagerState: pumpState) {
+            notes.append(note)
+        }
+        if let cgmState = devices?.cgmState, let note = cgmPairingNote(forManagerState: cgmState) {
+            notes.append(note)
+        }
+        return notes
+    }
+
+    static func pumpPairingNote(forManagerState base64: String) -> String? {
+        guard let rawValue = decodeManagerState(base64),
+              let identifier = rawValue["managerIdentifier"] as? String
+        else {
+            return nil
+        }
+
+        // RileyLink selections are CoreBluetooth identifiers, which are phone-local.
+        let state = rawValue["state"] as? [String: Any] ?? rawValue
+        let usesRileyLink = state.keys.contains { $0.localizedCaseInsensitiveContains("rileyLink") } ||
+            rawValue.keys.contains { $0.localizedCaseInsensitiveContains("rileyLink") }
+
+        if identifier.hasPrefix("Medtrum") {
+            // Session token and crypto live in the state; the pump is found by scanning for its
+            // serial number, so nothing is phone-bound.
+            return String(localized: "Medtrum: the pump reconnects automatically on the new phone.")
+        }
+        if identifier.hasPrefix("Omni") {
+            if usesRileyLink {
+                return String(
+                    localized: "Omnipod (Eros): the pod session transfers, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones."
+                )
+            }
+            // The DASH/O5 pod is bound to a phone-local Bluetooth identifier and a paired pod no
+            // longer advertises as pairable, so the running pod cannot follow to a new phone.
+            return String(
+                localized: "Omnipod DASH: a running pod cannot move to a new phone — deactivate it and activate a new pod under Devices > Insulin Pump."
+            )
+        }
+        if identifier.hasPrefix("Minimed") {
+            return String(
+                localized: "Medtronic: the pump settings transfer, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones."
+            )
+        }
+        if identifier.hasPrefix("Dana") {
+            // DanaKit reconnects only by a phone-local Bluetooth identifier, so the restored
+            // state cannot re-establish the link on a new phone.
+            return String(
+                localized: "Dana: the pump will not reconnect on its own — remove it and set it up again under Devices > Insulin Pump (Dana RS asks for its PINs again, Dana-i pairs again)."
+            )
+        }
+        return String(
+            localized: "\(identifier): restoring this pump type's pairing is untested — be prepared to pair manually under Devices > Insulin Pump."
+        )
+    }
+
+    static func cgmPairingNote(forManagerState base64: String) -> String? {
+        guard let rawValue = decodeManagerState(base64),
+              let identifier = rawValue["managerIdentifier"] as? String
+        else {
+            return nil
+        }
+
+        let lowered = identifier.lowercased()
+        // G7 before the generic Dexcom match: Trio only listens along, the Dexcom app owns the
+        // pairing, and the sensor is found by its advertised name — no prompt, no re-pairing.
+        if lowered.contains("g7") {
+            return String(
+                localized: "Dexcom G7: reconnects automatically — pairing is handled by the Dexcom app, so set that up on the new phone as well."
+            )
+        }
+        if lowered.contains("dex") || lowered.contains("g6") || lowered.contains("g5") {
+            return String(
+                localized: "Dexcom: iOS will show a Bluetooth pairing request when the transmitter reconnects — accept it and the session continues."
+            )
+        }
+        if lowered.contains("libreloop") {
+            // The receiver identity transfers with the backup; one NFC scan makes the running
+            // sensor accept the new phone as its receiver.
+            return String(
+                localized: "Libre 3: scan the existing sensor once with NFC after the restore — the transferred receiver identity makes it accept the new phone."
+            )
+        }
+        if lowered.contains("libretransmitter") {
+            // This plugin's exportable state is empty; its pairing lives outside the backup.
+            return String(
+                localized: "LibreTransmitter: pairing cannot travel in a backup for this plugin — set up your bridge or sensor again under Devices > CGM."
+            )
+        }
+        if lowered.contains("libre") {
+            return String(
+                localized: "Libre: sensors pair to a single device — be prepared to re-pair the sensor on the new phone."
+            )
+        }
+        if lowered.contains("accuchek") {
+            return String(
+                localized: "AccuChek: reconnects automatically — older sensors may show an iOS pairing request once."
+            )
+        }
+        if lowered.contains("eversense") {
+            return String(
+                localized: "Eversense: reconnects automatically — the transmitter may show an iOS pairing request once."
+            )
+        }
+        return String(
+            localized: "\(identifier): restoring this CGM type's pairing is untested — be prepared to re-add it under Devices > CGM."
+        )
+    }
+
+    /// Raw pump/CGM manager state dictionaries are property-list values; JSON carries them as
+    /// base64-encoded binary plists.
+    static func encodeManagerState(_ rawValue: [String: Any]) -> String? {
+        guard let data = try? PropertyListSerialization.data(fromPropertyList: rawValue, format: .binary, options: 0) else {
+            return nil
+        }
+        return data.base64EncodedString()
+    }
+
+    static func decodeManagerState(_ base64: String) -> [String: Any]? {
+        guard let data = Data(base64Encoded: base64),
+              let rawValue = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any]
+        else {
+            return nil
+        }
+        return rawValue
+    }
+}
+
+// Swift cannot synthesize Equatable in extensions outside the declaring file, so == is spelled
+// out for the container types the backup embeds. The schedule entry types already conform in
+// their declaring files.
+extension InsulinSensitivities: Equatable {
+    static func == (lhs: InsulinSensitivities, rhs: InsulinSensitivities) -> Bool {
+        lhs.units == rhs.units && lhs.userPreferredUnits == rhs.userPreferredUnits &&
+            lhs.sensitivities == rhs.sensitivities
+    }
+}
+
+extension CarbRatios: Equatable {
+    static func == (lhs: CarbRatios, rhs: CarbRatios) -> Bool {
+        lhs.units == rhs.units && lhs.schedule == rhs.schedule
+    }
+}
+
+extension BGTargets: Equatable {
+    static func == (lhs: BGTargets, rhs: BGTargets) -> Bool {
+        lhs.units == rhs.units && lhs.userPreferredUnits == rhs.userPreferredUnits && lhs.targets == rhs.targets
+    }
+}
+
+extension PumpSettings: Equatable {
+    static func == (lhs: PumpSettings, rhs: PumpSettings) -> Bool {
+        lhs.insulinActionCurve == rhs.insulinActionCurve && lhs.maxBolus == rhs.maxBolus && lhs.maxBasal == rhs.maxBasal
+    }
+}

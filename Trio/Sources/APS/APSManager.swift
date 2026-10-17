@@ -378,8 +378,8 @@ final class BaseAPSManager: APSManager, Injectable {
     private func executeLoop(loopStatRecord: inout LoopStats) async throws {
         try await determineBasal()
 
-        // Closed loop: also enact the determination.
-        if settings.dosingMode.automation != .off {
+        // Closed loop: also enact the determination. Never while an interrupted settings restore is unresolved.
+        if settings.dosingMode.automation != .off, !SettingsBackupRestore.hasUnresolvedJournal {
             try await enactDetermination()
         }
 
