@@ -28,6 +28,7 @@ extension Onboarding {
         private func updateCurrentChapter() {
             switch currentStep {
             case .nightscout,
+                 .restoreBackup,
                  .unitSelection:
                 currentChapter = .prepareTrio
             case .basalRates,
@@ -71,7 +72,9 @@ extension Onboarding {
 
         // Next button conditional
         private var shouldDisableNextButton: Bool {
-            (currentStep == .nightscout && didSelectNightscoutSetupOption)
+            (currentStep == .restoreBackup && state.restoreBlocksNext)
+                ||
+                (currentStep == .nightscout && didSelectNightscoutSetupOption)
                 ||
                 (currentStep == .nightscout && hasValidNightscoutConnection)
                 ||
@@ -349,6 +352,8 @@ struct OnboardingStepContent: View {
                                 }
                             case .overview:
                                 OverviewStepView()
+                            case .restoreBackup:
+                                RestoreBackupStepView(state: state)
                             case .nightscout:
                                 switch currentNightscoutSubstep {
                                 case .setupSelection:
@@ -548,6 +553,7 @@ struct OnboardingNavigationButtons: View {
     // MARK: - Navigation Logic
 
     private func handleBackNavigation() {
+        guard !state.backupRestoreInProgress else { return }
         if showingChapterCompletion != nil {
             showingChapterCompletion = nil
             return
@@ -665,6 +671,7 @@ struct OnboardingNavigationButtons: View {
     }
 
     private func handleNextNavigation() {
+        guard !state.backupRestoreInProgress else { return }
         if showingChapterCompletion != nil {
             showingChapterCompletion = nil
             if let next = currentStep.next {
