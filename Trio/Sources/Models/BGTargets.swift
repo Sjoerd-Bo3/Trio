@@ -18,7 +18,7 @@ extension BGTargets {
     }
 }
 
-struct BGTargetEntry: JSON {
+struct BGTargetEntry: JSON, Equatable {
     let low: Decimal
     let high: Decimal
     let start: String

@@ -340,7 +340,8 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
 
 extension BaseDeviceDataManager: PumpManagerDelegate {
     var automaticDosingEnabled: Bool {
-        settingsManager.settings.dosingMode.automation != .off // Trio may command the pump
+        // Trio may command the pump, but not while an interrupted settings restore is unresolved
+        settingsManager.settings.dosingMode.automation != .off && !SettingsBackupRestore.hasUnresolvedJournal
     }
 
     func pumpManager(
