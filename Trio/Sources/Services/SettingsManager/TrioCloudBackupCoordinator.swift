@@ -76,10 +76,24 @@ import Swinject
     private func snapshot(
         origin: TrioSettingsBackup.Origin,
         name: String? = nil,
-        sensitive: SensitiveExportOptions? = nil
+        sensitive: SensitiveExportOptions? = nil,
+        includeHistory: Bool = false
     ) async throws -> TrioSettingsBackup {
-        if let captureOverride { return try await captureOverride(origin, name).validated() }
-        return try await BackupService.shared.captureSnapshot(origin: origin, name: name, sensitive: sensitive)
+        // Treatment history is only ever added to a manual backup the user asked it for.
+        let withHistory = includeHistory && origin == .manual
+        var captured: TrioSettingsBackup
+        if let captureOverride {
+            captured = try await captureOverride(origin, name).validated()
+        } else {
+            captured = try await BackupService.shared.captureSnapshot(
+                origin: origin,
+                name: name,
+                sensitive: sensitive,
+                includeHistory: withHistory
+            )
+        }
+        if !withHistory, captured.treatmentHistory != nil { captured = try captured.withTreatmentHistory(nil) }
+        return captured
     }
 
     deinit {
@@ -239,10 +253,18 @@ import Swinject
 
     /// Only a manual backup can carry the protected tier: it needs a passphrase that is never stored,
     /// so the automatic daily backups never include it.
-    func createManualBackup(name: String?, sensitive: SensitiveExportOptions? = nil) async throws -> BackupEntry {
+    ///
+    /// Treatment history is also manual-only and opt-in. It is stored in extra records next to the backup;
+    /// a history that does not fit the iCloud limit is refused before anything is queued or uploaded.
+    func createManualBackup(
+        name: String?,
+        sensitive: SensitiveExportOptions? = nil,
+        includeHistory: Bool = false
+    ) async throws -> BackupEntry {
         guard let name = TrioSettingsBackup.normalizedName(name) else { throw BackupError.backupNameRequired }
         return try await withBackupOperation {
-            let snapshot = try await snapshot(origin: .manual, name: name, sensitive: sensitive)
+            let snapshot = try await snapshot(origin: .manual, name: name, sensitive: sensitive, includeHistory: includeHistory)
+            _ = try TrioCloudRecordCodec.split(snapshot)
             // Manual snapshots stay independent even if the fingerprint is identical.
             var queue = try loadQueue()
             queue.append(snapshot)

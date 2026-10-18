@@ -89,10 +89,21 @@ in Open Loop and sends no pump command during the restore.
 
 A backup file can optionally include treatment history (glucose readings, pump events, carb entries and hourly
 insulin totals Trio still holds, about 90 days). It is stored as separate bytes with its own checksum, so it never
-changes the configuration fingerprint, and it is not offered for iCloud backups. Restoring it is opt-in and
-deduplicates by date, so restoring twice or onto a phone that already has part of the data adds nothing. Files with
-history may be up to 64 MiB; others stay at 8 MiB. The daily insulin archive of the older export format is not
-restored.
+changes the configuration fingerprint. Restoring it is opt-in and deduplicates by date, so restoring twice or onto a
+phone that already has part of the data adds nothing. Files with history may be up to 64 MiB; others stay at 8 MiB.
+The daily insulin archive of the older export format is not restored.
+
+History can also go into a manual iCloud backup when the user opts in; automatic daily backups never carry it.
+The snapshot record is stored without the history. The history is cut into chunk records of about 500 KB in the
+same record zone, named after the backup and the chunk index. Every chunk repeats the backup id, its index, the chunk
+count and the checksum of the whole history, and all of it sits in `encryptedValues` (no `CKAsset`). Chunks are
+written before the snapshot record. A download fetches all chunks, checks each link, joins them in order and
+verifies size and checksum before the history is used. Deleting a backup, including retention, removes its chunks
+first and the snapshot record last. One iCloud backup holds at most 16 MiB of history; a larger history is refused
+before anything is queued or uploaded. The chunk logic lives in `TrioCloudChunkedStore.swift` on top of a small
+record-store protocol, so it is tested with an in-memory store; only the CloudKit adapter is compiled in with
+`ENABLE_ICLOUD_BACKUP`. The new record type `TrioSettingsBackupChunk` must be deployed to the production
+CloudKit schema together with the existing one.
 
 `BackupExtensionRegistry` is an extension point for other features: a provider registered at startup has opaque data
 saved in every snapshot and handed back after the core restore. Trio ships it without providers.
