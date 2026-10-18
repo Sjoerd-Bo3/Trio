@@ -391,9 +391,15 @@ enum BackupError: LocalizedError, Equatable {
     case unrecognizedFile
     case unresolvedRestore
     case incompleteBackup
+    case historyTooLargeForICloud
+    case historyRequiresManualBackup
 
     var errorDescription: String? {
         switch self {
+        case .historyTooLargeForICloud:
+            return String(localized: "The treatment history is too large for an iCloud backup (limit 16 MB). Make the backup without history, or export a backup file instead.")
+        case .historyRequiresManualBackup:
+            return String(localized: "Treatment history can only be added to a manual backup.")
         case .backupNameRequired: return String(localized: "Enter a name for your backup.")
         case .invalidRetentionLimit: return String(localized: "Choose a backup limit of 3, 5, 10, or 15.")
         case .unrecognizedFile: return String(localized: "This file is not a Trio settings backup.")

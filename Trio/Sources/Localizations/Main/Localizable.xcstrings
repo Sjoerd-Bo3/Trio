@@ -352173,6 +352173,15 @@
     },
     "Your CGM selection; the CGM itself is set up afterwards" : {
       "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Adds glucose readings, insulin and carb entries Trio still holds, about 90 days, to this backup only. Automatic daily backups never include history. It is stored encrypted in iCloud but not locked with a passphrase, and a backup with more than 16 MB of history is refused." : {
+      "comment" : "Explains the optional treatment history of a manual iCloud backup"
+    },
+    "The treatment history is too large for an iCloud backup (limit 16 MB). Make the backup without history, or export a backup file instead." : {
+      "comment" : "Error shown when the optional treatment history does not fit into an iCloud backup"
+    },
+    "Treatment history can only be added to a manual backup." : {
+      "comment" : "Error shown when treatment history is added to an automatic backup"
     }
   },
   "version" : "1.1"

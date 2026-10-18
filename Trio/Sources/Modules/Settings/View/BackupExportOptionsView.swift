@@ -48,17 +48,21 @@ struct BackupExportOptionsView: View {
                         "Sign-in details and device pairing are never saved in the clear. They are locked with a passphrase that you need again to restore them."
                     )
                 }.listRowBackground(Color.chart)
-                if purpose == .file {
-                    Section {
-                        Toggle("Treatment History", isOn: $includeHistory)
-                    } header: {
-                        Text("History (Optional)")
-                    } footer: {
+                Section {
+                    Toggle("Treatment History", isOn: $includeHistory)
+                } header: {
+                    Text("History (Optional)")
+                } footer: {
+                    if purpose == .file {
                         Text(
                             "Adds glucose readings, insulin and carb entries Trio still holds, about 90 days. The file can become large. History is not protected by a passphrase."
                         )
-                    }.listRowBackground(Color.chart)
-                }
+                    } else {
+                        Text(
+                            "Adds glucose readings, insulin and carb entries Trio still holds, about 90 days, to this backup only. Automatic daily backups never include history. It is stored encrypted in iCloud but not locked with a passphrase, and a backup with more than 16 MB of history is refused."
+                        )
+                    }
+                }.listRowBackground(Color.chart)
                 if includeDevices {
                     Section {
                         Text(
@@ -103,7 +107,7 @@ struct BackupExportOptionsView: View {
                             passphrase: passphrase
                         ) : nil
                         dismiss()
-                        onConfirm(purpose == .iCloud ? name : nil, options, purpose == .file && includeHistory)
+                        onConfirm(purpose == .iCloud ? name : nil, options, includeHistory)
                     }
                     .disabled(!isValid)
                 }

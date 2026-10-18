@@ -68,8 +68,15 @@ enum TrioCloudRecordCodec {
 
     /// Every payload field lives in `encryptedValues`; only the fields the list needs for ordering and
     /// display are stored in the clear. Backups are never stored as assets, which CloudKit does not encrypt.
-    static func fill(_ record: CKRecord, with candidate: TrioSettingsBackup) throws {
+    /// A snapshot is stored without its treatment history. When it has some, the record announces how many
+    /// chunk records hold it; a record that is filled again without `history` keeps what it announced.
+    static func fill(_ record: CKRecord, with candidate: TrioSettingsBackup, history: HistoryInfo? = nil) throws {
         let snapshot = try candidate.validated()
+        guard snapshot.treatmentHistory == nil else { throw BackupError.invalidCloudRecord }
+        if let history {
+            record.encryptedValues["historyChunkCount"] = history.chunkCount as NSNumber
+            record.encryptedValues["historyByteCount"] = history.byteCount as NSNumber
+        }
         let bytes = try JSONEncoder().encode(snapshot)
         guard bytes.count <= TrioSettingsBackup.maximumSize, bytes.count <= maximumPayloadSize else {
             throw BackupError.backupTooLarge
@@ -112,91 +119,101 @@ enum TrioCloudRecordCodec {
 }
 
 #if TRIO_ICLOUD_BACKUP
-    /// Private-database storage in a dedicated record zone.
+    /// Record operations on the private database. Requests stay small: callers pass a few records at a time.
+    struct CloudKitRecordStore: CloudRecordStoring {
+        let database: CKDatabase
+
+        func save(_ records: [CKRecord], overwrite: Bool) async throws {
+            guard !records.isEmpty else { return }
+            let result = try await database.modifyRecords(
+                saving: records,
+                deleting: [],
+                savePolicy: overwrite ? .allKeys : .ifServerRecordUnchanged,
+                atomically: true
+            )
+            for (_, saved) in result.saveResults {
+                do { _ = try saved.get() } catch let error as CKError where error.code == .serverRecordChanged {
+                    throw CloudRecordError.conflict
+                }
+            }
+        }
+
+        func fetch(_ ids: [CKRecord.ID]) async throws -> [CKRecord.ID: CKRecord] {
+            guard !ids.isEmpty else { return [:] }
+            var found: [CKRecord.ID: CKRecord] = [:]
+            for (id, result) in try await database.records(for: ids) {
+                do { found[id] = try result.get() } catch let error as CKError where error.code == .unknownItem { continue }
+            }
+            return found
+        }
+
+        func delete(_ ids: [CKRecord.ID]) async throws {
+            guard !ids.isEmpty else { return }
+            let result = try await database.modifyRecords(saving: [], deleting: ids, atomically: false)
+            for (_, deleted) in result.deleteResults {
+                // Already deleted by another device.
+                do { try deleted.get() } catch let error as CKError where error.code == .unknownItem { continue }
+            }
+        }
+
+        func query(recordType: String, desiredKeys: [String]) async throws -> [(id: CKRecord.ID, record: Result<CKRecord, Error>)] {
+            let query = CKQuery(recordType: recordType, predicate: NSPredicate(value: true))
+            var page = try await database.records(matching: query, inZoneWith: TrioCloudRecordCodec.zoneID, desiredKeys: desiredKeys)
+            var rows: [(id: CKRecord.ID, record: Result<CKRecord, Error>)] = []
+            while true {
+                rows.append(contentsOf: page.matchResults.map { (id: $0.0, record: $0.1) })
+                guard let cursor = page.queryCursor else { break }
+                page = try await database.records(continuingMatchFrom: cursor, desiredKeys: desiredKeys)
+            }
+            return rows
+        }
+    }
+
+    /// Private-database storage in a dedicated record zone. History travels in chunk records of the same zone.
     final class TrioCloudBackupStore: TrioCloudBackupStoring {
         private let container: CKContainer
+        private let store: TrioChunkedCloudStore
         private var zoneReady = false
 
         init(container: CKContainer = .default()) {
             self.container = container
+            store = TrioChunkedCloudStore(records: CloudKitRecordStore(database: container.privateCloudDatabase))
         }
-
-        private var database: CKDatabase { container.privateCloudDatabase }
 
         func checkAvailability() async throws {
             let status = try await container.accountStatus()
             guard status == .available else { throw BackupError.iCloudUnavailable }
             if !zoneReady {
-                _ = try await database.save(CKRecordZone(zoneID: TrioCloudRecordCodec.zoneID))
+                _ = try await container.privateCloudDatabase.save(CKRecordZone(zoneID: TrioCloudRecordCodec.zoneID))
                 zoneReady = true
             }
         }
 
         func upload(_ snapshot: TrioSettingsBackup) async throws -> BackupEntry {
+            // Refuse before touching iCloud when the history cannot be stored.
+            _ = try TrioCloudRecordCodec.split(snapshot)
             try await checkAvailability()
-            let record = CKRecord(recordType: TrioCloudRecordCodec.recordType, recordID: TrioCloudRecordCodec.recordID(for: snapshot.id))
-            do {
-                try TrioCloudRecordCodec.fill(record, with: snapshot)
-                return try TrioCloudRecordCodec.entry(from: await database.save(record))
-            } catch let error as CKError where error.code == .serverRecordChanged {
-                // Retries reuse the UUID and preserve any server-side rename.
-                let existing = try await database.record(for: record.recordID)
-                let saved = try TrioCloudRecordCodec.snapshot(from: existing)
-                guard try saved.matchesUploadedSnapshot(snapshot.validated()) else { throw BackupError.integrityCheckFailed }
-                return try TrioCloudRecordCodec.entry(from: existing)
-            }
+            return try await store.upload(snapshot)
         }
 
         func rename(id: String, name: String) async throws -> BackupEntry {
             try await checkAvailability()
-            guard let name = TrioSettingsBackup.normalizedName(name) else { throw BackupError.backupNameRequired }
-            let record = try await database.record(for: CKRecord.ID(recordName: id, zoneID: TrioCloudRecordCodec.zoneID))
-            var snapshot = try TrioCloudRecordCodec.snapshot(from: record)
-            guard snapshot.origin == .manual else { throw BackupError.invalidCloudRecord }
-            snapshot.name = name
-            // The record's change tag prevents overwriting concurrent renames.
-            try TrioCloudRecordCodec.fill(record, with: snapshot)
-            return try TrioCloudRecordCodec.entry(from: await database.save(record))
+            return try await store.rename(id: id, name: name)
         }
 
         func list() async throws -> [BackupEntry] {
             try await checkAvailability()
-            let query = CKQuery(recordType: TrioCloudRecordCodec.recordType, predicate: NSPredicate(value: true))
-            let keys = ["createdAt", "origin", "fingerprint", "name", "appVersion", "schemaVersion"]
-            var page = try await database.records(matching: query, inZoneWith: TrioCloudRecordCodec.zoneID, desiredKeys: keys)
-            var entries: [BackupEntry] = []
-            while true {
-                for (id, result) in page.matchResults {
-                    do {
-                        entries.append(try TrioCloudRecordCodec.entry(from: result.get()))
-                    } catch {
-                        // Keep an unavailable/corrupt record visible instead of hiding history.
-                        entries.append(BackupEntry(
-                            id: id.recordName,
-                            createdAt: .distantPast,
-                            origin: .automatic,
-                            name: "Unavailable Backup",
-                            fingerprint: "",
-                            validationMessage: error.localizedDescription
-                        ))
-                    }
-                }
-                guard let cursor = page.queryCursor else { break }
-                page = try await database.records(continuingMatchFrom: cursor, desiredKeys: keys)
-            }
-            return entries.sorted { $0.createdAt > $1.createdAt }
+            return try await store.list()
         }
 
         func download(id: String) async throws -> TrioSettingsBackup {
             try await checkAvailability()
-            let record = try await database.record(for: CKRecord.ID(recordName: id, zoneID: TrioCloudRecordCodec.zoneID))
-            return try TrioCloudRecordCodec.snapshot(from: record)
+            return try await store.download(id: id)
         }
 
         func delete(id: String) async throws {
             try await checkAvailability()
-            do { _ = try await database.deleteRecord(withID: CKRecord.ID(recordName: id, zoneID: TrioCloudRecordCodec.zoneID)) }
-            catch let error as CKError where error.code == .unknownItem { /* Already deleted by another device. */ }
+            try await store.delete(id: id)
         }
     }
 #endif
