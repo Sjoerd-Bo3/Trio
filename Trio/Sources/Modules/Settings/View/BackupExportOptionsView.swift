@@ -9,13 +9,14 @@ struct BackupExportOptionsView: View {
     }
 
     let purpose: Purpose
-    let onConfirm: (_ name: String?, _ options: SensitiveExportOptions?) -> Void
+    let onConfirm: (_ name: String?, _ options: SensitiveExportOptions?, _ includeHistory: Bool) -> Void
     @Environment(AppState.self) private var appState
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
     @State private var includeCredentials = false
     @State private var includeDevices = false
+    @State private var includeHistory = false
     @State private var passphrase = ""
     @State private var confirmation = ""
 
@@ -47,6 +48,17 @@ struct BackupExportOptionsView: View {
                         "Sign-in details and device pairing are never saved in the clear. They are locked with a passphrase that you need again to restore them."
                     )
                 }.listRowBackground(Color.chart)
+                if purpose == .file {
+                    Section {
+                        Toggle("Treatment History", isOn: $includeHistory)
+                    } header: {
+                        Text("History (Optional)")
+                    } footer: {
+                        Text(
+                            "Adds glucose readings, insulin and carb entries Trio still holds, about 90 days. The file can become large. History is not protected by a passphrase."
+                        )
+                    }.listRowBackground(Color.chart)
+                }
                 if includeDevices {
                     Section {
                         Text(
@@ -91,7 +103,7 @@ struct BackupExportOptionsView: View {
                             passphrase: passphrase
                         ) : nil
                         dismiss()
-                        onConfirm(purpose == .iCloud ? name : nil, options)
+                        onConfirm(purpose == .iCloud ? name : nil, options, purpose == .file && includeHistory)
                     }
                     .disabled(!isValid)
                 }

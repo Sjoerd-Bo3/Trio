@@ -85,6 +85,18 @@ pump, only for Medtrum, Omnipod Eros and Medtronic, and only after two confirmat
 runs Trio, and a final dialog naming the pump. Omnipod DASH, Dana and unknown pumps are never adopted. Trio stays
 in Open Loop and sends no pump command during the restore.
 
+## Treatment history and extensions
+
+A backup file can optionally include treatment history (glucose readings, pump events, carb entries and hourly
+insulin totals Trio still holds, about 90 days). It is stored as separate bytes with its own checksum, so it never
+changes the configuration fingerprint, and it is not offered for iCloud backups. Restoring it is opt-in and
+deduplicates by date, so restoring twice or onto a phone that already has part of the data adds nothing. Files with
+history may be up to 64 MiB; others stay at 8 MiB. The daily insulin archive of the older export format is not
+restored.
+
+`BackupExtensionRegistry` is an extension point for other features: a provider registered at startup has opaque data
+saved in every snapshot and handed back after the core restore. Trio ships it without providers.
+
 ## Implementation
 
 - `TrioSettingsBackup.swift`, `SettingsBackupValidator.swift`, `SettingsBackupDynamicISF.swift`: snapshot,
@@ -96,3 +108,4 @@ in Open Loop and sends no pump command during the restore.
 - `BackupService.swift`: capture, export and restore for the running app.
 - `CloudKitBackupStore.swift`, `TrioCloudBackupCoordinator.swift`: iCloud storage and scheduling.
 - `SealedSensitiveBlob.swift`, `SensitiveRestore.swift`: the protected tier, its envelope and the pump adoption gate.
+- `SettingsBackupHistory.swift`, `BackupExtensionRegistry.swift`: the history tier and the extension point.

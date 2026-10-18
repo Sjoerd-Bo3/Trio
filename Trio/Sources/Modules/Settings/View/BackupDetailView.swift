@@ -91,6 +91,11 @@ struct BackupDetailView: View {
                         )
                     }.listRowBackground(Color.chart)
                 }
+                if HistoryRestoreRow.isRelevant(backup) {
+                    Section("Treatment History") {
+                        HistoryRestoreRow(backup: backup, model: sensitiveModel)
+                    }.listRowBackground(Color.chart)
+                }
                 let nodes = BackupSettingsNode.make(from: backup)
                 Section("Settings") {
                     ForEach(nodes) { node in
@@ -243,7 +248,11 @@ struct BackupDetailView: View {
         defer { restoring = false }
         do {
             let selection = sensitiveModel.selection(allowsPairing: false, adoptionAccepted: false)
-            restoreWarnings = try await BackupService.shared.restoreConfiguredApp(backup, sensitive: selection).warnings
+            restoreWarnings = try await BackupService.shared.restoreConfiguredApp(
+                backup,
+                sensitive: selection,
+                restoreHistory: sensitiveModel.restoreHistory
+            ).warnings
             restored = true
         } catch {
             message = "Restore stopped. No pump settings were sent.\n\n" + error.localizedDescription

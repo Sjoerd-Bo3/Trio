@@ -11,6 +11,27 @@ enum LegacyBackupAdapter {
         let sensitive: SensitiveTier?
     }
 
+    /// The treatment history of an older file as the current tier. Its daily-TDD archive has no counterpart.
+    static func historyTier(from legacy: SettingsBackup.History?) -> BackupHistoryTier? {
+        guard let legacy else { return nil }
+        let tier = BackupHistoryTier(
+            glucose: legacy.glucose,
+            pumpHistory: legacy.pumpHistory,
+            carbs: legacy.carbs,
+            tdd: legacy.tdd?.map {
+                BackupHistoryTier.TDDEntry(
+                    date: $0.date,
+                    total: $0.total,
+                    bolus: $0.bolus,
+                    tempBasal: $0.tempBasal,
+                    scheduledBasal: $0.scheduledBasal,
+                    weightedAverage: $0.weightedAverage
+                )
+            }
+        )
+        return tier.isEmpty ? nil : tier
+    }
+
     /// A schema-1 file has no `configuration` object; the snapshot format always does.
     static func isLegacy(_ raw: [String: Any]) -> Bool {
         raw["configuration"] == nil && (raw["schemaVersion"] as? Int) == 1
@@ -75,8 +96,8 @@ enum LegacyBackupAdapter {
         if legacy.devices?.pumpState != nil || legacy.devices?.cgmState != nil {
             tier.devices = SensitiveTier.Devices(pumpState: legacy.devices?.pumpState, cgmState: legacy.devices?.cgmState)
         }
-        if legacy.history != nil {
-            warnings.append(String(localized: "Saved treatment history in this file is not restored."))
+        if legacy.history?.tddDaily?.isEmpty == false {
+            warnings.append(String(localized: "The daily insulin totals saved in this file are not restored."))
         }
 
         let version = [legacy.appVersion, legacy.buildNumber.map { "(\($0))" }].compactMap { $0 }.joined(separator: " ")
@@ -97,7 +118,11 @@ enum LegacyBackupAdapter {
                 )
             }
         )
-        return Converted(snapshot: snapshot, warnings: warnings, sensitive: tier.isEmpty ? nil : tier)
+        return Converted(
+            snapshot: try snapshot.withTreatmentHistory(historyTier(from: legacy.history)),
+            warnings: warnings,
+            sensitive: tier.isEmpty ? nil : tier
+        )
     }
 
     private static func presets(from legacy: SettingsBackup.Presets?) -> TrioSettingsBackup.Presets {

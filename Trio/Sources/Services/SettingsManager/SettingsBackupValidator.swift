@@ -123,6 +123,7 @@ extension TrioSettingsBackup {
         guard (2 ... Self.currentSchema).contains(schemaVersion) else { throw BackupError.unsupportedSchema }
         try Self.validate(configuration)
         try validateHistory()
+        try validateTreatmentHistory()
         // Verify the schema-2 checksum before migration changes the configuration.
         let expected: String
         if schemaVersion == 2 {
@@ -152,7 +153,10 @@ extension TrioSettingsBackup {
                 dynamicISFHistory: dynamicISFHistory,
                 historyChecksum: historyChecksum,
                 deviceInfo: deviceInfo,
-                sensitive: sensitive
+                sensitive: sensitive,
+                treatmentHistory: treatmentHistory,
+                treatmentHistoryChecksum: treatmentHistoryChecksum,
+                extensions: extensions
             )
         }
         return self
@@ -164,24 +168,25 @@ extension TrioSettingsBackup {
         let other = try other.validated()
         return try first.id == other.id && first.createdAt == other.createdAt && first.origin == other.origin &&
             first.appVersion == other.appVersion && first.cloudFingerprint() == other.cloudFingerprint() &&
-            first.historyChecksum == other.historyChecksum && first.sensitive == other.sensitive
+            first.historyChecksum == other.historyChecksum && first.sensitive == other.sensitive &&
+            first.treatmentHistoryChecksum == other.treatmentHistoryChecksum && first.extensions == other.extensions
     }
 
     static func contentsEqual(_ first: Data, _ second: Data) throws -> Bool {
         try JSONDecoder().decode(BackupJSONValue.self, from: first) == JSONDecoder().decode(BackupJSONValue.self, from: second)
     }
 
-    static func readBackupData(from url: URL) throws -> Data {
+    static func readBackupData(from url: URL, limit: Int = maximumSize) throws -> Data {
         let file = try FileHandle(forReadingFrom: url)
         defer { try? file.close() }
         // Bound the read itself, including files whose size metadata is unavailable.
-        let bytes = try file.read(upToCount: maximumSize + 1) ?? Data()
-        guard bytes.count <= maximumSize else { throw BackupError.backupTooLarge }
+        let bytes = try file.read(upToCount: limit + 1) ?? Data()
+        guard bytes.count <= limit else { throw BackupError.backupTooLarge }
         return bytes
     }
 
-    static func decode(_ bytes: Data, expectedFingerprint: String? = nil) throws -> TrioSettingsBackup {
-        guard bytes.count <= maximumSize else { throw BackupError.backupTooLarge }
+    static func decode(_ bytes: Data, expectedFingerprint: String? = nil, limit: Int = maximumSize) throws -> TrioSettingsBackup {
+        guard bytes.count <= limit else { throw BackupError.backupTooLarge }
         let raw = try JSONSerialization.jsonObject(with: bytes) as? [String: Any]
         guard let schema = raw?["schemaVersion"] as? Int,
               (2 ... currentSchema).contains(schema) else { throw BackupError.unsupportedSchema }

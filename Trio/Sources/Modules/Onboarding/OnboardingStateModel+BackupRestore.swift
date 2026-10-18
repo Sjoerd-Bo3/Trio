@@ -59,7 +59,11 @@ extension Onboarding.StateModel {
         defer { backupRestoreInProgress = false }
         do {
             let selection = sensitiveModel.selection(allowsPairing: true, adoptionAccepted: adoptionAccepted)
-            let report = try await BackupService.shared.restoreDuringOnboarding(backup, sensitive: selection)
+            let report = try await BackupService.shared.restoreDuringOnboarding(
+                backup,
+                sensitive: selection,
+                restoreHistory: sensitiveModel.restoreHistory
+            )
             restoreWarnings = report.warnings
             appliedBackupID = backup.id
             prefillFromRestoredSettings()

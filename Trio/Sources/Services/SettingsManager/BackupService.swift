@@ -15,7 +15,7 @@ enum BackupFileService {
     /// Opens a backup file of any supported format. The format is detected from the file's top-level
     /// keys, never from its extension.
     static func open(_ bytes: Data) throws -> Opened {
-        guard bytes.count <= TrioSettingsBackup.maximumSize else { throw BackupError.backupTooLarge }
+        guard bytes.count <= TrioSettingsBackup.maximumFileSize else { throw BackupError.backupTooLarge }
         guard let raw = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any],
               let schema = raw["schemaVersion"] as? Int
         else { throw BackupError.unrecognizedFile }
@@ -26,18 +26,22 @@ enum BackupFileService {
         }
         guard raw["configuration"] != nil else { throw BackupError.unrecognizedFile }
         guard schema <= TrioSettingsBackup.currentSchema else { throw BackupError.unsupportedSchema }
-        return Opened(snapshot: try TrioSettingsBackup.decode(bytes), warnings: [])
+        let snapshot = try TrioSettingsBackup.decode(bytes, limit: TrioSettingsBackup.maximumFileSize)
+        // Only a backup that carries treatment history may be larger than a plain configuration.
+        if snapshot.treatmentHistory == nil, bytes.count > TrioSettingsBackup.maximumSize { throw BackupError.backupTooLarge }
+        return Opened(snapshot: snapshot, warnings: [])
     }
 
     static func open(url: URL) throws -> Opened {
-        try open(TrioSettingsBackup.readBackupData(from: url))
+        try open(TrioSettingsBackup.readBackupData(from: url, limit: TrioSettingsBackup.maximumFileSize))
     }
 
     /// Writes the snapshot to a temporary file ready for the share sheet.
     static func export(_ candidate: TrioSettingsBackup) throws -> URL {
         let snapshot = try candidate.validated()
         let data = try JSONEncoder().encode(snapshot)
-        guard data.count <= TrioSettingsBackup.maximumSize else { throw BackupError.backupTooLarge }
+        guard data.count <= (snapshot.treatmentHistory == nil ? TrioSettingsBackup.maximumSize : TrioSettingsBackup.maximumFileSize)
+        else { throw BackupError.backupTooLarge }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -98,9 +102,13 @@ struct BackupEntry: Identifiable {
     func captureSnapshot(
         origin: TrioSettingsBackup.Origin,
         name: String? = nil,
-        sensitive: SensitiveExportOptions?
+        sensitive: SensitiveExportOptions?,
+        includeHistory: Bool = false
     ) async throws -> TrioSettingsBackup {
-        let snapshot = try await captureSnapshot(origin: origin, name: name)
+        var snapshot = try await captureSnapshot(origin: origin, name: name)
+        if includeHistory {
+            snapshot = try snapshot.withTreatmentHistory(await SettingsBackupHistory.export())
+        }
         guard let sensitive, sensitive.includesAnything else { return snapshot }
         return try snapshot.sealingSensitive(collectSensitiveTier(sensitive), passphrase: sensitive.passphrase)
     }
@@ -114,12 +122,17 @@ struct BackupEntry: Identifiable {
                 ?? settingsManager?.preferences.curve.rawValue,
             cgmDisplayName: settings?.cgm.displayName
         )
-        return try await TrioSettingsBackup.capture(storage: storage, origin: origin, name: name, deviceInfo: deviceInfo)
+        var snapshot = try await TrioSettingsBackup.capture(storage: storage, origin: origin, name: name, deviceInfo: deviceInfo)
+        let extensions = await BackupExtensionRegistry.captureAll()
+        snapshot.extensions = extensions.isEmpty ? nil : extensions
+        return snapshot
     }
 
-    func exportBackupFile(sensitive: SensitiveExportOptions? = nil) async throws -> URL {
+    func exportBackupFile(sensitive: SensitiveExportOptions? = nil, includeHistory: Bool = false) async throws -> URL {
         guard !SettingsBackupRestore.isRestoring, !BackupActivity.isUploading else { throw BackupError.operationInProgress }
-        return try BackupFileService.export(try await captureSnapshot(origin: .manual, sensitive: sensitive))
+        return try BackupFileService.export(
+            try await captureSnapshot(origin: .manual, sensitive: sensitive, includeHistory: includeHistory)
+        )
     }
 
     /// Reads the opt-in tier from the keychain and the running managers. Nothing here is logged.
@@ -182,7 +195,8 @@ struct BackupEntry: Identifiable {
 
     @discardableResult func restoreConfiguredApp(
         _ backup: TrioSettingsBackup,
-        sensitive: SensitiveSelection? = nil
+        sensitive: SensitiveSelection? = nil,
+        restoreHistory: Bool = false
     ) async throws -> RestoreReport {
         guard let settingsManager, let deviceManager else { throw BackupError.restoreFailed }
         guard deviceManager.pumpManager == nil else { throw BackupError.pumpNotReady }
@@ -192,13 +206,15 @@ struct BackupEntry: Identifiable {
         notifyObservers()
         // The core restore has committed; the protected tier is a separate step whose failure only warns.
         if let sensitive { report.warnings += applySensitive(sensitive, onboarding: false) }
+        report.warnings += await applyOptionalTiers(backup, restoreHistory: restoreHistory, onboarding: false)
         TrioCloudBackupCoordinator.shared.restoreCompleted()
         return report
     }
 
     @discardableResult func restoreDuringOnboarding(
         _ backup: TrioSettingsBackup,
-        sensitive: SensitiveSelection? = nil
+        sensitive: SensitiveSelection? = nil,
+        restoreHistory: Bool = false
     ) async throws -> RestoreReport {
         guard let settingsManager, let deviceManager else { throw BackupError.restoreFailed }
         guard deviceManager.pumpManager == nil else { throw BackupError.pumpNotReady }
@@ -223,7 +239,28 @@ struct BackupEntry: Identifiable {
             }
         }
         if let sensitive { report.warnings += applySensitive(sensitive, onboarding: true) }
+        report.warnings += await applyOptionalTiers(backup, restoreHistory: restoreHistory, onboarding: true)
         return report
+    }
+
+    /// Treatment history (when chosen) and registered extensions, applied after the core restore committed.
+    /// Failures are warnings; history is deduplicated by date so repeating a restore adds nothing.
+    func applyOptionalTiers(_ backup: TrioSettingsBackup, restoreHistory: Bool, onboarding: Bool) async -> [String] {
+        var warnings: [String] = []
+        if restoreHistory {
+            do {
+                if let tier = try backup.historyTier() {
+                    warnings += await SettingsBackupHistory.apply(tier)
+                }
+            } catch {
+                warnings.append(String(localized: "Treatment history could not be read: \(error.localizedDescription)"))
+            }
+        }
+        warnings += await BackupExtensionRegistry.restoreAll(
+            backup.extensions,
+            context: BackupExtensionRestoreContext(snapshotID: backup.id, isOnboarding: onboarding)
+        )
+        return warnings
     }
 
     /// Writes the chosen sign-in details, then adopts device pairing (onboarding only). Every failure is a
