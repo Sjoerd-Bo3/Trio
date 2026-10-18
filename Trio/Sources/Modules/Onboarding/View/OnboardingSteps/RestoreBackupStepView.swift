@@ -183,6 +183,10 @@ struct RestoreBackupStepView: View {
                 Text("Protected Data").fontWeight(.semibold)
                 SensitiveRestoreSection(backup: backup, allowsPairing: true, model: state.sensitiveModel)
             }
+            if HistoryRestoreRow.isRelevant(backup) {
+                Divider()
+                HistoryRestoreRow(backup: backup, model: state.sensitiveModel)
+            }
             Button(action: {
                 if state.sensitiveModel.restorePumpPairing { showingPumpDialog = true } else { showingRestoreConfirmation = true }
             }) {

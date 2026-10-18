@@ -27,6 +27,11 @@ struct TrioSettingsBackup: Codable {
     var deviceInfo: DeviceInfo? = nil
     /// Opt-in sign-in details and device pairing, sealed with a passphrase. Not part of the fingerprint.
     var sensitive: SealedSensitiveBlob? = nil
+    /// Opt-in treatment history (`BackupHistoryTier`) as encoded bytes with their own checksum. Not part of the fingerprint.
+    var treatmentHistory: Data? = nil
+    var treatmentHistoryChecksum: String? = nil
+    /// Data of registered backup extensions, keyed by provider id. Opaque to the backup.
+    var extensions: [String: Data]? = nil
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion
@@ -41,6 +46,9 @@ struct TrioSettingsBackup: Codable {
         case historyChecksum
         case deviceInfo
         case sensitive
+        case treatmentHistory
+        case treatmentHistoryChecksum
+        case extensions
     }
 
     struct DeviceInfo: Codable, Equatable {
@@ -334,6 +342,9 @@ extension TrioSettingsBackup {
         historyChecksum = try values.decodeIfPresent(String.self, forKey: .historyChecksum)
         deviceInfo = try? values.decodeIfPresent(DeviceInfo.self, forKey: .deviceInfo)
         sensitive = try? values.decodeIfPresent(SealedSensitiveBlob.self, forKey: .sensitive)
+        treatmentHistory = try? values.decodeIfPresent(Data.self, forKey: .treatmentHistory)
+        treatmentHistoryChecksum = try? values.decodeIfPresent(String.self, forKey: .treatmentHistoryChecksum)
+        extensions = try? values.decodeIfPresent([String: Data].self, forKey: .extensions)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -350,6 +361,9 @@ extension TrioSettingsBackup {
         try values.encodeIfPresent(historyChecksum, forKey: .historyChecksum)
         try values.encodeIfPresent(deviceInfo, forKey: .deviceInfo)
         try values.encodeIfPresent(sensitive, forKey: .sensitive)
+        try values.encodeIfPresent(treatmentHistory, forKey: .treatmentHistory)
+        try values.encodeIfPresent(treatmentHistoryChecksum, forKey: .treatmentHistoryChecksum)
+        try values.encodeIfPresent(extensions, forKey: .extensions)
     }
 }
 

@@ -128,6 +128,8 @@ struct SensitiveSelection {
     var restoreCGMPairing = false
     var restorePumpPairing = false
     var oldPhoneStopped = false
+    /// Restoring the backup's treatment history is opt-in too.
+    var restoreHistory = false
 
     var attemptsExhausted: Bool { failedAttempts >= Self.maximumAttempts }
 
@@ -141,6 +143,7 @@ struct SensitiveSelection {
         restoreCGMPairing = false
         restorePumpPairing = false
         oldPhoneStopped = false
+        restoreHistory = false
     }
 
     func unlock(_ backup: TrioSettingsBackup) {
