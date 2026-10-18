@@ -145,6 +145,7 @@
 		38AEE73D25F0200C0013F05B /* TrioSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38AEE73C25F0200C0013F05B /* TrioSettings.swift */; };
 		38AEE75225F022080013F05B /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38AEE75125F022080013F05B /* SettingsManager.swift */; };
 		38AEE75725F0F18E0013F05B /* CarbsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38AEE75625F0F18E0013F05B /* CarbsStorage.swift */; };
+		E73259BE7A7D1AFB93D6B8DF /* CarbEntryMutationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A2F107674CF1D9C0A2A9ACF /* CarbEntryMutationService.swift */; };
 		38B17B6625DD90E0005CAE3D /* SwiftDate in Frameworks */ = {isa = PBXBuildFile; productRef = 38B17B6525DD90E0005CAE3D /* SwiftDate */; };
 		38B4F3AF25E2979F00E76A18 /* IndexedCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B4F3AE25E2979F00E76A18 /* IndexedCollection.swift */; };
 		38B4F3C325E2A20B00E76A18 /* PumpSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B4F3C225E2A20B00E76A18 /* PumpSetupView.swift */; };
@@ -409,8 +410,11 @@
 		6B1A8D242B14D91700E76752 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6B1A8D232B14D91700E76752 /* Assets.xcassets */; };
 		6B1A8D282B14D91700E76752 /* LiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6B1A8D172B14D91600E76752 /* LiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		6B1A8D2E2B156EEF00E76752 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1A8D2D2B156EEF00E76752 /* LiveActivityManager.swift */; };
-		6BCF84DD2B16843A003AD46E /* LiveActitiyAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCF84DC2B16843A003AD46E /* LiveActitiyAttributes.swift */; };
-		6BCF84DE2B16843A003AD46E /* LiveActitiyAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCF84DC2B16843A003AD46E /* LiveActitiyAttributes.swift */; };
+		6BCF84DD2B16843A003AD46E /* LiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCF84DC2B16843A003AD46E /* LiveActivityAttributes.swift */; };
+		AC096399E4D2F4950BA8E5CF /* LiveActivityGlucoseStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E2CF3BABA4BF1C48CC96FD7 /* LiveActivityGlucoseStyle.swift */; };
+		39714DB1CF5B2C1F8D990CED /* LiveActivityGlucoseStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E2CF3BABA4BF1C48CC96FD7 /* LiveActivityGlucoseStyle.swift */; };
+		8B74AA51DC49429FB9F19159 /* LiveActivitySimpleWidgetConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6672C97F2AB74125F46DD5 /* LiveActivitySimpleWidgetConfiguration.swift */; };
+		6BCF84DE2B16843A003AD46E /* LiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCF84DC2B16843A003AD46E /* LiveActivityAttributes.swift */; };
 		6EADD581738D64431902AC0A /* (null) in Sources */ = {isa = PBXBuildFile; };
 		71D44AAB2CA5F5EA0036EE9E /* AlertPermissionsChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D44AAA2CA5F5EA0036EE9E /* AlertPermissionsChecker.swift */; };
 		72F1BD388F42FCA6C52E4500 /* ConfigEditorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44080E4709E3AE4B73054563 /* ConfigEditorProvider.swift */; };
@@ -603,6 +607,7 @@
 		BD8FC05B2D6618AF00B95AED /* DeterminationStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8FC05A2D6618AF00B95AED /* DeterminationStorageTests.swift */; };
 		BD8FC05E2D6618CE00B95AED /* BolusCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8FC05D2D6618CE00B95AED /* BolusCalculatorTests.swift */; };
 		BD8FC0602D6619DB00B95AED /* CarbsStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8FC05F2D6619DB00B95AED /* CarbsStorageTests.swift */; };
+		36BDB3927CB9ABFB548ED2B0 /* CarbEntryMutationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19B7FC1E8CD873546B563CB /* CarbEntryMutationServiceTests.swift */; };
 		BD8FC0622D6619E600B95AED /* OverrideStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8FC0612D6619E600B95AED /* OverrideStorageTests.swift */; };
 		BD8FC0642D6619EF00B95AED /* TempTargetStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8FC0632D6619EF00B95AED /* TempTargetStorageTests.swift */; };
 		BD8FC0662D661A0000B95AED /* GlucoseStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8FC0652D661A0000B95AED /* GlucoseStorageTests.swift */; };
@@ -681,6 +686,7 @@
 		CE1F6DD92BADF4620064EB8D /* PluginManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1F6DD82BADF4620064EB8D /* PluginManagerTests.swift */; };
 		DC01A00E2E9F100000000005 /* DeviceCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC01A00D2E9F100000000004 /* DeviceCatalogTests.swift */; };
 		10DAA318F47843A4B894173D /* ContainerResolutionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98546920BB7247B0AC73449A /* ContainerResolutionTests.swift */; };
+		940584C38CB62676214A2107 /* RemoteMealMutationPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF74BBFE9F7B8CA9187C4DB /* RemoteMealMutationPayloadTests.swift */; };
 		CE1F6DDB2BAE08B60064EB8D /* TidepoolManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1F6DDA2BAE08B60064EB8D /* TidepoolManager.swift */; };
 		CD1235D000000000000000F4 /* TidepoolUploadSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1235C000000000000000F3 /* TidepoolUploadSerializer.swift */; };
 		CE1F6DE72BAF1A180064EB8D /* BuildDetails.plist in Resources */ = {isa = PBXBuildFile; fileRef = CE1F6DE62BAF1A180064EB8D /* BuildDetails.plist */; };
@@ -795,6 +801,7 @@
 		DD30BA1A2E08AB9F00DA677C /* CarbImpactParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD30BA192E08AB9F00DA677C /* CarbImpactParams.swift */; };
 		DD32CF982CC82463003686D6 /* TrioRemoteControl+Bolus.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD32CF972CC82460003686D6 /* TrioRemoteControl+Bolus.swift */; };
 		DD32CF9A2CC8247B003686D6 /* TrioRemoteControl+Meal.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD32CF992CC8246F003686D6 /* TrioRemoteControl+Meal.swift */; };
+		FF0425EA9C0AFF6A6DF0B10D /* TrioRemoteControl+MealMutation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0480CC863D1BBC71668F34B3 /* TrioRemoteControl+MealMutation.swift */; };
 		DD32CF9C2CC82499003686D6 /* TrioRemoteControl+TempTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD32CF9B2CC82495003686D6 /* TrioRemoteControl+TempTarget.swift */; };
 		DD32CF9E2CC824C5003686D6 /* TrioRemoteControl+Override.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD32CF9D2CC824C2003686D6 /* TrioRemoteControl+Override.swift */; };
 		DD32CFA02CC824D6003686D6 /* TrioRemoteControl+APNS.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD32CF9F2CC824D3003686D6 /* TrioRemoteControl+APNS.swift */; };
@@ -991,6 +998,34 @@
 		FE66D16B291F74F8005D6F77 /* Bundle+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */; };
 		7A11AC0DE000000000000030 /* UIHostingController+KeyboardSafeArea.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11AC0DE000000000000130 /* UIHostingController+KeyboardSafeArea.swift */; };
 		FEFFA7A22929FE49007B8193 /* UIDevice+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */; };
+		CA0924000000000000000002 /* GRICalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0924000000000000000001 /* GRICalculator.swift */; };
+		CA0924000000000000000004 /* GRIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0924000000000000000003 /* GRIView.swift */; };
+		CA0924000000000000000006 /* GRICalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0924000000000000000005 /* GRICalculatorTests.swift */; };
+		493752BA9114C289F9154F51 /* TrioSettingsBackup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C0D2FE5B073B7C2D5E3B33 /* TrioSettingsBackup.swift */; };
+		11F88EECF078B0E0519F6A4B /* SettingsBackupValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E0C51076783EE263A11FFF /* SettingsBackupValidator.swift */; };
+		8A1DE53F84B655A2750B13C3 /* SettingsBackupDynamicISF.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C63A1CBEECCF2AEC31FC8B5 /* SettingsBackupDynamicISF.swift */; };
+		FF9FEB1B3A451F6F9362F469 /* SettingsBackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83DEE8EC0A77658A8270578A /* SettingsBackupRestore.swift */; };
+		B7EB04D4A766D39BC39E75C8 /* SettingsBackupRestoreTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 822624B2FF2716013FD231BC /* SettingsBackupRestoreTransaction.swift */; };
+		20654403C61E970B2BC469E9 /* SettingsBackupRestorePresets.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9E07932FEA1A989EF77377 /* SettingsBackupRestorePresets.swift */; };
+		DED45DCB8C1FAFD87E4B6319 /* SettingsBackupRestoreHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3BE95E5FFE44384BB5AABF6 /* SettingsBackupRestoreHistory.swift */; };
+		BF8BB6D8398D90008B25E64D /* SettingsBackupGuardrails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4B00ECC327FDDFAB0F3AD3 /* SettingsBackupGuardrails.swift */; };
+		C85F2D41EA5C28EAD9388C62 /* SettingsImportApplier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E73BA8265B5249168D4453 /* SettingsImportApplier.swift */; };
+		E4FBDE1F35F58674C878918A /* LegacySettingsBackupV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FD7F17AC2828C4A106F61AC /* LegacySettingsBackupV1.swift */; };
+		BA5DFF7AFFA3A7272342FD9F /* LegacyBackupAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0CD638754F555304884D7C /* LegacyBackupAdapter.swift */; };
+		F24CA02F60E5A3866667CB3A /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2873D4FB1702586CB595113 /* BackupService.swift */; };
+		005A9D4ACCE447C4320A9F7A /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96F5A70D10DACD37516E7CD8 /* BackupRestoreView.swift */; };
+		E5A14C6D6C2C2E786A9C2E57 /* BackupDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18082FEEEFCD56A6E36B29F4 /* BackupDetailView.swift */; };
+		E265C236433EA4E6825E1C54 /* BackupSettingsPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6442D0BA1EC8E4657CA4F064 /* BackupSettingsPreviewView.swift */; };
+		6F012BC5689EB62363DB41F8 /* BackupChangeOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F370A466A2ACB05F8BEC012A /* BackupChangeOverviewView.swift */; };
+		6CA299A9AA4B4A0BB2C58712 /* BackupSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29680134AE36B280829A2BF7 /* BackupSnapshotTests.swift */; };
+		A78F2AF949D83BF1E43AE962 /* BackupRestoreTransactionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64E4B82FE4DDE3C4B3D36CE /* BackupRestoreTransactionTests.swift */; };
+		52580F312542F080671495C8 /* BackupEngineSafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AB33ACE90D65EAEC348C55F /* BackupEngineSafetyTests.swift */; };
+		895E1839B715838EFF1688CD /* SettingsBackupCodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96FC31A21E9D344235D40473 /* SettingsBackupCodableTests.swift */; };
+		049C9D42043A7E19A3EB660E /* SettingsBackupTestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 098FE160E4B4B6A2971034D0 /* SettingsBackupTestFixtures.swift */; };
+		1C39E3979D8EF18A56FA9C2B /* SettingsImportApplierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4D540152F6226E2AB470F4 /* SettingsImportApplierTests.swift */; };
+		B6A140F4281B7CEF7B999066 /* OnboardingStateModel+BackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7D4DC7A2DF1BC417E8D8AC /* OnboardingStateModel+BackupRestore.swift */; };
+		F5CC5FE6C26D1838D1E782A0 /* RestoreBackupStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297B852E29187C6FCED92908 /* RestoreBackupStepView.swift */; };
+		8388FCFF5300CFD868CB154C /* OnboardingBackupRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1257,6 +1292,7 @@
 		38AEE73C25F0200C0013F05B /* TrioSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioSettings.swift; sourceTree = "<group>"; };
 		38AEE75125F022080013F05B /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		38AEE75625F0F18E0013F05B /* CarbsStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbsStorage.swift; sourceTree = "<group>"; };
+		3A2F107674CF1D9C0A2A9ACF /* CarbEntryMutationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbEntryMutationService.swift; sourceTree = "<group>"; };
 		38B4F3AE25E2979F00E76A18 /* IndexedCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndexedCollection.swift; sourceTree = "<group>"; };
 		38B4F3C225E2A20B00E76A18 /* PumpSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpSetupView.swift; sourceTree = "<group>"; };
 		38B4F3C525E5017E00E76A18 /* NotificationCenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationCenter.swift; sourceTree = "<group>"; };
@@ -1494,7 +1530,9 @@
 		6B1A8D232B14D91700E76752 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6B1A8D252B14D91700E76752 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B1A8D2D2B156EEF00E76752 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
-		6BCF84DC2B16843A003AD46E /* LiveActitiyAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActitiyAttributes.swift; sourceTree = "<group>"; };
+		6BCF84DC2B16843A003AD46E /* LiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityAttributes.swift; sourceTree = "<group>"; };
+		7E2CF3BABA4BF1C48CC96FD7 /* LiveActivityGlucoseStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityGlucoseStyle.swift; sourceTree = "<group>"; };
+		CD6672C97F2AB74125F46DD5 /* LiveActivitySimpleWidgetConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivitySimpleWidgetConfiguration.swift; sourceTree = "<group>"; };
 		71D44AAA2CA5F5EA0036EE9E /* AlertPermissionsChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPermissionsChecker.swift; sourceTree = "<group>"; };
 		79BDA519C9B890FD9A5DFCF3 /* ISFEditorDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ISFEditorDataFlow.swift; sourceTree = "<group>"; };
 		7E22146D3DF4853786C78132 /* CarbRatioEditorDataFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarbRatioEditorDataFlow.swift; sourceTree = "<group>"; };
@@ -1686,6 +1724,7 @@
 		BD8FC05A2D6618AF00B95AED /* DeterminationStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeterminationStorageTests.swift; sourceTree = "<group>"; };
 		BD8FC05D2D6618CE00B95AED /* BolusCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BolusCalculatorTests.swift; sourceTree = "<group>"; };
 		BD8FC05F2D6619DB00B95AED /* CarbsStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbsStorageTests.swift; sourceTree = "<group>"; };
+		A19B7FC1E8CD873546B563CB /* CarbEntryMutationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbEntryMutationServiceTests.swift; sourceTree = "<group>"; };
 		BD8FC0612D6619E600B95AED /* OverrideStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverrideStorageTests.swift; sourceTree = "<group>"; };
 		BD8FC0632D6619EF00B95AED /* TempTargetStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TempTargetStorageTests.swift; sourceTree = "<group>"; };
 		BD8FC0652D661A0000B95AED /* GlucoseStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseStorageTests.swift; sourceTree = "<group>"; };
@@ -1770,6 +1809,7 @@
 		CE1F6DD82BADF4620064EB8D /* PluginManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginManagerTests.swift; sourceTree = "<group>"; };
 		DC01A00D2E9F100000000004 /* DeviceCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceCatalogTests.swift; sourceTree = "<group>"; };
 		98546920BB7247B0AC73449A /* ContainerResolutionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerResolutionTests.swift; sourceTree = "<group>"; };
+		7AF74BBFE9F7B8CA9187C4DB /* RemoteMealMutationPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteMealMutationPayloadTests.swift; sourceTree = "<group>"; };
 		CE1F6DDA2BAE08B60064EB8D /* TidepoolManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidepoolManager.swift; sourceTree = "<group>"; };
 		CD1235C000000000000000F3 /* TidepoolUploadSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidepoolUploadSerializer.swift; sourceTree = "<group>"; };
 		CE1F6DE62BAF1A180064EB8D /* BuildDetails.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BuildDetails.plist; sourceTree = "<group>"; };
@@ -1887,6 +1927,7 @@
 		DD30BA192E08AB9F00DA677C /* CarbImpactParams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbImpactParams.swift; sourceTree = "<group>"; };
 		DD32CF972CC82460003686D6 /* TrioRemoteControl+Bolus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioRemoteControl+Bolus.swift"; sourceTree = "<group>"; };
 		DD32CF992CC8246F003686D6 /* TrioRemoteControl+Meal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioRemoteControl+Meal.swift"; sourceTree = "<group>"; };
+		0480CC863D1BBC71668F34B3 /* TrioRemoteControl+MealMutation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioRemoteControl+MealMutation.swift"; sourceTree = "<group>"; };
 		DD32CF9B2CC82495003686D6 /* TrioRemoteControl+TempTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioRemoteControl+TempTarget.swift"; sourceTree = "<group>"; };
 		DD32CF9D2CC824C2003686D6 /* TrioRemoteControl+Override.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioRemoteControl+Override.swift"; sourceTree = "<group>"; };
 		DD32CF9F2CC824D3003686D6 /* TrioRemoteControl+APNS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioRemoteControl+APNS.swift"; sourceTree = "<group>"; };
@@ -2074,6 +2115,34 @@
 		FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Extensions.swift"; sourceTree = "<group>"; };
 		7A11AC0DE000000000000130 /* UIHostingController+KeyboardSafeArea.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIHostingController+KeyboardSafeArea.swift"; sourceTree = "<group>"; };
 		FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extensions.swift"; sourceTree = "<group>"; };
+		CA0924000000000000000001 /* GRICalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRICalculator.swift; sourceTree = "<group>"; };
+		CA0924000000000000000003 /* GRIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRIView.swift; sourceTree = "<group>"; };
+		CA0924000000000000000005 /* GRICalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRICalculatorTests.swift; sourceTree = "<group>"; };
+		30C0D2FE5B073B7C2D5E3B33 /* TrioSettingsBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioSettingsBackup.swift; sourceTree = "<group>"; };
+		92E0C51076783EE263A11FFF /* SettingsBackupValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupValidator.swift; sourceTree = "<group>"; };
+		8C63A1CBEECCF2AEC31FC8B5 /* SettingsBackupDynamicISF.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupDynamicISF.swift; sourceTree = "<group>"; };
+		83DEE8EC0A77658A8270578A /* SettingsBackupRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupRestore.swift; sourceTree = "<group>"; };
+		822624B2FF2716013FD231BC /* SettingsBackupRestoreTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupRestoreTransaction.swift; sourceTree = "<group>"; };
+		CC9E07932FEA1A989EF77377 /* SettingsBackupRestorePresets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupRestorePresets.swift; sourceTree = "<group>"; };
+		D3BE95E5FFE44384BB5AABF6 /* SettingsBackupRestoreHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupRestoreHistory.swift; sourceTree = "<group>"; };
+		3C4B00ECC327FDDFAB0F3AD3 /* SettingsBackupGuardrails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupGuardrails.swift; sourceTree = "<group>"; };
+		12E73BA8265B5249168D4453 /* SettingsImportApplier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportApplier.swift; sourceTree = "<group>"; };
+		5FD7F17AC2828C4A106F61AC /* LegacySettingsBackupV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacySettingsBackupV1.swift; sourceTree = "<group>"; };
+		6D0CD638754F555304884D7C /* LegacyBackupAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyBackupAdapter.swift; sourceTree = "<group>"; };
+		B2873D4FB1702586CB595113 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
+		96F5A70D10DACD37516E7CD8 /* BackupRestoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreView.swift; sourceTree = "<group>"; };
+		18082FEEEFCD56A6E36B29F4 /* BackupDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupDetailView.swift; sourceTree = "<group>"; };
+		6442D0BA1EC8E4657CA4F064 /* BackupSettingsPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupSettingsPreviewView.swift; sourceTree = "<group>"; };
+		F370A466A2ACB05F8BEC012A /* BackupChangeOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupChangeOverviewView.swift; sourceTree = "<group>"; };
+		29680134AE36B280829A2BF7 /* BackupSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupSnapshotTests.swift; sourceTree = "<group>"; };
+		A64E4B82FE4DDE3C4B3D36CE /* BackupRestoreTransactionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreTransactionTests.swift; sourceTree = "<group>"; };
+		0AB33ACE90D65EAEC348C55F /* BackupEngineSafetyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupEngineSafetyTests.swift; sourceTree = "<group>"; };
+		96FC31A21E9D344235D40473 /* SettingsBackupCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupCodableTests.swift; sourceTree = "<group>"; };
+		098FE160E4B4B6A2971034D0 /* SettingsBackupTestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupTestFixtures.swift; sourceTree = "<group>"; };
+		BE4D540152F6226E2AB470F4 /* SettingsImportApplierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportApplierTests.swift; sourceTree = "<group>"; };
+		BD7D4DC7A2DF1BC417E8D8AC /* OnboardingStateModel+BackupRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OnboardingStateModel+BackupRestore.swift"; sourceTree = "<group>"; };
+		297B852E29187C6FCED92908 /* RestoreBackupStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreBackupStepView.swift; sourceTree = "<group>"; };
+		0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingBackupRestoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -2568,6 +2637,10 @@
 			children = (
 				DD1745112C54168300211FAC /* Subviews */,
 				3811DE3C25C9D4A100A708ED /* SettingsRootView.swift */,
+				F370A466A2ACB05F8BEC012A /* BackupChangeOverviewView.swift */,
+				6442D0BA1EC8E4657CA4F064 /* BackupSettingsPreviewView.swift */,
+				18082FEEEFCD56A6E36B29F4 /* BackupDetailView.swift */,
+				96F5A70D10DACD37516E7CD8 /* BackupRestoreView.swift */,
 				CE1F6DE82BAF37C90064EB8D /* TidepoolConfigView.swift */,
 				65070A322BFDCB83006F213F /* TidepoolStartView.swift */,
 			);
@@ -3060,6 +3133,7 @@
 			isa = PBXGroup;
 			children = (
 				38AEE75625F0F18E0013F05B /* CarbsStorage.swift */,
+				3A2F107674CF1D9C0A2A9ACF /* CarbEntryMutationService.swift */,
 				DDB37CC42D05048F00D99BF4 /* ContactImageStorage.swift */,
 				38A0363A25ECF07E00FCBB52 /* GlucoseStorage.swift */,
 				38FCF3FC25E997A80078B0D1 /* PumpHistoryStorage.swift */,
@@ -3091,6 +3165,18 @@
 			isa = PBXGroup;
 			children = (
 				38AEE75125F022080013F05B /* SettingsManager.swift */,
+				B2873D4FB1702586CB595113 /* BackupService.swift */,
+				6D0CD638754F555304884D7C /* LegacyBackupAdapter.swift */,
+				5FD7F17AC2828C4A106F61AC /* LegacySettingsBackupV1.swift */,
+				12E73BA8265B5249168D4453 /* SettingsImportApplier.swift */,
+				3C4B00ECC327FDDFAB0F3AD3 /* SettingsBackupGuardrails.swift */,
+				D3BE95E5FFE44384BB5AABF6 /* SettingsBackupRestoreHistory.swift */,
+				CC9E07932FEA1A989EF77377 /* SettingsBackupRestorePresets.swift */,
+				822624B2FF2716013FD231BC /* SettingsBackupRestoreTransaction.swift */,
+				83DEE8EC0A77658A8270578A /* SettingsBackupRestore.swift */,
+				8C63A1CBEECCF2AEC31FC8B5 /* SettingsBackupDynamicISF.swift */,
+				92E0C51076783EE263A11FFF /* SettingsBackupValidator.swift */,
+				30C0D2FE5B073B7C2D5E3B33 /* TrioSettingsBackup.swift */,
 			);
 			path = SettingsManager;
 			sourceTree = "<group>";
@@ -3193,6 +3279,7 @@
 			children = (
 				DDDD0FFD2F4E231600F9C645 /* Mocks */,
 				DDDD0FFA2F4E22C000F9C645 /* GlucoseSmoothingTests.swift */,
+				CA0924000000000000000005 /* GRICalculatorTests.swift */,
 				DDDD0FFC2F4E22C000F9C645 /* GlucoseNativeConversionTests.swift */,
 				DDDD10A02F4E22C000F9C645 /* CarbsNativeConversionTests.swift */,
 				DDDD10B02F4E22C000F9C645 /* PumpHistoryNativeConversionTests.swift */,
@@ -3233,6 +3320,7 @@
 				CE1F6DD82BADF4620064EB8D /* PluginManagerTests.swift */,
 				DC01A00D2E9F100000000004 /* DeviceCatalogTests.swift */,
 				98546920BB7247B0AC73449A /* ContainerResolutionTests.swift */,
+				7AF74BBFE9F7B8CA9187C4DB /* RemoteMealMutationPayloadTests.swift */,
 				3B5CD2C72D4AECD500CE213C /* OpenAPSSwiftTests */,
 				B3919BBB515547118D684CA2 /* SettingsSearchTests.swift */,
 				B3919BBB515547118D684CF2 /* AlgorithmSuggestedBolusTests.swift */,
@@ -3240,6 +3328,13 @@
 				B3919BBB515547118D684CD2 /* LoopIndicatorTests.swift */,
 				B3919BBB515547118D684CC2 /* MaxIOBSuggestionTests.swift */,
 				B3919BBB515547118D684CB2 /* DosingModeMigrationTests.swift */,
+				0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */,
+				BE4D540152F6226E2AB470F4 /* SettingsImportApplierTests.swift */,
+				098FE160E4B4B6A2971034D0 /* SettingsBackupTestFixtures.swift */,
+				96FC31A21E9D344235D40473 /* SettingsBackupCodableTests.swift */,
+				0AB33ACE90D65EAEC348C55F /* BackupEngineSafetyTests.swift */,
+				A64E4B82FE4DDE3C4B3D36CE /* BackupRestoreTransactionTests.swift */,
+				29680134AE36B280829A2BF7 /* BackupSnapshotTests.swift */,
 				BD8FC0532D66186000B95AED /* TestError.swift */,
 				C39FF1EC12CF4B1EBB13BE26 /* NightscoutUploadSerializerTests.swift */,
 				6EFF860E684B4C9488D438DD /* NightscoutImportRoundTripTests.swift */,
@@ -3553,7 +3648,8 @@
 			isa = PBXGroup;
 			children = (
 				6B1A8D2D2B156EEF00E76752 /* LiveActivityManager.swift */,
-				6BCF84DC2B16843A003AD46E /* LiveActitiyAttributes.swift */,
+				6BCF84DC2B16843A003AD46E /* LiveActivityAttributes.swift */,
+				7E2CF3BABA4BF1C48CC96FD7 /* LiveActivityGlucoseStyle.swift */,
 				BDF34F922C10D0E100D51995 /* LiveActivityAttributes+Helper.swift */,
 				BDF34F882C10C65E00D51995 /* Data */,
 			);
@@ -3810,6 +3906,7 @@
 				BD8E6B222D9036F700ABF8FA /* OnboardingDataFlow.swift */,
 				BD8E6B202D9036CA00ABF8FA /* OnboardingProvider.swift */,
 				BD47FD1A2D88AB4A0043966B /* OnboardingStateModel.swift */,
+				BD7D4DC7A2DF1BC417E8D8AC /* OnboardingStateModel+BackupRestore.swift */,
 				DDF68FFB2D9ECF77008BF16C /* OnboardingStateModel+Nightscout.swift */,
 				BD47FD152D88AAD80043966B /* View */,
 			);
@@ -3842,6 +3939,7 @@
 				DD3F1F8E2D9E151200DCE7B3 /* Nightscout */,
 				DD3F1F842D9DD83B00DCE7B3 /* DeliveryLimitsStepView.swift */,
 				DD3F1F822D9DC78300DCE7B3 /* UnitSelectionStepView.swift */,
+				297B852E29187C6FCED92908 /* RestoreBackupStepView.swift */,
 				BD47FD162D88AAEF0043966B /* CompletedStepView.swift */,
 			);
 			path = OnboardingSteps;
@@ -3907,6 +4005,7 @@
 				BD8FC0582D66189700B95AED /* TestAssembly.swift */,
 				BD8FC05A2D6618AF00B95AED /* DeterminationStorageTests.swift */,
 				BD8FC05F2D6619DB00B95AED /* CarbsStorageTests.swift */,
+				A19B7FC1E8CD873546B563CB /* CarbEntryMutationServiceTests.swift */,
 				BD8FC0612D6619E600B95AED /* OverrideStorageTests.swift */,
 				BD8FC0632D6619EF00B95AED /* TempTargetStorageTests.swift */,
 				BD8FC0652D661A0000B95AED /* GlucoseStorageTests.swift */,
@@ -4467,6 +4566,7 @@
 				DD32CF9D2CC824C2003686D6 /* TrioRemoteControl+Override.swift */,
 				DD32CF9B2CC82495003686D6 /* TrioRemoteControl+TempTarget.swift */,
 				DD32CF992CC8246F003686D6 /* TrioRemoteControl+Meal.swift */,
+				0480CC863D1BBC71668F34B3 /* TrioRemoteControl+MealMutation.swift */,
 				DD32CF972CC82460003686D6 /* TrioRemoteControl+Bolus.swift */,
 				DD9ECB672CA99F4500AA7C45 /* TrioRemoteControl.swift */,
 			);
@@ -4574,6 +4674,8 @@
 				BD249D8B2D42FC2500412DEB /* GlucoseDistributionChart.swift */,
 				BD249D892D42FC0E00412DEB /* GlucosePercentileChart.swift */,
 				BD249D852D42FBE600412DEB /* GlucoseMetricsView.swift */,
+				CA0924000000000000000003 /* GRIView.swift */,
+				CA0924000000000000000001 /* GRICalculator.swift */,
 			);
 			path = Glucose;
 			sourceTree = "<group>";
@@ -4689,6 +4791,7 @@
 			children = (
 				DDF847E32C5C288F0049BB3B /* LiveActivitySettingsRootView.swift */,
 				BD6EB2D52C7D049B0086BBB6 /* LiveActivityWidgetConfiguration.swift */,
+				CD6672C97F2AB74125F46DD5 /* LiveActivitySimpleWidgetConfiguration.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -5246,8 +5349,21 @@
 				1967DFC229D053D300759F30 /* IconImage.swift in Sources */,
 				382C134B25F14E3700715CE1 /* BGTargets.swift in Sources */,
 				38AEE75725F0F18E0013F05B /* CarbsStorage.swift in Sources */,
+				E73259BE7A7D1AFB93D6B8DF /* CarbEntryMutationService.swift in Sources */,
 				38B4F3CA25E502E200E76A18 /* SwiftNotificationCenter.swift in Sources */,
 				38AEE75225F022080013F05B /* SettingsManager.swift in Sources */,
+				F24CA02F60E5A3866667CB3A /* BackupService.swift in Sources */,
+				BA5DFF7AFFA3A7272342FD9F /* LegacyBackupAdapter.swift in Sources */,
+				E4FBDE1F35F58674C878918A /* LegacySettingsBackupV1.swift in Sources */,
+				C85F2D41EA5C28EAD9388C62 /* SettingsImportApplier.swift in Sources */,
+				BF8BB6D8398D90008B25E64D /* SettingsBackupGuardrails.swift in Sources */,
+				DED45DCB8C1FAFD87E4B6319 /* SettingsBackupRestoreHistory.swift in Sources */,
+				20654403C61E970B2BC469E9 /* SettingsBackupRestorePresets.swift in Sources */,
+				B7EB04D4A766D39BC39E75C8 /* SettingsBackupRestoreTransaction.swift in Sources */,
+				FF9FEB1B3A451F6F9362F469 /* SettingsBackupRestore.swift in Sources */,
+				8A1DE53F84B655A2750B13C3 /* SettingsBackupDynamicISF.swift in Sources */,
+				11F88EECF078B0E0519F6A4B /* SettingsBackupValidator.swift in Sources */,
+				493752BA9114C289F9154F51 /* TrioSettingsBackup.swift in Sources */,
 				3894873A2614928B004DF424 /* DispatchTimer.swift in Sources */,
 				3895E4C625B9E00D00214B37 /* Preferences.swift in Sources */,
 				CE94598429E9E3E60047C9C6 /* WatchConfigStateModel.swift in Sources */,
@@ -5304,6 +5420,10 @@
 				383948D625CD4D8900E91849 /* FileStorage.swift in Sources */,
 				CEE9A6572BBB418300EB5194 /* CalibrationsChart.swift in Sources */,
 				3811DE4125C9D4A100A708ED /* SettingsRootView.swift in Sources */,
+				6F012BC5689EB62363DB41F8 /* BackupChangeOverviewView.swift in Sources */,
+				E265C236433EA4E6825E1C54 /* BackupSettingsPreviewView.swift in Sources */,
+				E5A14C6D6C2C2E786A9C2E57 /* BackupDetailView.swift in Sources */,
+				005A9D4ACCE447C4320A9F7A /* BackupRestoreView.swift in Sources */,
 				38192E04261B82FA0094D973 /* ReachabilityManager.swift in Sources */,
 				38E44539274E411700EC9A94 /* Disk+UIImage.swift in Sources */,
 				3BAD36CC2D7D420E00CC298D /* CoreDataInitializationCoordinator.swift in Sources */,
@@ -5340,6 +5460,8 @@
 				E013D872273AC6FE0014109C /* GlucoseSimulatorSource.swift in Sources */,
 				3BAE87702E480BE100FCA8D2 /* ForecastResults.swift in Sources */,
 				BD249D862D42FBEC00412DEB /* GlucoseMetricsView.swift in Sources */,
+				CA0924000000000000000004 /* GRIView.swift in Sources */,
+				CA0924000000000000000002 /* GRICalculator.swift in Sources */,
 				58645BA32CA2D325008AFCE7 /* BatterySetup.swift in Sources */,
 				DD82D4B82DCAB2BA00BAFC77 /* PropertyPersistentFlags.swift in Sources */,
 				DD7E1E300000000000000002 /* TelemetryClient.swift in Sources */,
@@ -5359,6 +5481,7 @@
 				BD249D942D42FC5E00412DEB /* TotalDailyDoseChart.swift in Sources */,
 				BD249D902D42FC4500412DEB /* MealStatsView.swift in Sources */,
 				DD32CF9A2CC8247B003686D6 /* TrioRemoteControl+Meal.swift in Sources */,
+				FF0425EA9C0AFF6A6DF0B10D /* TrioRemoteControl+MealMutation.swift in Sources */,
 				BDF34F832C10C5B600D51995 /* DataManager.swift in Sources */,
 				38B4F3C625E5017E00E76A18 /* NotificationCenter.swift in Sources */,
 				19D466A729AA2C22004D5F33 /* MealSettingsStateModel.swift in Sources */,
@@ -5454,6 +5577,7 @@
 				DD940BAA2CA7585D000830A5 /* GlucoseColorScheme.swift in Sources */,
 				3811DE2225C9D48300A708ED /* MainProvider.swift in Sources */,
 				BD47FD1B2D88AB4F0043966B /* OnboardingStateModel.swift in Sources */,
+				B6A140F4281B7CEF7B999066 /* OnboardingStateModel+BackupRestore.swift in Sources */,
 				3811DE0C25C9D32F00A708ED /* BaseProvider.swift in Sources */,
 				CE95BF5A2BA62E4A00DC3DE3 /* PluginSource.swift in Sources */,
 				25726254CCC5496EB7BD95C8 /* CGMSensorStateLog.swift in Sources */,
@@ -5857,9 +5981,12 @@
 				DB0BB0030000000000000002 /* ReleaseNotesListView.swift in Sources */,
 				19F95FFA29F1102A00314DDC /* StatRootView.swift in Sources */,
 				0D9A5E34A899219C5C4CDFAF /* HistoryStateModel.swift in Sources */,
-				6BCF84DD2B16843A003AD46E /* LiveActitiyAttributes.swift in Sources */,
+				6BCF84DD2B16843A003AD46E /* LiveActivityAttributes.swift in Sources */,
+				AC096399E4D2F4950BA8E5CF /* LiveActivityGlucoseStyle.swift in Sources */,
+				8B74AA51DC49429FB9F19159 /* LiveActivitySimpleWidgetConfiguration.swift in Sources */,
 				195D80B92AF697F700D25097 /* DynamicSettingsProvider.swift in Sources */,
 				DD3F1F832D9DC78800DCE7B3 /* UnitSelectionStepView.swift in Sources */,
+				F5CC5FE6C26D1838D1E782A0 /* RestoreBackupStepView.swift in Sources */,
 				DD09D47D2C5986DA003FEA5D /* CalendarEventSettingsProvider.swift in Sources */,
 				DD09D47B2C5986D1003FEA5D /* CalendarEventSettingsDataFlow.swift in Sources */,
 				DD1745202C55523E00211FAC /* SMBSettingsDataFlow.swift in Sources */,
@@ -5985,6 +6112,7 @@
 				FB9012AE66284A92A6531037 /* NightscoutUploadSerializerTests.swift in Sources */,
 				782BE9AEFDD94938A6F3EFE9 /* NightscoutImportRoundTripTests.swift in Sources */,
 				DDDD0FFB2F4E22C000F9C645 /* GlucoseSmoothingTests.swift in Sources */,
+				CA0924000000000000000006 /* GRICalculatorTests.swift in Sources */,
 				DDDD0FFD2F4E22C000F9C645 /* GlucoseNativeConversionTests.swift in Sources */,
 				DDDD10A12F4E22C000F9C645 /* CarbsNativeConversionTests.swift in Sources */,
 				DDDD10B12F4E22C000F9C645 /* PumpHistoryNativeConversionTests.swift in Sources */,
@@ -6004,6 +6132,7 @@
 				CE1F6DD92BADF4620064EB8D /* PluginManagerTests.swift in Sources */,
 				DC01A00E2E9F100000000005 /* DeviceCatalogTests.swift in Sources */,
 				10DAA318F47843A4B894173D /* ContainerResolutionTests.swift in Sources */,
+				940584C38CB62676214A2107 /* RemoteMealMutationPayloadTests.swift in Sources */,
 				3B1C5C432D68E269004E9273 /* Extensions.swift in Sources */,
 				3BC26E552D7418830066ACD6 /* IobSuspendTests.swift in Sources */,
 				DD758EDE2ECC656500EF5D54 /* DetermineBasalSmbMicroBolusTests.swift in Sources */,
@@ -6043,6 +6172,7 @@
 				3B8221B22E5882E300585156 /* DetermineBasalEarlyExitTests.swift in Sources */,
 				3BA643EA2ED9FAD8007BC31F /* DetermineBasalAggressiveDosingTests.swift in Sources */,
 				BD8FC0602D6619DB00B95AED /* CarbsStorageTests.swift in Sources */,
+				36BDB3927CB9ABFB548ED2B0 /* CarbEntryMutationServiceTests.swift in Sources */,
 				DD30BA002E0745C400DA677C /* DetermineBasalDeltaCalculationTests.swift in Sources */,
 				BD8FC05E2D6618CE00B95AED /* BolusCalculatorTests.swift in Sources */,
 				41740E936552456AAC0EDAC3 /* SettingsSearchTests.swift in Sources */,
@@ -6052,6 +6182,13 @@
 				41740E936552456AAC0EDDC3 /* LoopIndicatorTests.swift in Sources */,
 				41740E936552456AAC0EDCC3 /* MaxIOBSuggestionTests.swift in Sources */,
 				41740E936552456AAC0EDBC3 /* DosingModeMigrationTests.swift in Sources */,
+				8388FCFF5300CFD868CB154C /* OnboardingBackupRestoreTests.swift in Sources */,
+				1C39E3979D8EF18A56FA9C2B /* SettingsImportApplierTests.swift in Sources */,
+				049C9D42043A7E19A3EB660E /* SettingsBackupTestFixtures.swift in Sources */,
+				895E1839B715838EFF1688CD /* SettingsBackupCodableTests.swift in Sources */,
+				52580F312542F080671495C8 /* BackupEngineSafetyTests.swift in Sources */,
+				A78F2AF949D83BF1E43AE962 /* BackupRestoreTransactionTests.swift in Sources */,
+				6CA299A9AA4B4A0BB2C58712 /* BackupSnapshotTests.swift in Sources */,
 				B015AFE52E500000000D7351 /* BolusSafetyValidatorTests.swift in Sources */,
 				BD8FC0712D661B0000B95AED /* TidepoolTherapySettingsTests.swift in Sources */,
 				CA03000000000000000010C2 /* AlertCatalogRegistryOmniFaultTests.swift in Sources */,
@@ -6063,7 +6200,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6BCF84DE2B16843A003AD46E /* LiveActitiyAttributes.swift in Sources */,
+				6BCF84DE2B16843A003AD46E /* LiveActivityAttributes.swift in Sources */,
+				39714DB1CF5B2C1F8D990CED /* LiveActivityGlucoseStyle.swift in Sources */,
 				DDCEBF5B2CC1B76400DF4C36 /* LiveActivity+Helper.swift in Sources */,
 				6B1A8D1E2B14D91600E76752 /* LiveActivityBundle.swift in Sources */,
 				6B1A8D202B14D91600E76752 /* LiveActivity.swift in Sources */,

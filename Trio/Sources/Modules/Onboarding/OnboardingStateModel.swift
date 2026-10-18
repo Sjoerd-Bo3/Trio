@@ -84,6 +84,28 @@ extension Onboarding {
         var uploadGlucose: Bool = true
         var uploadCGMSensorStates: Bool = true
 
+        // MARK: - Restore from Backup
+
+        /// Whether the user restores a backup or sets Trio up from scratch.
+        var backupRestoreOption: BackupRestoreOption = .noSelection
+        /// A chosen backup that has not been applied yet.
+        var pendingBackup: TrioSettingsBackup?
+        var pendingBackupWarnings: [String] = []
+        var pendingBackupOverview: ImportChangeSet?
+        /// Set once the engine has restored a backup; the onboarding editors are then prefilled from it.
+        var appliedBackupID: UUID?
+        var restoreWarnings: [String] = []
+        var backupRestoreInProgress = false
+        var backupRestoreError: String?
+
+        var backupWasRestored: Bool { appliedBackupID != nil }
+
+        /// The step cannot be left before a choice was made, and a chosen restore has to finish first.
+        var restoreBlocksNext: Bool {
+            backupRestoreInProgress || backupRestoreOption == .noSelection ||
+                (backupRestoreOption == .restore && !backupWasRestored)
+        }
+
         // MARK: - Units and Pump Omboarding Option
 
         var units: GlucoseUnits = .mgdL
@@ -695,10 +717,11 @@ extension Onboarding {
             applyToSettings()
             applyToPreferences()
             applyToPumpSettings()
-            saveTargets()
-            saveBasalProfile()
-            saveCarbRatios()
-            saveISFValues()
+            // A restored schedule keeps its exact values unless the user changed it during onboarding.
+            if !backupWasRestored || targetItems != initialTargetItems { saveTargets() }
+            if !backupWasRestored || basalProfileItems != initialBasalProfileItems { saveBasalProfile() }
+            if !backupWasRestored || carbRatioItems != initialCarbRatioItems { saveCarbRatios() }
+            if !backupWasRestored || isfItems != initialISFItems { saveISFValues() }
         }
 
         /// Applies the selected glucose units to the app's settings.
@@ -737,7 +760,8 @@ extension Onboarding {
 
         /// Applies the selected delivery preferences to the app's settings.
         func applyToPreferences() {
-            var preferences = Preferences()
+            // After a restore the onboarding screens only cover part of the preferences; the rest must stay as restored.
+            var preferences = backupWasRestored ? settingsManager.preferences : Preferences()
 
             // delivery limits (those that are preference-bound, not pump-settings-bound
             preferences.maxIOB = maxIOB
@@ -770,7 +794,7 @@ extension Onboarding {
             preferences.halfBasalExerciseTarget = halfBasalTarget
 
             // default suspendZeroesIOB to true
-            if !preferences.suspendZerosIOB {
+            if !backupWasRestored, !preferences.suspendZerosIOB {
                 preferences.suspendZerosIOB = true
             }
 
@@ -791,7 +815,9 @@ extension Onboarding {
 
         /// Saves pump delivery limits to persistent storage and broadcasts changes.
         func applyToPumpSettings() {
-            let defaultDIA = settingsProvider.settings.dia.value
+            let defaultDIA = backupWasRestored
+                ? (provider.pumpSettingsFromFile?.insulinActionCurve ?? settingsProvider.settings.dia.value)
+                : settingsProvider.settings.dia.value
             let pumpSettings = PumpSettings(insulinActionCurve: defaultDIA, maxBolus: maxBolus, maxBasal: maxBasal)
             fileStorage.save(pumpSettings, as: OpenAPS.Settings.settings)
         }

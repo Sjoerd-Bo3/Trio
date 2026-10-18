@@ -91,6 +91,8 @@ extension Notification.Name {
         // seeded DeviceAlertsStore in place before re-presenting alerts.
         resolver.resolve(TrioAlertManager.self)!.replayUnacknowledgedAlerts()
 
+        BackupService.shared.start(resolver: resolver)
+
         startTelemetry()
     }
 
@@ -189,6 +191,13 @@ extension Notification.Name {
         Task {
             do {
                 try await coreDataStack.initializeStack()
+
+                // Finish or undo an interrupted settings restore before any therapy service loads. This
+                // cannot throw: a damaged journal forces Open Loop, leaves a notice and startup carries on.
+                let recovery = await SettingsBackupRestore.recoverAtStartup()
+                if recovery != .none {
+                    debug(.default, "Settings restore recovery: \(recovery)")
+                }
 
                 // TODO: possibly wrap this in a UserDefault / TinyStorage flag check, so we do not even attempt to fetch files unnecessary, but early exit the import
                 await performJsonToCoreDataMigrationIfNeeded()
@@ -365,6 +374,7 @@ extension Notification.Name {
                         wasMigrationSuccessful: !initState.migrationFailed
                     )
                     .preferredColorScheme(colorScheme(for: .dark) ?? nil)
+                    .environment(appState)
                     .transition(.opacity)
                 } else {
                     Main.RootView(resolver: resolver)

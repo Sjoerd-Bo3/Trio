@@ -9,7 +9,7 @@ struct CarbRatios: JSON {
     let schedule: [CarbRatioEntry]
 }
 
-struct CarbRatioEntry: JSON {
+struct CarbRatioEntry: JSON, Equatable {
     let start: String
     let offset: Int
     let ratio: Decimal
