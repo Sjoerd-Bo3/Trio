@@ -92,6 +92,8 @@ extension Notification.Name {
         resolver.resolve(TrioAlertManager.self)!.replayUnacknowledgedAlerts()
 
         BackupService.shared.start(resolver: resolver)
+        // Automatic iCloud backups start once the services they read from are ready; onboarding suppresses them.
+        TrioCloudBackupCoordinator.shared.start()
 
         startTelemetry()
     }
@@ -419,6 +421,7 @@ extension Notification.Name {
             }
 
             if newScenePhase == .active {
+                TrioCloudBackupCoordinator.shared.applicationDidBecomeActive()
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let rootVC = windowScene.windows.first(where: { $0.isKeyWindow })?.rootViewController
                 {

@@ -10,6 +10,12 @@ struct BackupRestoreView: View {
     @State private var presentation: BackupPresentation?
     @State private var attention: String?
     @State private var reviewPending = false
+    @State private var cloudStatus: CloudBackupAvailability.Status = .notBuilt
+    @State private var backingUp = false
+    @State private var naming = false
+    @State private var name = ""
+    @State private var createdName: String?
+    @State private var lastBackup: Date?
 
     private enum BackupPresentation: Identifiable {
         case exported(BackupExportFile)
@@ -30,6 +36,33 @@ struct BackupRestoreView: View {
         .navigationTitle("Backup & Restore")
         .navigationBarTitleDisplayMode(.large)
         .onAppear(perform: refreshNotices)
+        .task { cloudStatus = await CloudBackupAvailability.status() }
+        .onReceive(Foundation.NotificationCenter.default.publisher(for: TrioCloudBackupCoordinator.uploadNotification)) { _ in
+            lastBackup = TrioCloudBackupCoordinator.shared.lastSuccessfulBackupDate
+        }
+        .alert("Name Your Backup", isPresented: $naming) {
+            TextField("Name", text: $name)
+            Button("Cancel", role: .cancel) {}
+            Button("Create Backup") {
+                let requestedName = name
+                Task { @MainActor in
+                    backingUp = true
+                    defer { backingUp = false
+                        lastBackup = TrioCloudBackupCoordinator.shared.lastSuccessfulBackupDate }
+                    do {
+                        let entry = try await TrioCloudBackupCoordinator.shared.createManualBackup(name: requestedName)
+                        createdName = entry.name ?? TrioSettingsBackup.normalizedName(requestedName)
+                        name = ""
+                    } catch { message = error.localizedDescription }
+                }
+            }
+            .disabled(TrioSettingsBackup.normalizedName(name) == nil)
+        }
+        .alert("Success!", isPresented: Binding(get: { createdName != nil }, set: { if !$0 { createdName = nil } })) {
+            Button("Done", role: .cancel) {}
+        } message: {
+            Text("Your \"\(createdName ?? "")\" backup has been saved to iCloud.")
+        }
         .alert("Backup & Restore", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(message ?? "") }
@@ -88,6 +121,9 @@ struct BackupRestoreView: View {
                     .buttonStyle(.borderless)
                 } header: { Text("Review Restored Settings") }.listRowBackground(Color.chart)
             }
+            if cloudStatus != .notBuilt {
+                iCloudSections
+            }
             Section {
                 Button {
                     guard !exporting, presentation == nil, !importing else { return }
@@ -119,10 +155,48 @@ struct BackupRestoreView: View {
         .scrollContentBackground(.hidden)
         .background(appState.trioBackgroundColor(for: colorScheme))
         .listSectionSpacing(sectionSpacing)
-        .allowsHitTesting(!exporting && !importing)
+        .allowsHitTesting(!exporting && !importing && !backingUp)
+    }
+
+    @ViewBuilder private var iCloudSections: some View {
+        if cloudStatus == .available {
+            Section {
+                Button {
+                    guard !backingUp, presentation == nil, !importing else { return }
+                    name = ""
+                    naming = true
+                } label: {
+                    HStack {
+                        Text("Back Up Now")
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .disabled(backingUp)
+            } header: { Text("iCloud Backup") } footer: {
+                Text(
+                    lastBackup
+                        .map { "Last successful backup: \($0.formatted(date: .abbreviated, time: .shortened))" } ??
+                        "No recent backups."
+                )
+            }.listRowBackground(Color.chart)
+            Section {
+                NavigationLink("View Backups") { TrioCloudBackupBrowser() }
+            }.listRowBackground(Color.chart)
+            Section {
+                NavigationLink("Configuration") { TrioCloudBackupConfigurationView() }
+            }.listRowBackground(Color.chart)
+        } else {
+            Section {
+                Text("Sign in to iCloud in iPhone Settings and enable iCloud for Trio to back up your settings to iCloud.")
+                    .foregroundStyle(.secondary)
+            } header: { Text("iCloud Backup") }.listRowBackground(Color.chart)
+        }
     }
 
     private func refreshNotices() {
+        lastBackup = TrioCloudBackupCoordinator.shared.lastSuccessfulBackupDate
         attention = UserDefaults.standard.string(forKey: SettingsBackupRestore.needsAttentionKey)
         reviewPending = UserDefaults.standard.bool(forKey: SettingsBackupRestore.reviewPendingKey)
     }

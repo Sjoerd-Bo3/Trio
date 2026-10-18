@@ -2,7 +2,9 @@ import Foundation
 import SwiftUI
 
 enum BackupRestoreOption: Equatable {
+    /// Restore from a backup file.
     case restore
+    case restoreICloud
     case startFresh
     case noSelection
 }
@@ -14,11 +16,22 @@ extension Onboarding.StateModel {
     @MainActor func chooseBackupRestoreOption(_ option: BackupRestoreOption) {
         // A restore that has been applied cannot be taken back by choosing another option.
         guard !backupWasRestored, !backupRestoreInProgress else { return }
-        backupRestoreOption = option
-        if option == .startFresh {
+        if option != backupRestoreOption {
             pendingBackup = nil
             pendingBackupWarnings = []
             pendingBackupOverview = nil
+        }
+        backupRestoreOption = option
+    }
+
+    /// A backup picked from the iCloud list; applied only after the user confirms.
+    @MainActor func selectCloudBackup(_ backup: TrioSettingsBackup) {
+        guard !backupWasRestored, !backupRestoreInProgress else { return }
+        pendingBackup = backup
+        pendingBackupWarnings = []
+        pendingBackupOverview = nil
+        Task { @MainActor in
+            pendingBackupOverview = await BackupService.shared.changeOverview(for: backup, onboarding: true)
         }
     }
 

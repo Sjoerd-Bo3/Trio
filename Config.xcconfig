@@ -23,6 +23,18 @@ APP_DEV_VERSION = 1.0.2.9
 APP_BUILD_NUMBER = 1
 COPYRIGHT_NOTICE =
 
+// iCloud backup of Trio settings (CloudKit). Off by default so Trio builds and signs without the iCloud
+// capability. Set to YES in ConfigOverride.xcconfig only if your App ID and provisioning profile include the
+// iCloud capability with the container iCloud.$(PRODUCT_BUNDLE_IDENTIFIER); it selects Trio-iCloud.entitlements.
+// Backup files (Settings > Backup & Restore) always work, with or without this.
+ENABLE_ICLOUD_BACKUP = NO
+TRIO_ENTITLEMENTS_SUFFIX_YES = -iCloud
+TRIO_ENTITLEMENTS_SUFFIX_NO =
+TRIO_ENTITLEMENTS_SUFFIX = $(TRIO_ENTITLEMENTS_SUFFIX_$(ENABLE_ICLOUD_BACKUP))
+TRIO_ICLOUD_CONDITION_YES = TRIO_ICLOUD_BACKUP
+TRIO_ICLOUD_CONDITION_NO =
+TRIO_ICLOUD_CONDITION = $(TRIO_ICLOUD_CONDITION_$(ENABLE_ICLOUD_BACKUP))
+
 // Optional overrides - these can be used to insert your TEAMID into the DEVELOPER_TEAM field
 #include? "../../ConfigOverride.xcconfig"
 #include? "../ConfigOverride.xcconfig"
