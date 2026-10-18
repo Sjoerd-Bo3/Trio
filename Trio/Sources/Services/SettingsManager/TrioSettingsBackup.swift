@@ -25,6 +25,8 @@ struct TrioSettingsBackup: Codable {
     var historyChecksum: String? = nil
     /// Informational only (pump, insulin and CGM names); never applied and not part of the fingerprint.
     var deviceInfo: DeviceInfo? = nil
+    /// Opt-in sign-in details and device pairing, sealed with a passphrase. Not part of the fingerprint.
+    var sensitive: SealedSensitiveBlob? = nil
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion
@@ -38,6 +40,7 @@ struct TrioSettingsBackup: Codable {
         case dynamicISFHistory
         case historyChecksum
         case deviceInfo
+        case sensitive
     }
 
     struct DeviceInfo: Codable, Equatable {
@@ -330,6 +333,7 @@ extension TrioSettingsBackup {
         dynamicISFHistory = try values.decodeIfPresent([TDDRecord].self, forKey: .dynamicISFHistory)
         historyChecksum = try values.decodeIfPresent(String.self, forKey: .historyChecksum)
         deviceInfo = try? values.decodeIfPresent(DeviceInfo.self, forKey: .deviceInfo)
+        sensitive = try? values.decodeIfPresent(SealedSensitiveBlob.self, forKey: .sensitive)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -345,6 +349,7 @@ extension TrioSettingsBackup {
         try values.encodeIfPresent(dynamicISFHistory, forKey: .dynamicISFHistory)
         try values.encodeIfPresent(historyChecksum, forKey: .historyChecksum)
         try values.encodeIfPresent(deviceInfo, forKey: .deviceInfo)
+        try values.encodeIfPresent(sensitive, forKey: .sensitive)
     }
 }
 

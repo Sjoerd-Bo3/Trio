@@ -12,7 +12,7 @@ configuration, and Dynamic ISF summaries from the last ten days. A configuration
 and tampering.
 
 It never holds pump or CGM pairing state, sign-in details, active overrides or temp targets, or treatment
-history. Those travel only in opt-in tiers (see the sections below as they are added).
+history. Those travel only in opt-in tiers (see Protected data).
 
 ## File backup
 
@@ -71,6 +71,20 @@ file backup only.
 - Initialize the development CloudKit schema once and deploy it to production before shipping; TestFlight uses
   production. Upload failures are shown in Configuration and never raise alerts.
 
+## Protected data
+
+When exporting a file or making a named iCloud backup, the user can opt in to Nightscout and remote control
+sign-in details and to pump and CGM pairing. They are sealed with a passphrase (PBKDF2-HMAC-SHA256, at least
+200,000 iterations, then AES-256-GCM; the header and the backup id are authenticated) and are never written in the
+clear. The passphrase is never stored or uploaded, so automatic backups never include this tier, and a forgotten
+passphrase loses only this tier. Older plain export files with sign-in details can still be read.
+
+Sign-in details are written after the core restore has committed; a failure is only a warning. Remote commands stay
+off until the user opens Settings > Services. Pairing is restored only during onboarding, only on a phone without a
+pump, only for Medtrum, Omnipod Eros and Medtronic, and only after two confirmations: that the old phone no longer
+runs Trio, and a final dialog naming the pump. Omnipod DASH, Dana and unknown pumps are never adopted. Trio stays
+in Open Loop and sends no pump command during the restore.
+
 ## Implementation
 
 - `TrioSettingsBackup.swift`, `SettingsBackupValidator.swift`, `SettingsBackupDynamicISF.swift`: snapshot,
@@ -81,3 +95,4 @@ file backup only.
 - `LegacySettingsBackupV1.swift`, `LegacyBackupAdapter.swift`: the earlier export format.
 - `BackupService.swift`: capture, export and restore for the running app.
 - `CloudKitBackupStore.swift`, `TrioCloudBackupCoordinator.swift`: iCloud storage and scheduling.
+- `SealedSensitiveBlob.swift`, `SensitiveRestore.swift`: the protected tier, its envelope and the pump adoption gate.

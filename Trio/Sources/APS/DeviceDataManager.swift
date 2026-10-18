@@ -32,6 +32,7 @@ protocol DeviceDataManager {
     func updatePumpBLEHeartbeat(lastCGMReadingDate: Date?, expectedCGMReadingInterval: TimeInterval?)
     func updateCGMHeartbeatCapability(providesBLEHeartbeat: Bool)
     func createBolusProgressReporter() -> DoseProgressReporter?
+    func adoptPumpManager(fromRawValue rawValue: [String: Any]) -> Bool
     var alertHistoryStorage: AlertHistoryStorage! { get }
 }
 
@@ -237,6 +238,15 @@ final class BaseDeviceDataManager: DeviceDataManager, Injectable {
         } else {
             pumpManager = nil
         }
+    }
+
+    /// Adopts pump manager state restored from a settings backup during onboarding. Assigning `pumpManager`
+    /// wires the delegate and persists the state, the same path as app start. Returns false when the state
+    /// cannot be reconstructed (unknown manager type or invalid state).
+    func adoptPumpManager(fromRawValue rawValue: [String: Any]) -> Bool {
+        guard let manager = pumpManagerFromRawValue(rawValue) else { return false }
+        pumpManager = manager
+        return true
     }
 
     func createBolusProgressReporter() -> DoseProgressReporter? {

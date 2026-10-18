@@ -7,6 +7,8 @@ enum LegacyBackupAdapter {
         let snapshot: TrioSettingsBackup
         /// Parts of the file this version does not restore.
         let warnings: [String]
+        /// Sign-in details and pairing the older file carried in the clear; offered as opt-in choices on restore.
+        let sensitive: SensitiveTier?
     }
 
     /// A schema-1 file has no `configuration` object; the snapshot format always does.
@@ -62,11 +64,16 @@ enum LegacyBackupAdapter {
         let safe = try TrioSettingsBackup.normalized(configuration)
         try TrioSettingsBackup.validate(safe)
 
-        if legacy.credentials != nil {
-            warnings.append(String(localized: "Saved Nightscout and remote control credentials in this file are not restored."))
+        var tier = SensitiveTier()
+        if let credentials = legacy.credentials {
+            tier.credentials = SensitiveTier.Credentials(
+                nightscoutURL: credentials.nightscoutURL,
+                nightscoutSecret: credentials.nightscoutSecret,
+                remoteControlSharedSecret: credentials.remoteControlSharedSecret
+            )
         }
         if legacy.devices?.pumpState != nil || legacy.devices?.cgmState != nil {
-            warnings.append(String(localized: "Saved pump and CGM pairing in this file is not restored."))
+            tier.devices = SensitiveTier.Devices(pumpState: legacy.devices?.pumpState, cgmState: legacy.devices?.cgmState)
         }
         if legacy.history != nil {
             warnings.append(String(localized: "Saved treatment history in this file is not restored."))
@@ -90,7 +97,7 @@ enum LegacyBackupAdapter {
                 )
             }
         )
-        return Converted(snapshot: snapshot, warnings: warnings)
+        return Converted(snapshot: snapshot, warnings: warnings, sensitive: tier.isEmpty ? nil : tier)
     }
 
     private static func presets(from legacy: SettingsBackup.Presets?) -> TrioSettingsBackup.Presets {
