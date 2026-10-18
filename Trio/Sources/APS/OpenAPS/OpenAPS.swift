@@ -2,6 +2,20 @@ import Combine
 import CoreData
 import Foundation
 
+/// A settings file the algorithm needs exists on disk but could not be read.
+enum OpenAPSError: LocalizedError, Equatable {
+    case settingsFileUnreadable(String)
+
+    var errorDescription: String? {
+        switch self {
+        case let .settingsFileUnreadable(name):
+            return String(
+                localized: "Trio cannot read the saved settings file \(name). The loop is paused until it can be read."
+            )
+        }
+    }
+}
+
 final class OpenAPS {
     private let processQueue = DispatchQueue(label: "OpenAPS.processQueue", qos: .utility)
 
@@ -255,7 +269,7 @@ final class OpenAPS {
         )
 
         // second, independent read into the algorithm; needs the same clamp as the profile
-        var preferences = (await storage.retrieveAsync(OpenAPS.Settings.preferences, as: Preferences.self) ?? Preferences())
+        var preferences = (try await retrieveRequiredAsync(OpenAPS.Settings.preferences, as: Preferences.self) ?? Preferences())
             .clamped(for: dosingMode)
         let glucoseFetchHours = preferences.maxMealAbsorptionTime + 0.5 // MMAT + half hour buffer
         async let glucoseFetch = glucoseStorage.getGlucoseForAlgorithm(
@@ -286,10 +300,10 @@ final class OpenAPS {
             try carbsFetch,
             try glucoseFetch,
             try prepareTrioCustomOrefVariables,
-            profileAsync,
-            basalAsync,
-            autosenseAsync,
-            reservoirAsync,
+            try profileAsync,
+            try basalAsync,
+            try autosenseAsync,
+            try reservoirAsync,
             try hasSufficientTddForDynamic
         )
 
@@ -378,7 +392,7 @@ final class OpenAPS {
     func prepareTrioCustomOrefVariables(on context: NSManagedObjectContext) async throws -> RawJSON {
         try await context.perform {
             // Retrieve user preferences
-            let userPreferences = self.storage.retrieve(OpenAPS.Settings.preferences, as: Preferences.self)
+            let userPreferences = try self.retrieveRequired(OpenAPS.Settings.preferences, as: Preferences.self)
             let weightPercentage = userPreferences?.weightPercentage ?? 1.0
             let maxSMBBasalMinutes = userPreferences?.maxSMBBasalMinutes ?? 30
             let maxUAMBasalMinutes = userPreferences?.maxUAMSMBBasalMinutes ?? 30
@@ -439,7 +453,7 @@ final class OpenAPS {
 
             // Save and return contents of Trio's custom oref variables
             self.storage.save(trioCustomOrefVariablesData, as: OpenAPS.Monitor.trio_custom_oref_variables)
-            return self.loadFileFromStorage(name: Monitor.trio_custom_oref_variables)
+            return try self.loadFileFromStorage(name: Monitor.trio_custom_oref_variables)
         }
     }
 
@@ -465,9 +479,9 @@ final class OpenAPS {
             try parsePumpHistory(on: context, await pumpHistoryObjectIDs),
             try carbsFetch,
             try glucoseFetch,
-            getProfile,
-            getBasalProfile,
-            getTempTargets
+            try getProfile,
+            try getBasalProfile,
+            try getTempTargets
         )
 
         // Decode the JSON-at-rest inputs into native models at the call boundary.
@@ -507,16 +521,16 @@ final class OpenAPS {
         async let getTempTargets = loadFileFromStorageAsync(name: Settings.tempTargets)
 
         let (pumpSettings, bgTargets, basalProfile, insulinSensitivities, carbRatios, tempTargets) = await (
-            getPumpSettings,
-            getBGTargets,
-            getBasalProfile,
-            getInsulinSensitivities,
-            getCarbRatios,
-            getTempTargets
+            try getPumpSettings,
+            try getBGTargets,
+            try getBasalProfile,
+            try getInsulinSensitivities,
+            try getCarbRatios,
+            try getTempTargets
         )
 
         // Retrieve user preferences, or set defaults if not available
-        let preferences = storage.retrieve(OpenAPS.Settings.preferences, as: Preferences.self) ?? Preferences()
+        let preferences = try retrieveRequired(OpenAPS.Settings.preferences, as: Preferences.self) ?? Preferences()
         let defaultHalfBasalTarget = preferences.halfBasalExerciseTarget
         var adjustedPreferences = preferences
 
@@ -723,17 +737,47 @@ final class OpenAPS {
         try! String(contentsOf: Foundation.Bundle.main.url(forResource: "json/\(name)", withExtension: "json")!)
     }
 
-    private func loadFileFromStorage(name: String) -> RawJSON {
-        storage.retrieveRaw(name) ?? OpenAPS.defaults(for: name)
+    /// Bundled defaults are only for a file that does not exist yet. A file that exists but cannot be read
+    /// (for example while the phone is locked, or damaged) must stop the loop cycle: dosing with built-in
+    /// defaults instead of the user's own basal, sensitivity or targets would be unsafe.
+    static func loadRawOrDefaults(
+        name: String,
+        retrieveRaw: (String) -> RawJSON?,
+        fileExists: (String) -> Bool = OpenAPS.settingsFileExists
+    ) throws -> RawJSON {
+        if let raw = retrieveRaw(name) { return raw }
+        guard !fileExists(name) else { throw OpenAPSError.settingsFileUnreadable(name) }
+        return OpenAPS.defaults(for: name)
     }
 
-    private func loadFileFromStorageAsync(name: String) async -> RawJSON {
-        await withCheckedContinuation { continuation in
+    static func settingsFileExists(_ name: String) -> Bool {
+        guard let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return false }
+        return FileManager.default.fileExists(atPath: documents.appendingPathComponent(name).path)
+    }
+
+    private func loadFileFromStorage(name: String) throws -> RawJSON {
+        try OpenAPS.loadRawOrDefaults(name: name, retrieveRaw: storage.retrieveRaw)
+    }
+
+    private func loadFileFromStorageAsync(name: String) async throws -> RawJSON {
+        try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
-                let result = self.storage.retrieveRaw(name) ?? OpenAPS.defaults(for: name)
-                continuation.resume(returning: result)
+                continuation.resume(with: Result { try self.loadFileFromStorage(name: name) })
             }
         }
+    }
+
+    /// A typed file that may legitimately be absent, but must not be silently replaced when it exists unreadable.
+    private func retrieveRequired<T: JSON>(_ name: String, as type: T.Type) throws -> T? {
+        if let value = storage.retrieve(name, as: type) { return value }
+        guard !OpenAPS.settingsFileExists(name) else { throw OpenAPSError.settingsFileUnreadable(name) }
+        return nil
+    }
+
+    private func retrieveRequiredAsync<T: JSON>(_ name: String, as type: T.Type) async throws -> T? {
+        if let value = await storage.retrieveAsync(name, as: type) { return value }
+        guard !OpenAPS.settingsFileExists(name) else { throw OpenAPSError.settingsFileUnreadable(name) }
+        return nil
     }
 
     static func defaults(for file: String) -> RawJSON {
