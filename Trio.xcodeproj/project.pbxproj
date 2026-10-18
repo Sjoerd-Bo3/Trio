@@ -1040,6 +1040,7 @@
 		3491E7ADF653BDB3AFAE400E /* BackupExtensionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D7D8A00A0E2783CCFFCE89 /* BackupExtensionRegistry.swift */; };
 		A753DBA634259F055C712EBA /* HistoryRestoreRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF853B929BD9ED55FC0DD25 /* HistoryRestoreRow.swift */; };
 		6EFD44704CD0B6B9DDA935A0 /* BackupHistoryAndExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */; };
+		94886BACB4DFDA29C25554D2 /* OpenAPSSettingsFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A168291CD609AC60AF7413C1 /* OpenAPSSettingsFileTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -2171,6 +2172,7 @@
 		96D7D8A00A0E2783CCFFCE89 /* BackupExtensionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupExtensionRegistry.swift; sourceTree = "<group>"; };
 		1FF853B929BD9ED55FC0DD25 /* HistoryRestoreRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryRestoreRow.swift; sourceTree = "<group>"; };
 		D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupHistoryAndExtensionTests.swift; sourceTree = "<group>"; };
+		A168291CD609AC60AF7413C1 /* OpenAPSSettingsFileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAPSSettingsFileTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -3367,6 +3369,7 @@
 				B3919BBB515547118D684CD2 /* LoopIndicatorTests.swift */,
 				B3919BBB515547118D684CC2 /* MaxIOBSuggestionTests.swift */,
 				B3919BBB515547118D684CB2 /* DosingModeMigrationTests.swift */,
+				A168291CD609AC60AF7413C1 /* OpenAPSSettingsFileTests.swift */,
 				D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */,
 				B559671B9B77CE0F908B912D /* SensitiveTierTests.swift */,
 				6906188AC5A17AC18A8BA575 /* CloudBackupCoordinatorTests.swift */,
@@ -6235,6 +6238,7 @@
 				41740E936552456AAC0EDDC3 /* LoopIndicatorTests.swift in Sources */,
 				41740E936552456AAC0EDCC3 /* MaxIOBSuggestionTests.swift in Sources */,
 				41740E936552456AAC0EDBC3 /* DosingModeMigrationTests.swift in Sources */,
+				94886BACB4DFDA29C25554D2 /* OpenAPSSettingsFileTests.swift in Sources */,
 				6EFD44704CD0B6B9DDA935A0 /* BackupHistoryAndExtensionTests.swift in Sources */,
 				A7B51C49774288C981BA692A /* SensitiveTierTests.swift in Sources */,
 				D0933B0A93DC20D0EBC5A5A7 /* CloudBackupCoordinatorTests.swift in Sources */,
