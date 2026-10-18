@@ -6,6 +6,7 @@ struct RestoreBackupStepView: View {
     @State private var isFilePickerPresented = false
     @State private var showingRestoreConfirmation = false
     @State private var showingOverview = false
+    @State private var cloudStatus: CloudBackupAvailability.Status = .notBuilt
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -15,10 +16,15 @@ struct RestoreBackupStepView: View {
                 .multilineTextAlignment(.leading)
 
             optionButton(.restore, title: String(localized: "Restore From Backup File"))
+            if cloudStatus == .available {
+                optionButton(.restoreICloud, title: String(localized: "Restore From iCloud"))
+            }
             optionButton(.startFresh, title: String(localized: "Start Fresh With New Settings"))
 
             if state.backupRestoreOption == .restore {
                 restoreSection
+            } else if state.backupRestoreOption == .restoreICloud {
+                cloudRestoreSection
             }
 
             VStack(alignment: .leading, spacing: 10) {
@@ -39,6 +45,7 @@ struct RestoreBackupStepView: View {
             .multilineTextAlignment(.leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task { cloudStatus = await CloudBackupAvailability.status() }
         .disabled(state.backupRestoreInProgress)
         .overlay {
             if state.backupRestoreInProgress { ProgressView("Restoring settings… Keep Trio open.") }
@@ -70,6 +77,20 @@ struct RestoreBackupStepView: View {
                 if let overview = state.pendingBackupOverview {
                     BackupChangeOverviewView(changeSet: overview)
                 }
+            }
+        }
+    }
+
+    @ViewBuilder private var cloudRestoreSection: some View {
+        if state.backupWasRestored {
+            restoredCard
+        } else {
+            TrioCloudBackupBrowser(
+                onSelectForOnboarding: { state.selectCloudBackup($0) },
+                selectedBackupID: state.pendingBackup?.id.uuidString
+            )
+            if let backup = state.pendingBackup {
+                summaryCard(backup)
             }
         }
     }
@@ -118,8 +139,10 @@ struct RestoreBackupStepView: View {
                 Image(systemName: "doc.text.fill").foregroundColor(.blue)
                 Text("Backup selected").fontWeight(.semibold)
                 Spacer()
-                Button(action: { isFilePickerPresented = true }) {
-                    Text("Change").font(.footnote)
+                if state.backupRestoreOption == .restore {
+                    Button(action: { isFilePickerPresented = true }) {
+                        Text("Change").font(.footnote)
+                    }
                 }
             }
             Text("Created: \(backup.createdAt.formatted(date: .abbreviated, time: .shortened))")

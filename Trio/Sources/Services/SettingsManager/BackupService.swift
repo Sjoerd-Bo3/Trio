@@ -136,6 +136,7 @@ struct BackupEntry: Identifiable {
             backup, settingsManager: settingsManager, deviceManager: deviceManager
         )
         notifyObservers()
+        TrioCloudBackupCoordinator.shared.restoreCompleted()
         return report
     }
 

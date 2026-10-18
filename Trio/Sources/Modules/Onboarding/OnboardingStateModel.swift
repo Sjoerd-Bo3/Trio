@@ -103,7 +103,7 @@ extension Onboarding {
         /// The step cannot be left before a choice was made, and a chosen restore has to finish first.
         var restoreBlocksNext: Bool {
             backupRestoreInProgress || backupRestoreOption == .noSelection ||
-                (backupRestoreOption == .restore && !backupWasRestored)
+                ((backupRestoreOption == .restore || backupRestoreOption == .restoreICloud) && !backupWasRestored)
         }
 
         // MARK: - Units and Pump Omboarding Option
