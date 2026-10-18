@@ -426,8 +426,9 @@ extension BackupSnapshotTests {
         let legacy = SettingsBackupTestFixtures.fullBackup()
         let opened = try BackupFileService.open(JSONCoding.encoder.encode(legacy))
         #expect(opened.snapshot.schemaVersion == TrioSettingsBackup.currentSchema)
-        #expect(!opened.warnings.isEmpty)
         #expect(opened.snapshot.deviceInfo?.pumpType == "Omnipod DASH")
+        #expect(opened.sensitive?.credentials?.nightscoutURL == "https://example.nightscout.test")
+        #expect(opened.sensitive?.nightscoutHost == "example.nightscout.test")
 
         let prepared = try SettingsBackupRestore.prepare(
             opened.snapshot,

@@ -19,11 +19,13 @@ struct BackupDetailView: View {
     @State private var restored = false
     @State private var restoreWarnings: [String] = []
     @State private var exported: BackupExportFile?
+    @State private var sensitiveModel: SensitiveRestoreModel
 
     init(
         entry: BackupEntry,
         snapshot: TrioSettingsBackup? = nil,
         warnings: [String] = [],
+        plainSensitive: SensitiveTier? = nil,
         allowsExport: Bool = true,
         loader: (() async throws -> TrioSettingsBackup)? = nil,
         onSelectForOnboarding: ((TrioSettingsBackup) -> Void)?
@@ -34,6 +36,9 @@ struct BackupDetailView: View {
         self.allowsExport = allowsExport
         self.loader = loader
         _backup = State(initialValue: snapshot)
+        let model = SensitiveRestoreModel()
+        model.tier = plainSensitive
+        _sensitiveModel = State(initialValue: model)
     }
 
     private var pumpBlocksRestore: Bool {
@@ -75,6 +80,20 @@ struct BackupDetailView: View {
                         }
                     } footer: {
                         Text("Compares this backup with your current settings. Restoring always switches Trio to Open Loop.")
+                    }.listRowBackground(Color.chart)
+                }
+                if SensitiveRestoreSection.isRelevant(backup, model: sensitiveModel) {
+                    Section("Protected Data") {
+                        SensitiveRestoreSection(
+                            backup: backup,
+                            allowsPairing: onSelectForOnboarding != nil,
+                            model: sensitiveModel
+                        )
+                    }.listRowBackground(Color.chart)
+                }
+                if HistoryRestoreRow.isRelevant(backup) {
+                    Section("Treatment History") {
+                        HistoryRestoreRow(backup: backup, model: sensitiveModel)
                     }.listRowBackground(Color.chart)
                 }
                 let nodes = BackupSettingsNode.make(from: backup)
@@ -228,7 +247,12 @@ struct BackupDetailView: View {
         restoring = true
         defer { restoring = false }
         do {
-            restoreWarnings = try await BackupService.shared.restoreConfiguredApp(backup).warnings
+            let selection = sensitiveModel.selection(allowsPairing: false, adoptionAccepted: false)
+            restoreWarnings = try await BackupService.shared.restoreConfiguredApp(
+                backup,
+                sensitive: selection,
+                restoreHistory: sensitiveModel.restoreHistory
+            ).warnings
             restored = true
         } catch {
             message = "Restore stopped. No pump settings were sent.\n\n" + error.localizedDescription

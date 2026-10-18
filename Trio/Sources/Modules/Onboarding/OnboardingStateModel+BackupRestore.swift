@@ -2,7 +2,9 @@ import Foundation
 import SwiftUI
 
 enum BackupRestoreOption: Equatable {
+    /// Restore from a backup file.
     case restore
+    case restoreICloud
     case startFresh
     case noSelection
 }
@@ -14,11 +16,24 @@ extension Onboarding.StateModel {
     @MainActor func chooseBackupRestoreOption(_ option: BackupRestoreOption) {
         // A restore that has been applied cannot be taken back by choosing another option.
         guard !backupWasRestored, !backupRestoreInProgress else { return }
-        backupRestoreOption = option
-        if option == .startFresh {
+        if option != backupRestoreOption {
             pendingBackup = nil
             pendingBackupWarnings = []
             pendingBackupOverview = nil
+            sensitiveModel.reset()
+        }
+        backupRestoreOption = option
+    }
+
+    /// A backup picked from the iCloud list; applied only after the user confirms.
+    @MainActor func selectCloudBackup(_ backup: TrioSettingsBackup) {
+        guard !backupWasRestored, !backupRestoreInProgress else { return }
+        pendingBackup = backup
+        pendingBackupWarnings = []
+        pendingBackupOverview = nil
+        sensitiveModel.reset()
+        Task { @MainActor in
+            pendingBackupOverview = await BackupService.shared.changeOverview(for: backup, onboarding: true)
         }
     }
 
@@ -29,6 +44,7 @@ extension Onboarding.StateModel {
             let opened = try BackupFileService.open(url: url)
             pendingBackup = opened.snapshot
             pendingBackupWarnings = opened.warnings
+            sensitiveModel.reset(tier: opened.sensitive)
             pendingBackupOverview = await BackupService.shared.changeOverview(for: opened.snapshot, onboarding: true)
             backupRestoreError = nil
         } catch {
@@ -36,12 +52,18 @@ extension Onboarding.StateModel {
         }
     }
 
-    @MainActor func applyPendingBackup() async {
+    /// `adoptionAccepted` is true only when the user accepted the final dialog naming the pump to adopt.
+    @MainActor func applyPendingBackup(adoptionAccepted: Bool = false) async {
         guard let backup = pendingBackup, !backupRestoreInProgress, appliedBackupID != backup.id else { return }
         backupRestoreInProgress = true
         defer { backupRestoreInProgress = false }
         do {
-            let report = try await BackupService.shared.restoreDuringOnboarding(backup)
+            let selection = sensitiveModel.selection(allowsPairing: true, adoptionAccepted: adoptionAccepted)
+            let report = try await BackupService.shared.restoreDuringOnboarding(
+                backup,
+                sensitive: selection,
+                restoreHistory: sensitiveModel.restoreHistory
+            )
             restoreWarnings = report.warnings
             appliedBackupID = backup.id
             prefillFromRestoredSettings()

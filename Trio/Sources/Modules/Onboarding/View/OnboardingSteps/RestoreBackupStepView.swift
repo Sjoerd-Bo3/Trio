@@ -6,6 +6,8 @@ struct RestoreBackupStepView: View {
     @State private var isFilePickerPresented = false
     @State private var showingRestoreConfirmation = false
     @State private var showingOverview = false
+    @State private var showingPumpDialog = false
+    @State private var cloudStatus: CloudBackupAvailability.Status = .notBuilt
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -15,10 +17,15 @@ struct RestoreBackupStepView: View {
                 .multilineTextAlignment(.leading)
 
             optionButton(.restore, title: String(localized: "Restore From Backup File"))
+            if cloudStatus == .available {
+                optionButton(.restoreICloud, title: String(localized: "Restore From iCloud"))
+            }
             optionButton(.startFresh, title: String(localized: "Start Fresh With New Settings"))
 
             if state.backupRestoreOption == .restore {
                 restoreSection
+            } else if state.backupRestoreOption == .restoreICloud {
+                cloudRestoreSection
             }
 
             VStack(alignment: .leading, spacing: 10) {
@@ -39,6 +46,7 @@ struct RestoreBackupStepView: View {
             .multilineTextAlignment(.leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task { cloudStatus = await CloudBackupAvailability.status() }
         .disabled(state.backupRestoreInProgress)
         .overlay {
             if state.backupRestoreInProgress { ProgressView("Restoring settings… Keep Trio open.") }
@@ -70,6 +78,20 @@ struct RestoreBackupStepView: View {
                 if let overview = state.pendingBackupOverview {
                     BackupChangeOverviewView(changeSet: overview)
                 }
+            }
+        }
+    }
+
+    @ViewBuilder private var cloudRestoreSection: some View {
+        if state.backupWasRestored {
+            restoredCard
+        } else {
+            TrioCloudBackupBrowser(
+                onSelectForOnboarding: { state.selectCloudBackup($0) },
+                selectedBackupID: state.pendingBackup?.id.uuidString
+            )
+            if let backup = state.pendingBackup {
+                summaryCard(backup)
             }
         }
     }
@@ -112,14 +134,25 @@ struct RestoreBackupStepView: View {
         .accessibilityAddTraits(state.backupRestoreOption == option ? [.isSelected] : [])
     }
 
+    /// Pump pairing needs the "old phone is gone" confirmation before the restore can start.
+    private var restoreBlocked: Bool {
+        state.sensitiveModel.restorePumpPairing && !state.sensitiveModel.oldPhoneStopped
+    }
+
+    private var pumpName: String {
+        PumpAdoptionGate.displayName(forManagerState: state.sensitiveModel.tier?.devices?.pumpState ?? "")
+    }
+
     private func summaryCard(_ backup: TrioSettingsBackup) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: "doc.text.fill").foregroundColor(.blue)
                 Text("Backup selected").fontWeight(.semibold)
                 Spacer()
-                Button(action: { isFilePickerPresented = true }) {
-                    Text("Change").font(.footnote)
+                if state.backupRestoreOption == .restore {
+                    Button(action: { isFilePickerPresented = true }) {
+                        Text("Change").font(.footnote)
+                    }
                 }
             }
             Text("Created: \(backup.createdAt.formatted(date: .abbreviated, time: .shortened))")
@@ -145,15 +178,41 @@ struct RestoreBackupStepView: View {
                 Button("Show Settings in This Backup") { showingOverview = true }
                     .font(.footnote)
             }
-            Button(action: { showingRestoreConfirmation = true }) {
+            if SensitiveRestoreSection.isRelevant(backup, model: state.sensitiveModel) {
+                Divider()
+                Text("Protected Data").fontWeight(.semibold)
+                SensitiveRestoreSection(backup: backup, allowsPairing: true, model: state.sensitiveModel)
+            }
+            if HistoryRestoreRow.isRelevant(backup) {
+                Divider()
+                HistoryRestoreRow(backup: backup, model: state.sensitiveModel)
+            }
+            Button(action: {
+                if state.sensitiveModel.restorePumpPairing { showingPumpDialog = true } else { showingRestoreConfirmation = true }
+            }) {
                 Text("Restore Settings")
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .foregroundColor(.white)
-                    .background(Capsule().fill(Color.blue))
+                    .background(Capsule().fill(restoreBlocked ? Color(.systemGray) : Color.blue))
             }
             .buttonStyle(.plain)
+            .disabled(restoreBlocked)
+            .confirmationDialog(
+                "Adopt \(pumpName) on THIS phone?",
+                isPresented: $showingPumpDialog,
+                titleVisibility: .visible
+            ) {
+                Button("Adopt Pump and Restore", role: .destructive) {
+                    Task { await state.applyPendingBackup(adoptionAccepted: true) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(
+                    "If another phone still controls this pump, two phones can command it at once. Trio stays in Open Loop and sends no pump command during the restore."
+                )
+            }
             .confirmationDialog("Restore Settings?", isPresented: $showingRestoreConfirmation, titleVisibility: .visible) {
                 Button("Restore") { Task { await state.applyPendingBackup() } }
                 Button("Cancel", role: .cancel) {}

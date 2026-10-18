@@ -1026,6 +1026,20 @@
 		B6A140F4281B7CEF7B999066 /* OnboardingStateModel+BackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7D4DC7A2DF1BC417E8D8AC /* OnboardingStateModel+BackupRestore.swift */; };
 		F5CC5FE6C26D1838D1E782A0 /* RestoreBackupStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 297B852E29187C6FCED92908 /* RestoreBackupStepView.swift */; };
 		8388FCFF5300CFD868CB154C /* OnboardingBackupRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */; };
+		E81802CEB99DDA3F23B8B267 /* CloudKitBackupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73051984840EB788997F951 /* CloudKitBackupStore.swift */; };
+		E61BEB66107D57137332D7E5 /* TrioCloudBackupCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F05539FF162B3E50FC979FF5 /* TrioCloudBackupCoordinator.swift */; };
+		71BE794A3571365D0A2E0761 /* TrioCloudBackupBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C557B205EDCBF1B26911907E /* TrioCloudBackupBrowser.swift */; };
+		46DDB5D19DEE4E576B2FBF55 /* TrioCloudBackupConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B97C222A7FEC92A3D7268EA /* TrioCloudBackupConfigurationView.swift */; };
+		D0933B0A93DC20D0EBC5A5A7 /* CloudBackupCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6906188AC5A17AC18A8BA575 /* CloudBackupCoordinatorTests.swift */; };
+		EB9FBFF67667A2B891753505 /* SealedSensitiveBlob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A9044DE407406254EE07578 /* SealedSensitiveBlob.swift */; };
+		586481C6055F323E940E76E7 /* SensitiveRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29ACB0B98857BEEC7759EC2 /* SensitiveRestore.swift */; };
+		3AAB79E2CD8F79291371865C /* SensitiveRestoreSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6F426C2E63404B7DD55BB7 /* SensitiveRestoreSection.swift */; };
+		E5B37D339CBE9A504BF3E59D /* BackupExportOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AED046C0118913E55E5A6ACC /* BackupExportOptionsView.swift */; };
+		A7B51C49774288C981BA692A /* SensitiveTierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B559671B9B77CE0F908B912D /* SensitiveTierTests.swift */; };
+		FAB12AF24A10A5F6EF4FE140 /* SettingsBackupHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FD918062B3757977B4EF29 /* SettingsBackupHistory.swift */; };
+		3491E7ADF653BDB3AFAE400E /* BackupExtensionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D7D8A00A0E2783CCFFCE89 /* BackupExtensionRegistry.swift */; };
+		A753DBA634259F055C712EBA /* HistoryRestoreRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF853B929BD9ED55FC0DD25 /* HistoryRestoreRow.swift */; };
+		6EFD44704CD0B6B9DDA935A0 /* BackupHistoryAndExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -2143,6 +2157,20 @@
 		BD7D4DC7A2DF1BC417E8D8AC /* OnboardingStateModel+BackupRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OnboardingStateModel+BackupRestore.swift"; sourceTree = "<group>"; };
 		297B852E29187C6FCED92908 /* RestoreBackupStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreBackupStepView.swift; sourceTree = "<group>"; };
 		0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingBackupRestoreTests.swift; sourceTree = "<group>"; };
+		B73051984840EB788997F951 /* CloudKitBackupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitBackupStore.swift; sourceTree = "<group>"; };
+		F05539FF162B3E50FC979FF5 /* TrioCloudBackupCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioCloudBackupCoordinator.swift; sourceTree = "<group>"; };
+		C557B205EDCBF1B26911907E /* TrioCloudBackupBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioCloudBackupBrowser.swift; sourceTree = "<group>"; };
+		6B97C222A7FEC92A3D7268EA /* TrioCloudBackupConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioCloudBackupConfigurationView.swift; sourceTree = "<group>"; };
+		6906188AC5A17AC18A8BA575 /* CloudBackupCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupCoordinatorTests.swift; sourceTree = "<group>"; };
+		0A9044DE407406254EE07578 /* SealedSensitiveBlob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SealedSensitiveBlob.swift; sourceTree = "<group>"; };
+		B29ACB0B98857BEEC7759EC2 /* SensitiveRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitiveRestore.swift; sourceTree = "<group>"; };
+		2D6F426C2E63404B7DD55BB7 /* SensitiveRestoreSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitiveRestoreSection.swift; sourceTree = "<group>"; };
+		AED046C0118913E55E5A6ACC /* BackupExportOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupExportOptionsView.swift; sourceTree = "<group>"; };
+		B559671B9B77CE0F908B912D /* SensitiveTierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitiveTierTests.swift; sourceTree = "<group>"; };
+		67FD918062B3757977B4EF29 /* SettingsBackupHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupHistory.swift; sourceTree = "<group>"; };
+		96D7D8A00A0E2783CCFFCE89 /* BackupExtensionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupExtensionRegistry.swift; sourceTree = "<group>"; };
+		1FF853B929BD9ED55FC0DD25 /* HistoryRestoreRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryRestoreRow.swift; sourceTree = "<group>"; };
+		D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupHistoryAndExtensionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -2637,6 +2665,11 @@
 			children = (
 				DD1745112C54168300211FAC /* Subviews */,
 				3811DE3C25C9D4A100A708ED /* SettingsRootView.swift */,
+				1FF853B929BD9ED55FC0DD25 /* HistoryRestoreRow.swift */,
+				AED046C0118913E55E5A6ACC /* BackupExportOptionsView.swift */,
+				2D6F426C2E63404B7DD55BB7 /* SensitiveRestoreSection.swift */,
+				6B97C222A7FEC92A3D7268EA /* TrioCloudBackupConfigurationView.swift */,
+				C557B205EDCBF1B26911907E /* TrioCloudBackupBrowser.swift */,
 				F370A466A2ACB05F8BEC012A /* BackupChangeOverviewView.swift */,
 				6442D0BA1EC8E4657CA4F064 /* BackupSettingsPreviewView.swift */,
 				18082FEEEFCD56A6E36B29F4 /* BackupDetailView.swift */,
@@ -3165,6 +3198,12 @@
 			isa = PBXGroup;
 			children = (
 				38AEE75125F022080013F05B /* SettingsManager.swift */,
+				96D7D8A00A0E2783CCFFCE89 /* BackupExtensionRegistry.swift */,
+				67FD918062B3757977B4EF29 /* SettingsBackupHistory.swift */,
+				B29ACB0B98857BEEC7759EC2 /* SensitiveRestore.swift */,
+				0A9044DE407406254EE07578 /* SealedSensitiveBlob.swift */,
+				F05539FF162B3E50FC979FF5 /* TrioCloudBackupCoordinator.swift */,
+				B73051984840EB788997F951 /* CloudKitBackupStore.swift */,
 				B2873D4FB1702586CB595113 /* BackupService.swift */,
 				6D0CD638754F555304884D7C /* LegacyBackupAdapter.swift */,
 				5FD7F17AC2828C4A106F61AC /* LegacySettingsBackupV1.swift */,
@@ -3328,6 +3367,9 @@
 				B3919BBB515547118D684CD2 /* LoopIndicatorTests.swift */,
 				B3919BBB515547118D684CC2 /* MaxIOBSuggestionTests.swift */,
 				B3919BBB515547118D684CB2 /* DosingModeMigrationTests.swift */,
+				D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */,
+				B559671B9B77CE0F908B912D /* SensitiveTierTests.swift */,
+				6906188AC5A17AC18A8BA575 /* CloudBackupCoordinatorTests.swift */,
 				0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */,
 				BE4D540152F6226E2AB470F4 /* SettingsImportApplierTests.swift */,
 				098FE160E4B4B6A2971034D0 /* SettingsBackupTestFixtures.swift */,
@@ -5352,6 +5394,12 @@
 				E73259BE7A7D1AFB93D6B8DF /* CarbEntryMutationService.swift in Sources */,
 				38B4F3CA25E502E200E76A18 /* SwiftNotificationCenter.swift in Sources */,
 				38AEE75225F022080013F05B /* SettingsManager.swift in Sources */,
+				3491E7ADF653BDB3AFAE400E /* BackupExtensionRegistry.swift in Sources */,
+				FAB12AF24A10A5F6EF4FE140 /* SettingsBackupHistory.swift in Sources */,
+				586481C6055F323E940E76E7 /* SensitiveRestore.swift in Sources */,
+				EB9FBFF67667A2B891753505 /* SealedSensitiveBlob.swift in Sources */,
+				E61BEB66107D57137332D7E5 /* TrioCloudBackupCoordinator.swift in Sources */,
+				E81802CEB99DDA3F23B8B267 /* CloudKitBackupStore.swift in Sources */,
 				F24CA02F60E5A3866667CB3A /* BackupService.swift in Sources */,
 				BA5DFF7AFFA3A7272342FD9F /* LegacyBackupAdapter.swift in Sources */,
 				E4FBDE1F35F58674C878918A /* LegacySettingsBackupV1.swift in Sources */,
@@ -5420,6 +5468,11 @@
 				383948D625CD4D8900E91849 /* FileStorage.swift in Sources */,
 				CEE9A6572BBB418300EB5194 /* CalibrationsChart.swift in Sources */,
 				3811DE4125C9D4A100A708ED /* SettingsRootView.swift in Sources */,
+				A753DBA634259F055C712EBA /* HistoryRestoreRow.swift in Sources */,
+				E5B37D339CBE9A504BF3E59D /* BackupExportOptionsView.swift in Sources */,
+				3AAB79E2CD8F79291371865C /* SensitiveRestoreSection.swift in Sources */,
+				46DDB5D19DEE4E576B2FBF55 /* TrioCloudBackupConfigurationView.swift in Sources */,
+				71BE794A3571365D0A2E0761 /* TrioCloudBackupBrowser.swift in Sources */,
 				6F012BC5689EB62363DB41F8 /* BackupChangeOverviewView.swift in Sources */,
 				E265C236433EA4E6825E1C54 /* BackupSettingsPreviewView.swift in Sources */,
 				E5A14C6D6C2C2E786A9C2E57 /* BackupDetailView.swift in Sources */,
@@ -6182,6 +6235,9 @@
 				41740E936552456AAC0EDDC3 /* LoopIndicatorTests.swift in Sources */,
 				41740E936552456AAC0EDCC3 /* MaxIOBSuggestionTests.swift in Sources */,
 				41740E936552456AAC0EDBC3 /* DosingModeMigrationTests.swift in Sources */,
+				6EFD44704CD0B6B9DDA935A0 /* BackupHistoryAndExtensionTests.swift in Sources */,
+				A7B51C49774288C981BA692A /* SensitiveTierTests.swift in Sources */,
+				D0933B0A93DC20D0EBC5A5A7 /* CloudBackupCoordinatorTests.swift in Sources */,
 				8388FCFF5300CFD868CB154C /* OnboardingBackupRestoreTests.swift in Sources */,
 				1C39E3979D8EF18A56FA9C2B /* SettingsImportApplierTests.swift in Sources */,
 				049C9D42043A7E19A3EB660E /* SettingsBackupTestFixtures.swift in Sources */,
@@ -6426,7 +6482,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				BUNDLE_IDENTIFIER = "$(BUNDLE_IDENTIFIER)";
-				CODE_SIGN_ENTITLEMENTS = Trio/Resources/Trio.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Trio/Resources/Trio$(TRIO_ENTITLEMENTS_SUFFIX).entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = $APP_BUILD_NUMBER;
@@ -6458,6 +6514,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(TRIO_ICLOUD_CONDITION)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -6472,7 +6529,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				BUNDLE_IDENTIFIER = "$(BUNDLE_IDENTIFIER)";
-				CODE_SIGN_ENTITLEMENTS = Trio/Resources/Trio.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Trio/Resources/Trio$(TRIO_ENTITLEMENTS_SUFFIX).entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = $APP_BUILD_NUMBER;
@@ -6503,6 +6560,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(TRIO_ICLOUD_CONDITION)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
