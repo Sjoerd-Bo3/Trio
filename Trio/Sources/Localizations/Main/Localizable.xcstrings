@@ -351539,649 +351539,2369 @@
       "comment" : "Live Activity glucose reading font size"
     },
     "%@: %@ %@ adjusted to %@ %@ to respect limits" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ %3$@ aangepast naar %4$@ %5$@ om binnen de limieten te blijven"
+          }
+        }
+      }
     },
     "%@: %@ adjusted to %@ to respect limits" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ aangepast naar %3$@ om binnen de limieten te blijven"
+          }
+        }
+      }
     },
     "%@: restoring this CGM type's pairing is untested — be prepared to re-add it under Devices > CGM." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: het herstellen van de koppeling van dit CGM-type is niet getest — wees voorbereid om het opnieuw toe te voegen via Apparaten > CGM."
+          }
+        }
+      }
     },
     "%@: restoring this pump type's pairing is untested — be prepared to pair manually under Devices > Insulin Pump." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: het herstellen van de koppeling van dit pomptype is niet getest — wees voorbereid om handmatig te koppelen via Apparaten > Insuline Pomp."
+          }
+        }
+      }
     },
     "%lld backup operation(s) pending." : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld back-upbewerking(en) in afwachting."
+          }
+        }
+      }
     },
     "%lld basal rate(s) adjusted to the nearest rate supported by your pump." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld basaalstand(en) aangepast naar de dichtstbijzijnde stand die je pomp ondersteunt."
+          }
+        }
+      }
     },
     "A paired pump blocks restoring settings. Remove your pump under Devices first." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Een gekoppelde pomp blokkeert het herstellen van instellingen. Verwijder eerst je pomp onder Apparaten."
+          }
+        }
+      }
     },
     "A previous restore did not finish. Restart Trio so it can finish recovering, then try again." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Een eerdere herstelactie is niet afgerond. Start Trio opnieuw op zodat het het herstel kan afronden en probeer het daarna opnieuw."
+          }
+        }
+      }
     },
     "A previous settings restore did not finish. Trio switched to Open Loop. Check your therapy settings and your pump before returning to Closed Loop." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Een eerdere herstelactie van instellingen is niet afgerond. Trio is overgeschakeld naar Open Loop. Controleer je therapie-instellingen en je pomp voordat je terugkeert naar Actieve loop."
+          }
+        }
+      }
     },
     "A pump is already paired with this phone." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er is al een pomp gekoppeld aan deze telefoon."
+          }
+        }
+      }
     },
     "A running Omnipod DASH pod cannot move to a new phone. Deactivate it and activate a new pod under Devices > Insulin Pump." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Een actieve Omnipod DASH-pod kan niet naar een nieuwe telefoon worden verplaatst. Deactiveer de pod en activeer een nieuwe pod onder Apparaten > Insuline Pomp."
+          }
+        }
+      }
     },
     "A Trio backup restores your setup:" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Met een Trio-back-up herstel je je configuratie:"
+          }
+        }
+      }
     },
     "A52 Risk Enable" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A52-risico inschakelen"
+          }
+        }
+      }
     },
     "AccuChek: reconnects automatically — older sensors may show an iOS pairing request once." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AccuChek: maakt automatisch opnieuw verbinding — oudere sensoren kunnen eenmalig een iOS-koppelverzoek tonen."
+          }
+        }
+      }
     },
     "Add Glucose to Calendar" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glucose toevoegen aan agenda"
+          }
+        }
+      }
     },
     "added" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "toegevoegd"
+          }
+        }
+      }
     },
     "Adopt %@ on THIS phone?" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ op DEZE telefoon overnemen?"
+          }
+        }
+      }
     },
     "Adopt Pump and Restore" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomp overnemen en herstellen"
+          }
+        }
+      }
     },
     "Algorithm settings, delivery limits, alerts and presets" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritme-instellingen, afgiftelimieten, waarschuwingen en voorinstellingen"
+          }
+        }
+      }
     },
     "All existing presets in the imported categories are deleted and replaced by the file's presets." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle bestaande voorinstellingen in de geïmporteerde categorieën worden verwijderd en vervangen door de voorinstellingen uit het bestand."
+          }
+        }
+      }
     },
     "Allow Insulin Dilution" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insulineverdunning toestaan"
+          }
+        }
+      }
     },
     "Another phone may still control this pump" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Een andere telefoon bestuurt deze pomp mogelijk nog"
+          }
+        }
+      }
     },
     "App Version: %@" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App-versie: %@"
+          }
+        }
+      }
     },
     "Automatic Backup" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische back-up"
+          }
+        }
+      }
     },
     "Automatic Backups" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische back-ups"
+          }
+        }
+      }
     },
     "Back Up Now" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu back-up maken"
+          }
+        }
+      }
     },
     "Backup & Restore" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-up en herstel"
+          }
+        }
+      }
     },
     "Backup Details" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-updetails"
+          }
+        }
+      }
     },
     "Backup File" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-upbestand"
+          }
+        }
+      }
     },
     "Backup Retention" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-upbewaartermijn"
+          }
+        }
+      }
     },
     "Backup selected" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-up geselecteerd"
+          }
+        }
+      }
     },
     "basal rates" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "basaalstanden"
+          }
+        }
+      }
     },
     "Both confirmations are needed before a pump pairing is restored." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beide bevestigingen zijn nodig voordat een pompkoppeling wordt hersteld."
+          }
+        }
+      }
     },
     "Carb Entries" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koolhydraatinvoer"
+          }
+        }
+      }
     },
     "Carb history could not be imported: %@" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koolhydraatgeschiedenis kon niet worden geïmporteerd: %@"
+          }
+        }
+      }
     },
     "carb ratios" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "koolhydraatratio's"
+          }
+        }
+      }
     },
     "CGM Pairing" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CGM-koppeling"
+          }
+        }
+      }
     },
     "CGM pairing could not be restored. Add your CGM under Settings > Devices > CGM." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De CGM-koppeling kon niet worden hersteld. Voeg je CGM toe onder Instellingen > Apparaten > CGM."
+          }
+        }
+      }
     },
     "CGM Plugin" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CGM-plug-in"
+          }
+        }
+      }
     },
     "CGM: %@" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CGM: %@"
+          }
+        }
+      }
     },
     "Change" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzigen"
+          }
+        }
+      }
     },
     "Changes" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzigingen"
+          }
+        }
+      }
     },
     "Changes to This Phone" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzigingen op deze telefoon"
+          }
+        }
+      }
     },
     "Checks run while Trio is running or the next time you open it. Unchanged settings do not create another backup." : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controles worden uitgevoerd terwijl Trio actief is of de volgende keer dat je Trio opent. Ongewijzigde instellingen maken geen nieuwe back-up."
+          }
+        }
+      }
     },
     "Choose a backup limit of 3, 5, 10, or 15." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies een back-uplimiet van 3, 5, 10 of 15."
+          }
+        }
+      }
     },
     "Choose a backup to restore." : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies een back-up om te herstellen."
+          }
+        }
+      }
     },
     "Choose the maximum number of backups to keep in iCloud. When this limit is reached, Trio will automatically delete the oldest backup to make room for a new one." : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies het maximale aantal back-ups dat in iCloud wordt bewaard. Wanneer deze limiet is bereikt, verwijdert Trio automatisch de oudste back-up om ruimte te maken voor een nieuwe."
+          }
+        }
+      }
     },
     "Close backup details" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-updetails sluiten"
+          }
+        }
+      }
     },
     "Compares this backup with your current settings. Restoring always switches Trio to Open Loop." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergelijkt deze back-up met je huidige instellingen. Bij herstellen schakelt Trio altijd over naar Open Loop."
+          }
+        }
+      }
     },
     "Complete your therapy settings before creating a backup." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltooi je therapie-instellingen voordat je een back-up maakt."
+          }
+        }
+      }
     },
     "Could not restore %@: %@" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kon %1$@ niet herstellen: %2$@"
+          }
+        }
+      }
     },
     "Created" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemaakt"
+          }
+        }
+      }
     },
     "Created: %@" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemaakt: %@"
+          }
+        }
+      }
     },
     "Dana pumps do not reconnect from a saved pairing. Set the pump up again under Devices > Insulin Pump." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dana-pompen maken niet opnieuw verbinding vanuit een opgeslagen koppeling. Stel de pomp opnieuw in onder Apparaten > Insuline Pomp."
+          }
+        }
+      }
     },
     "Dana: the pump will not reconnect on its own — remove it and set it up again under Devices > Insulin Pump (Dana RS asks for its PINs again, Dana-i pairs again)." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dana: de pomp maakt niet vanzelf opnieuw verbinding — verwijder de pomp en stel hem opnieuw in onder Apparaten > Insuline Pomp (Dana RS vraagt opnieuw om de pincodes, Dana-i koppelt opnieuw)."
+          }
+        }
+      }
     },
     "Debug Options" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debug-opties"
+          }
+        }
+      }
     },
     "Delete Backup?" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-up verwijderen?"
+          }
+        }
+      }
     },
     "Dexcom G7: reconnects automatically — pairing is handled by the Dexcom app, so set that up on the new phone as well." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dexcom G7: maakt automatisch opnieuw verbinding — de koppeling wordt door de Dexcom-app afgehandeld, dus stel die ook op de nieuwe telefoon in."
+          }
+        }
+      }
     },
     "Dexcom: iOS will show a Bluetooth pairing request when the transmitter reconnects — accept it and the session continues." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dexcom: iOS toont een Bluetooth-koppelverzoek wanneer de transmitter opnieuw verbinding maakt — accepteer het en de sessie gaat verder."
+          }
+        }
+      }
     },
     "Disable all running overrides and temporary targets before restoring settings." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel alle actieve overrides en tijdelijke doelen uit voordat je instellingen herstelt."
+          }
+        }
+      }
     },
     "Display Emojis in Calendar" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emoji's tonen in agenda"
+          }
+        }
+      }
     },
     "Display IOB and COB in Calendar" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IOB en COB tonen in agenda"
+          }
+        }
+      }
     },
     "Duplicate preset name \"%@\" in backup — the last occurrence is used." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dubbele voorinstellingsnaam \"%@\" in back-up — de laatste wordt gebruikt."
+          }
+        }
+      }
     },
     "Dynamic ISF history is included in backups, but new history alone does not trigger a backup." : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De Dynamische ISF-geschiedenis wordt meegenomen in back-ups, maar alleen nieuwe geschiedenis zorgt niet voor een back-up."
+          }
+        }
+      }
     },
     "Enter a name for your backup." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geef je back-up een naam."
+          }
+        }
+      }
     },
     "Enter the passphrase you chose when you made this backup." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voer de wachtwoordzin in die je hebt gekozen toen je deze back-up maakte."
+          }
+        }
+      }
     },
     "Eversense: reconnects automatically — the transmitter may show an iOS pairing request once." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eversense: maakt automatisch opnieuw verbinding — de transmitter kan eenmalig een iOS-koppelverzoek tonen."
+          }
+        }
+      }
     },
     "Export Backup File" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-upbestand exporteren"
+          }
+        }
+      }
     },
     "Faster Bolus Confirmation" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snellere bolusbevestiging"
+          }
+        }
+      }
     },
     "Garmin Datafield" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin-datafield"
+          }
+        }
+      }
     },
     "Garmin Primary Attribute" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin primair attribuut"
+          }
+        }
+      }
     },
     "Garmin Secondary Attribute" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin secundair attribuut"
+          }
+        }
+      }
     },
     "Garmin Watchface" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin-watchface"
+          }
+        }
+      }
     },
     "Garmin Watchface Data" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin-watchfacegegevens"
+          }
+        }
+      }
     },
     "Glucose history could not be imported: %@" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glucosegeschiedenis kon niet worden geïmporteerd: %@"
+          }
+        }
+      }
     },
     "Glucose Readings" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glucosemetingen"
+          }
+        }
+      }
     },
     "glucose targets" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "glucosedoelen"
+          }
+        }
+      }
     },
     "Hide Insulin Badge" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insulinebadge verbergen"
+          }
+        }
+      }
     },
     "History (Optional)" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschiedenis (optioneel)"
+          }
+        }
+      }
     },
     "Home Stats Panel" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startscherm-statistiekenpaneel"
+          }
+        }
+      }
     },
     "I Have Reviewed My Settings" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ik heb mijn instellingen gecontroleerd"
+          }
+        }
+      }
     },
     "iCloud Backup" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud-back-up"
+          }
+        }
+      }
     },
     "If you saved a Trio settings backup, you can restore it now. You will still review every value in the next steps. Or start fresh with new settings." : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als je een back-up van je Trio-instellingen hebt opgeslagen, kun je die nu herstellen. Je controleert nog steeds elke waarde in de volgende stappen. Of begin opnieuw met nieuwe instellingen."
+          }
+        }
+      }
     },
     "Import Backup File" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-upbestand importeren"
+          }
+        }
+      }
     },
     "Imported presets replace same-named existing ones. New names are added, other presets are kept." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geïmporteerde voorinstellingen vervangen bestaande voorinstellingen met dezelfde naam. Nieuwe namen worden toegevoegd, andere voorinstellingen blijven behouden."
+          }
+        }
+      }
     },
     "Insulin Concentration" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insulineconcentratie"
+          }
+        }
+      }
     },
     "insulin sensitivities" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "insulinegevoeligheden"
+          }
+        }
+      }
     },
     "Invalid %@ in backup: schedule is empty." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ongeldige %@ in back-up: het schema is leeg."
+          }
+        }
+      }
     },
     "Invalid %@ in backup: values look like mmol/L, but backups must store mg/dL." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ongeldige %@ in back-up: de waarden lijken in mmol/L te zijn, maar back-ups moeten mg/dL gebruiken."
+          }
+        }
+      }
     },
     "Invalid %@ in backup: values must be greater than 0." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ongeldige %@ in back-up: waarden moeten groter zijn dan 0."
+          }
+        }
+      }
     },
     "Invalid basal rates in backup: total basal must be greater than 0." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ongeldige basaalstanden in back-up: de totale basaal moet groter zijn dan 0."
+          }
+        }
+      }
     },
     "Keep Existing" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestaande behouden"
+          }
+        }
+      }
     },
     "kept" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "behouden"
+          }
+        }
+      }
     },
     "Libre 3: scan the existing sensor once with NFC after the restore — the transferred receiver identity makes it accept the new phone." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libre 3: scan de bestaande sensor na het herstellen eenmalig met NFC — door de overgedragen ontvangeridentiteit accepteert hij de nieuwe telefoon."
+          }
+        }
+      }
     },
     "Libre: sensors pair to a single device — be prepared to re-pair the sensor on the new phone." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libre: sensoren koppelen aan één apparaat — wees voorbereid om de sensor opnieuw te koppelen op de nieuwe telefoon."
+          }
+        }
+      }
     },
     "LibreTransmitter: pairing cannot travel in a backup for this plugin — set up your bridge or sensor again under Devices > CGM." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LibreTransmitter: de koppeling kan voor deze plug-in niet via een back-up worden overgedragen — stel je bridge of sensor opnieuw in onder Apparaten > CGM."
+          }
+        }
+      }
     },
     "Live Activity Font Size" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lettergrootte Live-activiteit"
+          }
+        }
+      }
     },
     "Loading backup…" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-up laden…"
+          }
+        }
+      }
     },
     "Local Glucose Server Port" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poort lokale glucoseserver"
+          }
+        }
+      }
     },
     "Manual Backups" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handmatige back-ups"
+          }
+        }
+      }
     },
     "Medtronic: the pump settings transfer, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medtronic: de pompinstellingen worden overgedragen, maar selecteer je RileyLink opnieuw onder Apparaten > Insuline Pomp — RileyLink-selecties worden niet tussen telefoons overgedragen."
+          }
+        }
+      }
     },
     "Medtrum: the pump reconnects automatically on the new phone." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medtrum: de pomp maakt automatisch opnieuw verbinding op de nieuwe telefoon."
+          }
+        }
+      }
     },
     "More information about Backup Retention" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meer informatie over back-upbewaartermijn"
+          }
+        }
+      }
     },
     "Name Your Backup" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geef je back-up een naam"
+          }
+        }
+      }
     },
     "Nightscout and Remote Control Sign-In" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nightscout- en Afstandsbediening-aanmelding"
+          }
+        }
+      }
     },
     "Nightscout Sign-In" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nightscout-aanmelding"
+          }
+        }
+      }
     },
     "Nightscout sign-in could not be saved to the keychain. Enter it again under Settings > Services > Nightscout." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De Nightscout-aanmelding kon niet in de sleutelhanger worden opgeslagen. Voer deze opnieuw in onder Instellingen > Apps > Nightscout."
+          }
+        }
+      }
     },
     "Nightscout sign-in restored. Check the connection under Settings > Services > Nightscout." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nightscout-aanmelding hersteld. Controleer de verbinding onder Instellingen > Apps > Nightscout."
+          }
+        }
+      }
     },
     "No backups found" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geen back-ups gevonden"
+          }
+        }
+      }
     },
     "No settings included." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geen instellingen inbegrepen."
+          }
+        }
+      }
     },
     "Not included" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet inbegrepen"
+          }
+        }
+      }
     },
     "Not Restored" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet hersteld"
+          }
+        }
+      }
     },
     "Omnipod (Eros): the pod session transfers, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omnipod (Eros): de podsessie wordt overgedragen, maar selecteer je RileyLink opnieuw onder Apparaten > Insuline Pomp — RileyLink-selecties worden niet tussen telefoons overgedragen."
+          }
+        }
+      }
     },
     "Omnipod DASH: a running pod cannot move to a new phone — deactivate it and activate a new pod under Devices > Insulin Pump." : {
-      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omnipod DASH: een actieve pod kan niet naar een nieuwe telefoon worden verplaatst — deactiveer de pod en activeer een nieuwe pod onder Apparaten > Insuline Pomp."
+          }
+        }
+      }
     },
     "Once a day, Trio will check for any new settings changes and automatically back them up." : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eén keer per dag controleert Trio op nieuwe instellingswijzigingen en maakt daar automatisch een back-up van."
+          }
+        }
+      }
     },
     "Only presets with names that do not exist yet are added." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alleen voorinstellingen met namen die nog niet bestaan worden toegevoegd."
+          }
+        }
+      }
     },
     "Passphrase" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wachtwoordzin"
+          }
+        }
+      }
     },
     "Please choose if you want to restore a Trio settings backup or start fresh." : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies of je een Trio-instellingenback-up wilt herstellen of opnieuw wilt beginnen."
+          }
+        }
+      }
     },
     "Protected Data" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beveiligde gegevens"
+          }
+        }
+      }
     },
     "Protected Data (Optional)" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beveiligde gegevens (optioneel)"
+          }
+        }
+      }
     },
     "Pump and CGM Pairing" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomp- en CGM-koppeling"
+          }
+        }
+      }
     },
     "Pump and CGM pairing can only be restored while setting up Trio on a new phone." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomp- en CGM-koppeling kunnen alleen worden hersteld tijdens het instellen van Trio op een nieuwe telefoon."
+          }
+        }
+      }
     },
     "Pump Events" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pompgebeurtenissen"
+          }
+        }
+      }
     },
     "Pump history could not be imported: %@" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pompgeschiedenis kon niet worden geïmporteerd: %@"
+          }
+        }
+      }
     },
     "Pump Pairing (%@)" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pompkoppeling (%@)"
+          }
+        }
+      }
     },
     "Pump pairing can only be restored while setting up Trio." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pompkoppeling kan alleen worden hersteld tijdens het instellen van Trio."
+          }
+        }
+      }
     },
     "Pump pairing could not be restored. Pair your pump under Settings > Devices > Insulin Pump." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De pompkoppeling kon niet worden hersteld. Koppel je pomp onder Instellingen > Apparaten > Insuline Pomp."
+          }
+        }
+      }
     },
     "Pump pairing restored. Trio stays in Open Loop. Check the pump status before returning to Closed Loop." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pompkoppeling hersteld. Trio blijft in Open Loop. Controleer de pompstatus voordat je terugkeert naar Actieve loop."
+          }
+        }
+      }
     },
     "Pump: %@. Pumps are paired manually later." : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomp: %@. Pompen worden later handmatig gekoppeld."
+          }
+        }
+      }
     },
     "Readings and entries this phone already has are skipped, so restoring twice adds nothing." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metingen en invoer die deze telefoon al heeft, worden overgeslagen, dus twee keer herstellen voegt niets toe."
+          }
+        }
+      }
     },
     "Refresh backups" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-ups vernieuwen"
+          }
+        }
+      }
     },
     "Remote commands stay off until you turn them on under Settings > Services." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opdrachten op afstand blijven uit totdat je ze inschakelt onder Instellingen > Apps."
+          }
+        }
+      }
     },
     "Remote Control Secret" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afstandsbedieningsgeheim"
+          }
+        }
+      }
     },
     "Remote control secret restored. Remote commands stay off until you open Settings > Services > Remote Control." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afstandsbedieningsgeheim hersteld. Opdrachten op afstand blijven uit totdat je Instellingen > Apps > Afstandsbediening opent."
+          }
+        }
+      }
     },
     "removed" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "verwijderd"
+          }
+        }
+      }
     },
     "Rename" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hernoemen"
+          }
+        }
+      }
     },
     "Rename Backup" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-up hernoemen"
+          }
+        }
+      }
     },
     "Repeat Passphrase" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wachtwoordzin herhalen"
+          }
+        }
+      }
     },
     "Replace All" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles vervangen"
+          }
+        }
+      }
     },
     "Replace Same-Named" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang met dezelfde naam"
+          }
+        }
+      }
     },
     "replaced" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vervangen"
+          }
+        }
+      }
     },
     "Restore" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstellen"
+          }
+        }
+      }
     },
     "Restore Backup" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-up herstellen"
+          }
+        }
+      }
     },
     "Restore failed. Trio is in Open Loop. Check your settings and pump delivery." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstellen mislukt. Trio staat in Open Loop. Controleer je instellingen en de insulineafgifte van je pomp."
+          }
+        }
+      }
     },
     "Restore From Backup File" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstellen vanuit back-upbestand"
+          }
+        }
+      }
     },
     "Restore From iCloud" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstellen vanuit iCloud"
+          }
+        }
+      }
     },
     "Restore Needs Attention" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstel vereist aandacht"
+          }
+        }
+      }
     },
     "Restore Settings" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen herstellen"
+          }
+        }
+      }
     },
     "Restore Settings?" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen herstellen?"
+          }
+        }
+      }
     },
     "Restore stopped because pump delivery could not be safely suspended. Check your pump before trying again." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het herstellen is gestopt omdat de insulineafgifte van de pomp niet veilig kon worden onderbroken. Controleer je pomp voordat je het opnieuw probeert."
+          }
+        }
+      }
     },
     "Restore stopped. No pump settings were sent." : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstellen gestopt. Er zijn geen pompinstellingen verzonden."
+          }
+        }
+      }
     },
     "Restore Treatment History" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behandelgeschiedenis herstellen"
+          }
+        }
+      }
     },
     "Restoring settings… Keep Trio open." : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen worden hersteld… Houd Trio open."
+          }
+        }
+      }
     },
     "Restoring this pump type's pairing has not been tested. Pair it manually under Devices > Insulin Pump." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het herstellen van de koppeling van dit pomptype is niet getest. Koppel de pomp handmatig onder Apparaten > Insuline Pomp."
+          }
+        }
+      }
     },
     "Review Restored Settings" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstelde instellingen controleren"
+          }
+        }
+      }
     },
     "Select Backup File" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-upbestand selecteren"
+          }
+        }
+      }
     },
     "Settings restored" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen hersteld"
+          }
+        }
+      }
     },
     "Settings Restored!" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen hersteld!"
+          }
+        }
+      }
     },
     "Settings were restored from a backup and Trio is in Open Loop. Review your therapy settings, then switch to Closed Loop yourself when you are ready." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen hersteld uit een back-up en Trio staat in Open Loop. Controleer je therapie-instellingen en schakel daarna zelf over naar Actieve loop wanneer je er klaar voor bent."
+          }
+        }
+      }
     },
     "Show COB/IOB Chart" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COB/IOB-grafiek tonen"
+          }
+        }
+      }
     },
     "Show Settings in This Backup" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen in deze back-up tonen"
+          }
+        }
+      }
     },
     "Sigmoid Formula" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigmoid-formule"
+          }
+        }
+      }
     },
     "Sign in to iCloud in iPhone Settings and enable iCloud for Trio to back up your settings to iCloud." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meld je aan bij iCloud in de iPhone-instellingen en schakel iCloud in voor Trio om een back-up van je instellingen naar iCloud te maken."
+          }
+        }
+      }
     },
     "Sign in to iCloud in iPhone Settings and enable iCloud for Trio." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meld je aan bij iCloud in de iPhone-instellingen en schakel iCloud in voor Trio."
+          }
+        }
+      }
     },
     "skipped (currently running)" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "overgeslagen (momenteel actief)"
+          }
+        }
+      }
     },
     "Smart Stack Widget Style" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Stack-widgetstijl"
+          }
+        }
+      }
     },
     "Start Fresh With New Settings" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opnieuw beginnen met nieuwe instellingen"
+          }
+        }
+      }
     },
     "Success!" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gelukt!"
+          }
+        }
+      }
     },
     "TDD history could not be imported: %@" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TDD-geschiedenis kon niet worden geïmporteerd: %@"
+          }
+        }
+      }
     },
     "TDD Samples" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TDD-metingen"
+          }
+        }
+      }
     },
     "The backup used the CGM \"%@\". Set it up again under Settings > Devices > CGM." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De back-up gebruikte de CGM \"%@\". Stel deze opnieuw in onder Instellingen > Apparaten > CGM."
+          }
+        }
+      }
     },
     "The daily insulin totals saved in this file are not restored." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De dagelijkse insulinetotalen die in dit bestand zijn opgeslagen, worden niet hersteld."
+          }
+        }
+      }
     },
     "The iCloud backup could not be read." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De iCloud-back-up kon niet worden gelezen."
+          }
+        }
+      }
     },
     "The old phone is wiped or Trio is removed from it" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De oude telefoon wordt gewist of Trio wordt ervan verwijderd"
+          }
+        }
+      }
     },
     "The passphrase could not be processed." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De wachtwoordzin kon niet worden verwerkt."
+          }
+        }
+      }
     },
     "The passphrase is wrong, or the protected part of this backup is damaged." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De wachtwoordzin is onjuist, of het beveiligde deel van deze back-up is beschadigd."
+          }
+        }
+      }
     },
     "The passphrases do not match." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De wachtwoordzinnen komen niet overeen."
+          }
+        }
+      }
     },
     "The saved pump pairing could not be read." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De opgeslagen pompkoppeling kon niet worden gelezen."
+          }
+        }
+      }
     },
     "Therapy settings, which you still review on the next screens" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Therapie-instellingen, die je op de volgende schermen nog controleert"
+          }
+        }
+      }
     },
     "This backup also holds sign-in details or device pairing, protected by a passphrase." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze back-up bevat ook aanmeldgegevens of apparaatkoppelingen, beveiligd met een wachtwoordzin."
+          }
+        }
+      }
     },
     "This backup couldn’t be opened." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze back-up kon niet worden geopend."
+          }
+        }
+      }
     },
     "This backup has invalid therapy settings and cannot be restored." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze back-up bevat ongeldige therapie-instellingen en kan niet worden hersteld."
+          }
+        }
+      }
     },
     "This backup is damaged and cannot be restored." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze back-up is beschadigd en kan niet worden hersteld."
+          }
+        }
+      }
     },
     "This backup is too large. The limit is 8 MB." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze back-up is te groot. De limiet is 8 MB."
+          }
+        }
+      }
     },
     "This backup matches your current settings." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze back-up komt overeen met je huidige instellingen."
+          }
+        }
+      }
     },
     "This backup protects its sign-in details in a way this version of Trio cannot open." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze back-up beveiligt de aanmeldgegevens op een manier die deze versie van Trio niet kan openen."
+          }
+        }
+      }
     },
     "This backup’s insulin concentration, basal rates, or delivery limits do not match your pump. Settings were not restored." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De insulineconcentratie, basaalstanden of afgiftelimieten van deze back-up komen niet overeen met je pomp. De instellingen zijn niet hersteld."
+          }
+        }
+      }
     },
     "This file does not contain every therapy setting needed to restore it." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dit bestand bevat niet alle therapie-instellingen die nodig zijn om het te herstellen."
+          }
+        }
+      }
     },
     "This file is not a Trio settings backup." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dit bestand is geen Trio-instellingenback-up."
+          }
+        }
+      }
     },
     "this pump" : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "deze pomp"
+          }
+        }
+      }
     },
     "This removes the backup from iCloud." : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiermee wordt de back-up uit iCloud verwijderd."
+          }
+        }
+      }
     },
     "This restore operation is not available during the current setup state." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze herstelactie is niet beschikbaar in de huidige installatiestatus."
+          }
+        }
+      }
     },
     "Too many wrong passphrases. You can still restore everything else." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te veel onjuiste wachtwoordzinnen. Je kunt nog steeds al het andere herstellen."
+          }
+        }
+      }
     },
     "Treatment History" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behandelgeschiedenis"
+          }
+        }
+      }
     },
     "Treatment history could not be read: %@" : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behandelgeschiedenis kon niet worden gelezen: %@"
+          }
+        }
+      }
     },
     "Trio always starts in Open Loop after a restore. You switch to Closed Loop yourself once everything is reviewed." : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trio start na een herstelactie altijd in Open Loop. Je schakelt zelf over naar Actieve loop zodra alles is gecontroleerd."
+          }
+        }
+      }
     },
     "Trio cannot read the saved settings file %@. The loop is paused until it can be read." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trio kan het opgeslagen instellingenbestand %@ niet lezen. De loop is gepauzeerd totdat het bestand kan worden gelezen."
+          }
+        }
+      }
     },
     "Trio is busy. Wait for the current operation to finish, then try again." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trio is bezig. Wacht tot de huidige bewerking klaar is en probeer het daarna opnieuw."
+          }
+        }
+      }
     },
     "Trio will use the settings from this backup. It starts in Open Loop and nothing is sent to a pump." : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trio gebruikt de instellingen uit deze back-up. Het start in Open Loop en er wordt niets naar een pomp verzonden."
+          }
+        }
+      }
     },
     "Unlock" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontgrendelen"
+          }
+        }
+      }
     },
     "Unlock Protected Data" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beveiligde gegevens ontgrendelen"
+          }
+        }
+      }
     },
     "Unlock with Passphrase" : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontgrendelen met wachtwoordzin"
+          }
+        }
+      }
     },
     "Update Interval" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updateinterval"
+          }
+        }
+      }
     },
     "Update Trio to open this backup." : {
-      "comment" : "Error shown when a backup or restore cannot continue"
+      "comment" : "Error shown when a backup or restore cannot continue",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werk Trio bij om deze back-up te openen."
+          }
+        }
+      }
     },
     "Use a passphrase with at least 8 characters." : {
-      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik een wachtwoordzin van minimaal 8 tekens."
+          }
+        }
+      }
     },
     "Use at least 8 characters." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik minimaal 8 tekens."
+          }
+        }
+      }
     },
     "Use at least 8 characters. Trio cannot recover a forgotten passphrase; without it only the settings can be restored." : {
-      "comment" : "Backup & Restore"
+      "comment" : "Backup & Restore",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik minimaal 8 tekens. Trio kan een vergeten wachtwoordzin niet herstellen; zonder wachtwoordzin kunnen alleen de instellingen worden hersteld."
+          }
+        }
+      }
     },
     "Use Local Glucose Server" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lokale glucoseserver gebruiken"
+          }
+        }
+      }
     },
     "Use Weighted Average of TDD" : {
-      "comment" : "Name of a setting or result label in the backup restore change overview"
+      "comment" : "Name of a setting or result label in the backup restore change overview",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gewogen gemiddelde van TDD gebruiken"
+          }
+        }
+      }
     },
     "View Backups" : {
-      "comment" : "iCloud backup list and settings"
+      "comment" : "iCloud backup list and settings",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back-ups bekijken"
+          }
+        }
+      }
     },
     "Your \"%@\" backup has been saved to iCloud." : {
-      "comment" : "Shown after a manual iCloud backup was created. The placeholder is the backup name."
+      "comment" : "Shown after a manual iCloud backup was created. The placeholder is the backup name.",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je back-up \"%@\" is opgeslagen in iCloud."
+          }
+        }
+      }
     },
     "Your CGM selection; the CGM itself is set up afterwards" : {
-      "comment" : "Onboarding step for restoring a Trio backup"
+      "comment" : "Onboarding step for restoring a Trio backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je CGM-keuze; de CGM zelf wordt daarna ingesteld"
+          }
+        }
+      }
     },
     "Adds glucose readings, insulin and carb entries Trio still holds, about 90 days, to this backup only. Automatic daily backups never include history. It is stored encrypted in iCloud but not locked with a passphrase, and a backup with more than 16 MB of history is refused." : {
-      "comment" : "Explains the optional treatment history of a manual iCloud backup"
+      "comment" : "Explains the optional treatment history of a manual iCloud backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voegt glucosemetingen, insuline- en koolhydraatinvoer die Trio nog bewaart (ongeveer 90 dagen) alleen aan deze back-up toe. Automatische dagelijkse back-ups bevatten nooit geschiedenis. De geschiedenis wordt versleuteld in iCloud opgeslagen, maar niet met een wachtwoordzin vergrendeld, en een back-up met meer dan 16 MB aan geschiedenis wordt geweigerd."
+          }
+        }
+      }
     },
     "The treatment history is too large for an iCloud backup (limit 16 MB). Make the backup without history, or export a backup file instead." : {
-      "comment" : "Error shown when the optional treatment history does not fit into an iCloud backup"
+      "comment" : "Error shown when the optional treatment history does not fit into an iCloud backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De behandelgeschiedenis is te groot voor een iCloud-back-up (limiet 16 MB). Maak de back-up zonder geschiedenis of exporteer in plaats daarvan een back-upbestand."
+          }
+        }
+      }
     },
     "Treatment history can only be added to a manual backup." : {
-      "comment" : "Error shown when treatment history is added to an automatic backup"
+      "comment" : "Error shown when treatment history is added to an automatic backup",
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behandelgeschiedenis kan alleen aan een handmatige back-up worden toegevoegd."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
