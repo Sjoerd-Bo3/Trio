@@ -391,27 +391,33 @@ enum BackupError: LocalizedError, Equatable {
     case unrecognizedFile
     case unresolvedRestore
     case incompleteBackup
+    case historyTooLargeForICloud
+    case historyRequiresManualBackup
 
     var errorDescription: String? {
         switch self {
-        case .backupNameRequired: return "Enter a name for your backup."
-        case .invalidRetentionLimit: return "Choose a backup limit of 3, 5, 10, or 15."
-        case .unrecognizedFile: return "This file is not a Trio settings backup."
-        case .incompleteBackup: return "This file does not contain every therapy setting needed to restore it."
-        case .unresolvedRestore: return "A previous restore did not finish. Restart Trio so it can finish recovering, then try again."
-        case .backupTooLarge: return "This backup is too large. The limit is 8 MB."
-        case .incompleteConfiguration: return "Complete your therapy settings before creating a backup."
-        case .invalidTherapyConfiguration: return "This backup has invalid therapy settings and cannot be restored."
-        case .unsupportedSchema: return "Update Trio to open this backup."
-        case .integrityCheckFailed: return "This backup is damaged and cannot be restored."
-        case .iCloudUnavailable: return "Sign in to iCloud in iPhone Settings and enable iCloud for Trio."
-        case .invalidCloudRecord: return "The iCloud backup could not be read."
-        case .notOnboarding: return "This restore operation is not available during the current setup state."
-        case .activeAdjustments: return "Disable all running overrides and temporary targets before restoring settings."
-        case .operationInProgress: return "Trio is busy. Wait for the current operation to finish, then try again."
-        case .restoreFailed: return "Restore failed. Trio is in Open Loop. Check your settings and pump delivery."
-        case .pumpNotReady: return "Restore stopped because pump delivery could not be safely suspended. Check your pump before trying again."
-        case .incompatiblePumpSettings: return "This backup’s insulin concentration, basal rates, or delivery limits do not match your pump. Settings were not restored."
+        case .historyTooLargeForICloud:
+            return String(localized: "The treatment history is too large for an iCloud backup (limit 16 MB). Make the backup without history, or export a backup file instead.")
+        case .historyRequiresManualBackup:
+            return String(localized: "Treatment history can only be added to a manual backup.")
+        case .backupNameRequired: return String(localized: "Enter a name for your backup.")
+        case .invalidRetentionLimit: return String(localized: "Choose a backup limit of 3, 5, 10, or 15.")
+        case .unrecognizedFile: return String(localized: "This file is not a Trio settings backup.")
+        case .incompleteBackup: return String(localized: "This file does not contain every therapy setting needed to restore it.")
+        case .unresolvedRestore: return String(localized: "A previous restore did not finish. Restart Trio so it can finish recovering, then try again.")
+        case .backupTooLarge: return String(localized: "This backup is too large. The limit is 8 MB.")
+        case .incompleteConfiguration: return String(localized: "Complete your therapy settings before creating a backup.")
+        case .invalidTherapyConfiguration: return String(localized: "This backup has invalid therapy settings and cannot be restored.")
+        case .unsupportedSchema: return String(localized: "Update Trio to open this backup.")
+        case .integrityCheckFailed: return String(localized: "This backup is damaged and cannot be restored.")
+        case .iCloudUnavailable: return String(localized: "Sign in to iCloud in iPhone Settings and enable iCloud for Trio.")
+        case .invalidCloudRecord: return String(localized: "The iCloud backup could not be read.")
+        case .notOnboarding: return String(localized: "This restore operation is not available during the current setup state.")
+        case .activeAdjustments: return String(localized: "Disable all running overrides and temporary targets before restoring settings.")
+        case .operationInProgress: return String(localized: "Trio is busy. Wait for the current operation to finish, then try again.")
+        case .restoreFailed: return String(localized: "Restore failed. Trio is in Open Loop. Check your settings and pump delivery.")
+        case .pumpNotReady: return String(localized: "Restore stopped because pump delivery could not be safely suspended. Check your pump before trying again.")
+        case .incompatiblePumpSettings: return String(localized: "This backup’s insulin concentration, basal rates, or delivery limits do not match your pump. Settings were not restored.")
         }
     }
 }

@@ -351537,6 +351537,651 @@
     },
     "Small" : {
       "comment" : "Live Activity glucose reading font size"
+    },
+    "%@: %@ %@ adjusted to %@ %@ to respect limits" : {
+      "comment" : "Backup & Restore"
+    },
+    "%@: %@ adjusted to %@ to respect limits" : {
+      "comment" : "Backup & Restore"
+    },
+    "%@: restoring this CGM type's pairing is untested — be prepared to re-add it under Devices > CGM." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "%@: restoring this pump type's pairing is untested — be prepared to pair manually under Devices > Insulin Pump." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "%lld backup operation(s) pending." : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "%lld basal rate(s) adjusted to the nearest rate supported by your pump." : {
+      "comment" : "Backup & Restore"
+    },
+    "A paired pump blocks restoring settings. Remove your pump under Devices first." : {
+      "comment" : "Backup & Restore"
+    },
+    "A previous restore did not finish. Restart Trio so it can finish recovering, then try again." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "A previous settings restore did not finish. Trio switched to Open Loop. Check your therapy settings and your pump before returning to Closed Loop." : {
+      "comment" : "Backup & Restore"
+    },
+    "A pump is already paired with this phone." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "A running Omnipod DASH pod cannot move to a new phone. Deactivate it and activate a new pod under Devices > Insulin Pump." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "A Trio backup restores your setup:" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "A52 Risk Enable" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "AccuChek: reconnects automatically — older sensors may show an iOS pairing request once." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Add Glucose to Calendar" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "added" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Adopt %@ on THIS phone?" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Adopt Pump and Restore" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Algorithm settings, delivery limits, alerts and presets" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "All existing presets in the imported categories are deleted and replaced by the file's presets." : {
+      "comment" : "Backup & Restore"
+    },
+    "Allow Insulin Dilution" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Another phone may still control this pump" : {
+      "comment" : "Backup & Restore"
+    },
+    "App Version: %@" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Automatic Backup" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Automatic Backups" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Back Up Now" : {
+      "comment" : "Backup & Restore"
+    },
+    "Backup & Restore" : {
+      "comment" : "Backup & Restore"
+    },
+    "Backup Details" : {
+      "comment" : "Backup & Restore"
+    },
+    "Backup File" : {
+      "comment" : "Backup & Restore"
+    },
+    "Backup Retention" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Backup selected" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "basal rates" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Both confirmations are needed before a pump pairing is restored." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Carb Entries" : {
+      "comment" : "Backup & Restore"
+    },
+    "Carb history could not be imported: %@" : {
+      "comment" : "Backup & Restore"
+    },
+    "carb ratios" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "CGM Pairing" : {
+      "comment" : "Backup & Restore"
+    },
+    "CGM pairing could not be restored. Add your CGM under Settings > Devices > CGM." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "CGM Plugin" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "CGM: %@" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Change" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Changes" : {
+      "comment" : "Backup & Restore"
+    },
+    "Changes to This Phone" : {
+      "comment" : "Backup & Restore"
+    },
+    "Checks run while Trio is running or the next time you open it. Unchanged settings do not create another backup." : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Choose a backup limit of 3, 5, 10, or 15." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Choose a backup to restore." : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Choose the maximum number of backups to keep in iCloud. When this limit is reached, Trio will automatically delete the oldest backup to make room for a new one." : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Close backup details" : {
+      "comment" : "Backup & Restore"
+    },
+    "Compares this backup with your current settings. Restoring always switches Trio to Open Loop." : {
+      "comment" : "Backup & Restore"
+    },
+    "Complete your therapy settings before creating a backup." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Could not restore %@: %@" : {
+      "comment" : "Backup & Restore"
+    },
+    "Created" : {
+      "comment" : "Backup & Restore"
+    },
+    "Created: %@" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Dana pumps do not reconnect from a saved pairing. Set the pump up again under Devices > Insulin Pump." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Dana: the pump will not reconnect on its own — remove it and set it up again under Devices > Insulin Pump (Dana RS asks for its PINs again, Dana-i pairs again)." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Debug Options" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Delete Backup?" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Dexcom G7: reconnects automatically — pairing is handled by the Dexcom app, so set that up on the new phone as well." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Dexcom: iOS will show a Bluetooth pairing request when the transmitter reconnects — accept it and the session continues." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Disable all running overrides and temporary targets before restoring settings." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Display Emojis in Calendar" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Display IOB and COB in Calendar" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Duplicate preset name \"%@\" in backup — the last occurrence is used." : {
+      "comment" : "Backup & Restore"
+    },
+    "Dynamic ISF history is included in backups, but new history alone does not trigger a backup." : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Enter a name for your backup." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Enter the passphrase you chose when you made this backup." : {
+      "comment" : "Backup & Restore"
+    },
+    "Eversense: reconnects automatically — the transmitter may show an iOS pairing request once." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Export Backup File" : {
+      "comment" : "Backup & Restore"
+    },
+    "Faster Bolus Confirmation" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Garmin Datafield" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Garmin Primary Attribute" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Garmin Secondary Attribute" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Garmin Watchface" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Garmin Watchface Data" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Glucose history could not be imported: %@" : {
+      "comment" : "Backup & Restore"
+    },
+    "Glucose Readings" : {
+      "comment" : "Backup & Restore"
+    },
+    "glucose targets" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Hide Insulin Badge" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "History (Optional)" : {
+      "comment" : "Backup & Restore"
+    },
+    "Home Stats Panel" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "I Have Reviewed My Settings" : {
+      "comment" : "Backup & Restore"
+    },
+    "iCloud Backup" : {
+      "comment" : "Backup & Restore"
+    },
+    "If you saved a Trio settings backup, you can restore it now. You will still review every value in the next steps. Or start fresh with new settings." : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Import Backup File" : {
+      "comment" : "Backup & Restore"
+    },
+    "Imported presets replace same-named existing ones. New names are added, other presets are kept." : {
+      "comment" : "Backup & Restore"
+    },
+    "Insulin Concentration" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "insulin sensitivities" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Invalid %@ in backup: schedule is empty." : {
+      "comment" : "Backup & Restore"
+    },
+    "Invalid %@ in backup: values look like mmol/L, but backups must store mg/dL." : {
+      "comment" : "Backup & Restore"
+    },
+    "Invalid %@ in backup: values must be greater than 0." : {
+      "comment" : "Backup & Restore"
+    },
+    "Invalid basal rates in backup: total basal must be greater than 0." : {
+      "comment" : "Backup & Restore"
+    },
+    "Keep Existing" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "kept" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Libre 3: scan the existing sensor once with NFC after the restore — the transferred receiver identity makes it accept the new phone." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Libre: sensors pair to a single device — be prepared to re-pair the sensor on the new phone." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "LibreTransmitter: pairing cannot travel in a backup for this plugin — set up your bridge or sensor again under Devices > CGM." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Live Activity Font Size" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Loading backup…" : {
+      "comment" : "Backup & Restore"
+    },
+    "Local Glucose Server Port" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Manual Backups" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Medtronic: the pump settings transfer, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Medtrum: the pump reconnects automatically on the new phone." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "More information about Backup Retention" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Name Your Backup" : {
+      "comment" : "Backup & Restore"
+    },
+    "Nightscout and Remote Control Sign-In" : {
+      "comment" : "Backup & Restore"
+    },
+    "Nightscout Sign-In" : {
+      "comment" : "Backup & Restore"
+    },
+    "Nightscout sign-in could not be saved to the keychain. Enter it again under Settings > Services > Nightscout." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Nightscout sign-in restored. Check the connection under Settings > Services > Nightscout." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "No backups found" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "No settings included." : {
+      "comment" : "Backup & Restore"
+    },
+    "Not included" : {
+      "comment" : "Backup & Restore"
+    },
+    "Not Restored" : {
+      "comment" : "Backup & Restore"
+    },
+    "Omnipod (Eros): the pod session transfers, but select your RileyLink again under Devices > Insulin Pump — RileyLink selections do not transfer between phones." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Omnipod DASH: a running pod cannot move to a new phone — deactivate it and activate a new pod under Devices > Insulin Pump." : {
+      "comment" : "Hint shown after restoring a backup made on another phone, depending on the pump or CGM used"
+    },
+    "Once a day, Trio will check for any new settings changes and automatically back them up." : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Only presets with names that do not exist yet are added." : {
+      "comment" : "Backup & Restore"
+    },
+    "Passphrase" : {
+      "comment" : "Backup & Restore"
+    },
+    "Please choose if you want to restore a Trio settings backup or start fresh." : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Protected Data" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Protected Data (Optional)" : {
+      "comment" : "Backup & Restore"
+    },
+    "Pump and CGM Pairing" : {
+      "comment" : "Backup & Restore"
+    },
+    "Pump and CGM pairing can only be restored while setting up Trio on a new phone." : {
+      "comment" : "Backup & Restore"
+    },
+    "Pump Events" : {
+      "comment" : "Backup & Restore"
+    },
+    "Pump history could not be imported: %@" : {
+      "comment" : "Backup & Restore"
+    },
+    "Pump Pairing (%@)" : {
+      "comment" : "Backup & Restore"
+    },
+    "Pump pairing can only be restored while setting up Trio." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Pump pairing could not be restored. Pair your pump under Settings > Devices > Insulin Pump." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Pump pairing restored. Trio stays in Open Loop. Check the pump status before returning to Closed Loop." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Pump: %@. Pumps are paired manually later." : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Readings and entries this phone already has are skipped, so restoring twice adds nothing." : {
+      "comment" : "Backup & Restore"
+    },
+    "Refresh backups" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Remote commands stay off until you turn them on under Settings > Services." : {
+      "comment" : "Backup & Restore"
+    },
+    "Remote Control Secret" : {
+      "comment" : "Backup & Restore"
+    },
+    "Remote control secret restored. Remote commands stay off until you open Settings > Services > Remote Control." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "removed" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Rename" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Rename Backup" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Repeat Passphrase" : {
+      "comment" : "Backup & Restore"
+    },
+    "Replace All" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Replace Same-Named" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "replaced" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Restore" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restore Backup" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restore failed. Trio is in Open Loop. Check your settings and pump delivery." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Restore From Backup File" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restore From iCloud" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restore Needs Attention" : {
+      "comment" : "Backup & Restore"
+    },
+    "Restore Settings" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restore Settings?" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restore stopped because pump delivery could not be safely suspended. Check your pump before trying again." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Restore stopped. No pump settings were sent." : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restore Treatment History" : {
+      "comment" : "Backup & Restore"
+    },
+    "Restoring settings… Keep Trio open." : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Restoring this pump type's pairing has not been tested. Pair it manually under Devices > Insulin Pump." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Review Restored Settings" : {
+      "comment" : "Backup & Restore"
+    },
+    "Select Backup File" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Settings restored" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Settings Restored!" : {
+      "comment" : "Backup & Restore"
+    },
+    "Settings were restored from a backup and Trio is in Open Loop. Review your therapy settings, then switch to Closed Loop yourself when you are ready." : {
+      "comment" : "Backup & Restore"
+    },
+    "Show COB/IOB Chart" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Show Settings in This Backup" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Sigmoid Formula" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Sign in to iCloud in iPhone Settings and enable iCloud for Trio to back up your settings to iCloud." : {
+      "comment" : "Backup & Restore"
+    },
+    "Sign in to iCloud in iPhone Settings and enable iCloud for Trio." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "skipped (currently running)" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Smart Stack Widget Style" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Start Fresh With New Settings" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Success!" : {
+      "comment" : "Backup & Restore"
+    },
+    "TDD history could not be imported: %@" : {
+      "comment" : "Backup & Restore"
+    },
+    "TDD Samples" : {
+      "comment" : "Backup & Restore"
+    },
+    "The backup used the CGM \"%@\". Set it up again under Settings > Devices > CGM." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "The daily insulin totals saved in this file are not restored." : {
+      "comment" : "Backup & Restore"
+    },
+    "The iCloud backup could not be read." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "The old phone is wiped or Trio is removed from it" : {
+      "comment" : "Backup & Restore"
+    },
+    "The passphrase could not be processed." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "The passphrase is wrong, or the protected part of this backup is damaged." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "The passphrases do not match." : {
+      "comment" : "Backup & Restore"
+    },
+    "The saved pump pairing could not be read." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Therapy settings, which you still review on the next screens" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "This backup also holds sign-in details or device pairing, protected by a passphrase." : {
+      "comment" : "Backup & Restore"
+    },
+    "This backup couldn’t be opened." : {
+      "comment" : "Backup & Restore"
+    },
+    "This backup has invalid therapy settings and cannot be restored." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "This backup is damaged and cannot be restored." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "This backup is too large. The limit is 8 MB." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "This backup matches your current settings." : {
+      "comment" : "Backup & Restore"
+    },
+    "This backup protects its sign-in details in a way this version of Trio cannot open." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "This backup’s insulin concentration, basal rates, or delivery limits do not match your pump. Settings were not restored." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "This file does not contain every therapy setting needed to restore it." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "This file is not a Trio settings backup." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "this pump" : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "This removes the backup from iCloud." : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "This restore operation is not available during the current setup state." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Too many wrong passphrases. You can still restore everything else." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Treatment History" : {
+      "comment" : "Backup & Restore"
+    },
+    "Treatment history could not be read: %@" : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Trio always starts in Open Loop after a restore. You switch to Closed Loop yourself once everything is reviewed." : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Trio cannot read the saved settings file %@. The loop is paused until it can be read." : {
+      "comment" : "Backup & Restore"
+    },
+    "Trio is busy. Wait for the current operation to finish, then try again." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Trio will use the settings from this backup. It starts in Open Loop and nothing is sent to a pump." : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Unlock" : {
+      "comment" : "Backup & Restore"
+    },
+    "Unlock Protected Data" : {
+      "comment" : "Backup & Restore"
+    },
+    "Unlock with Passphrase" : {
+      "comment" : "Backup & Restore"
+    },
+    "Update Interval" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Update Trio to open this backup." : {
+      "comment" : "Error shown when a backup or restore cannot continue"
+    },
+    "Use a passphrase with at least 8 characters." : {
+      "comment" : "Message about restoring protected backup data (sign-in details and device pairing)"
+    },
+    "Use at least 8 characters." : {
+      "comment" : "Backup & Restore"
+    },
+    "Use at least 8 characters. Trio cannot recover a forgotten passphrase; without it only the settings can be restored." : {
+      "comment" : "Backup & Restore"
+    },
+    "Use Local Glucose Server" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "Use Weighted Average of TDD" : {
+      "comment" : "Name of a setting or result label in the backup restore change overview"
+    },
+    "View Backups" : {
+      "comment" : "iCloud backup list and settings"
+    },
+    "Your \"%@\" backup has been saved to iCloud." : {
+      "comment" : "Shown after a manual iCloud backup was created. The placeholder is the backup name."
+    },
+    "Your CGM selection; the CGM itself is set up afterwards" : {
+      "comment" : "Onboarding step for restoring a Trio backup"
+    },
+    "Adds glucose readings, insulin and carb entries Trio still holds, about 90 days, to this backup only. Automatic daily backups never include history. It is stored encrypted in iCloud but not locked with a passphrase, and a backup with more than 16 MB of history is refused." : {
+      "comment" : "Explains the optional treatment history of a manual iCloud backup"
+    },
+    "The treatment history is too large for an iCloud backup (limit 16 MB). Make the backup without history, or export a backup file instead." : {
+      "comment" : "Error shown when the optional treatment history does not fit into an iCloud backup"
+    },
+    "Treatment history can only be added to a manual backup." : {
+      "comment" : "Error shown when treatment history is added to an automatic backup"
     }
   },
   "version" : "1.1"

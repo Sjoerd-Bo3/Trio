@@ -1040,6 +1040,9 @@
 		3491E7ADF653BDB3AFAE400E /* BackupExtensionRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D7D8A00A0E2783CCFFCE89 /* BackupExtensionRegistry.swift */; };
 		A753DBA634259F055C712EBA /* HistoryRestoreRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF853B929BD9ED55FC0DD25 /* HistoryRestoreRow.swift */; };
 		6EFD44704CD0B6B9DDA935A0 /* BackupHistoryAndExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */; };
+		94886BACB4DFDA29C25554D2 /* OpenAPSSettingsFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A168291CD609AC60AF7413C1 /* OpenAPSSettingsFileTests.swift */; };
+		4228673DED8C7C36F30B7D90 /* TrioCloudChunkedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A238C7BF469A576AD11304C /* TrioCloudChunkedStore.swift */; };
+		1E96286F8CCABC293BFA505A /* CloudHistoryChunkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E0A916EFBD1882EDEB8E7B3 /* CloudHistoryChunkTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -2171,6 +2174,9 @@
 		96D7D8A00A0E2783CCFFCE89 /* BackupExtensionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupExtensionRegistry.swift; sourceTree = "<group>"; };
 		1FF853B929BD9ED55FC0DD25 /* HistoryRestoreRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryRestoreRow.swift; sourceTree = "<group>"; };
 		D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupHistoryAndExtensionTests.swift; sourceTree = "<group>"; };
+		A168291CD609AC60AF7413C1 /* OpenAPSSettingsFileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAPSSettingsFileTests.swift; sourceTree = "<group>"; };
+		1A238C7BF469A576AD11304C /* TrioCloudChunkedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioCloudChunkedStore.swift; sourceTree = "<group>"; };
+		6E0A916EFBD1882EDEB8E7B3 /* CloudHistoryChunkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudHistoryChunkTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -3204,6 +3210,7 @@
 				0A9044DE407406254EE07578 /* SealedSensitiveBlob.swift */,
 				F05539FF162B3E50FC979FF5 /* TrioCloudBackupCoordinator.swift */,
 				B73051984840EB788997F951 /* CloudKitBackupStore.swift */,
+				1A238C7BF469A576AD11304C /* TrioCloudChunkedStore.swift */,
 				B2873D4FB1702586CB595113 /* BackupService.swift */,
 				6D0CD638754F555304884D7C /* LegacyBackupAdapter.swift */,
 				5FD7F17AC2828C4A106F61AC /* LegacySettingsBackupV1.swift */,
@@ -3367,9 +3374,11 @@
 				B3919BBB515547118D684CD2 /* LoopIndicatorTests.swift */,
 				B3919BBB515547118D684CC2 /* MaxIOBSuggestionTests.swift */,
 				B3919BBB515547118D684CB2 /* DosingModeMigrationTests.swift */,
+				A168291CD609AC60AF7413C1 /* OpenAPSSettingsFileTests.swift */,
 				D4A274CE55E0D7CAB0D90C83 /* BackupHistoryAndExtensionTests.swift */,
 				B559671B9B77CE0F908B912D /* SensitiveTierTests.swift */,
 				6906188AC5A17AC18A8BA575 /* CloudBackupCoordinatorTests.swift */,
+				6E0A916EFBD1882EDEB8E7B3 /* CloudHistoryChunkTests.swift */,
 				0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */,
 				BE4D540152F6226E2AB470F4 /* SettingsImportApplierTests.swift */,
 				098FE160E4B4B6A2971034D0 /* SettingsBackupTestFixtures.swift */,
@@ -5400,6 +5409,7 @@
 				EB9FBFF67667A2B891753505 /* SealedSensitiveBlob.swift in Sources */,
 				E61BEB66107D57137332D7E5 /* TrioCloudBackupCoordinator.swift in Sources */,
 				E81802CEB99DDA3F23B8B267 /* CloudKitBackupStore.swift in Sources */,
+				4228673DED8C7C36F30B7D90 /* TrioCloudChunkedStore.swift in Sources */,
 				F24CA02F60E5A3866667CB3A /* BackupService.swift in Sources */,
 				BA5DFF7AFFA3A7272342FD9F /* LegacyBackupAdapter.swift in Sources */,
 				E4FBDE1F35F58674C878918A /* LegacySettingsBackupV1.swift in Sources */,
@@ -6235,9 +6245,11 @@
 				41740E936552456AAC0EDDC3 /* LoopIndicatorTests.swift in Sources */,
 				41740E936552456AAC0EDCC3 /* MaxIOBSuggestionTests.swift in Sources */,
 				41740E936552456AAC0EDBC3 /* DosingModeMigrationTests.swift in Sources */,
+				94886BACB4DFDA29C25554D2 /* OpenAPSSettingsFileTests.swift in Sources */,
 				6EFD44704CD0B6B9DDA935A0 /* BackupHistoryAndExtensionTests.swift in Sources */,
 				A7B51C49774288C981BA692A /* SensitiveTierTests.swift in Sources */,
 				D0933B0A93DC20D0EBC5A5A7 /* CloudBackupCoordinatorTests.swift in Sources */,
+				1E96286F8CCABC293BFA505A /* CloudHistoryChunkTests.swift in Sources */,
 				8388FCFF5300CFD868CB154C /* OnboardingBackupRestoreTests.swift in Sources */,
 				1C39E3979D8EF18A56FA9C2B /* SettingsImportApplierTests.swift in Sources */,
 				049C9D42043A7E19A3EB660E /* SettingsBackupTestFixtures.swift in Sources */,

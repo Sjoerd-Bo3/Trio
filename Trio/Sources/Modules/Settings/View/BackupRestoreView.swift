@@ -44,7 +44,9 @@ struct BackupRestoreView: View {
             BackupExportOptionsView(purpose: .file) { _, options, history in runExport(options, includeHistory: history) }
         }
         .sheet(isPresented: $showingBackupOptions) {
-            BackupExportOptionsView(purpose: .iCloud) { name, options, _ in runBackup(name: name, options: options) }
+            BackupExportOptionsView(purpose: .iCloud) { name, options, history in
+                runBackup(name: name, options: options, includeHistory: history)
+            }
         }
         .alert("Success!", isPresented: Binding(get: { createdName != nil }, set: { if !$0 { createdName = nil } })) {
             Button("Done", role: .cancel) {}
@@ -190,14 +192,18 @@ struct BackupRestoreView: View {
         }
     }
 
-    @MainActor private func runBackup(name requestedName: String?, options: SensitiveExportOptions?) {
+    @MainActor private func runBackup(name requestedName: String?, options: SensitiveExportOptions?, includeHistory: Bool) {
         guard !backingUp else { return }
         backingUp = true
         Task { @MainActor in
             defer { backingUp = false
                 lastBackup = TrioCloudBackupCoordinator.shared.lastSuccessfulBackupDate }
             do {
-                let entry = try await TrioCloudBackupCoordinator.shared.createManualBackup(name: requestedName, sensitive: options)
+                let entry = try await TrioCloudBackupCoordinator.shared.createManualBackup(
+                    name: requestedName,
+                    sensitive: options,
+                    includeHistory: includeHistory
+                )
                 createdName = entry.name ?? TrioSettingsBackup.normalizedName(requestedName)
             } catch { message = error.localizedDescription }
         }
