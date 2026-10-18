@@ -151,7 +151,8 @@ extension TrioSettingsBackup {
                 fingerprint: try Self.normalizedFingerprint(normalized),
                 dynamicISFHistory: dynamicISFHistory,
                 historyChecksum: historyChecksum,
-                deviceInfo: deviceInfo
+                deviceInfo: deviceInfo,
+                sensitive: sensitive
             )
         }
         return self
@@ -163,7 +164,7 @@ extension TrioSettingsBackup {
         let other = try other.validated()
         return try first.id == other.id && first.createdAt == other.createdAt && first.origin == other.origin &&
             first.appVersion == other.appVersion && first.cloudFingerprint() == other.cloudFingerprint() &&
-            first.historyChecksum == other.historyChecksum
+            first.historyChecksum == other.historyChecksum && first.sensitive == other.sensitive
     }
 
     static func contentsEqual(_ first: Data, _ second: Data) throws -> Bool {

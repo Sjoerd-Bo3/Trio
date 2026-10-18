@@ -10,6 +10,7 @@ import UIKit
 
 protocol FetchGlucoseManager: SourceInfoProvider {
     func updateGlucoseSource(cgmGlucoseSourceType: CGMType, cgmGlucosePluginId: String, newManager: CGMManagerUI?)
+    func adoptCGMManagerState(_ rawValue: CGMManager.RawValue, cgmGlucosePluginId: String) -> Bool
     func deleteGlucoseSource() async
     func removeCalibrations()
     func newGlucoseFromCgmManager(newGlucose: [BloodGlucose])
@@ -204,6 +205,20 @@ final class BaseFetchGlucoseManager: FetchGlucoseManager, Injectable {
 
     func startCGMSensorSession(startedAt: Date) {
         sensorStateLock.perform { sensorStateLog.startSensor(startedAt: startedAt) }
+    }
+
+    /// Adopts CGM manager state restored from a settings backup. The source type and plugin id are set before
+    /// `updateGlucoseSource` runs so its "source changed" branch does not wipe the adopted state.
+    /// Returns false when the state cannot be reconstructed (plugin not compiled in, invalid state).
+    func adoptCGMManagerState(_ rawValue: CGMManager.RawValue, cgmGlucosePluginId pluginId: String) -> Bool {
+        removeCalibrations()
+        cgmManager = nil
+        glucoseSource = nil
+        cgmGlucoseSourceType = .plugin
+        cgmGlucosePluginId = pluginId
+        rawCGMManager = rawValue
+        updateGlucoseSource(cgmGlucoseSourceType: .plugin, cgmGlucosePluginId: pluginId)
+        return cgmManager != nil
     }
 
     @MainActor func deleteGlucoseSource() async {

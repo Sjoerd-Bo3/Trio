@@ -12,8 +12,8 @@ struct BackupRestoreView: View {
     @State private var reviewPending = false
     @State private var cloudStatus: CloudBackupAvailability.Status = .notBuilt
     @State private var backingUp = false
-    @State private var naming = false
-    @State private var name = ""
+    @State private var showingExportOptions = false
+    @State private var showingBackupOptions = false
     @State private var createdName: String?
     @State private var lastBackup: Date?
 
@@ -40,23 +40,11 @@ struct BackupRestoreView: View {
         .onReceive(Foundation.NotificationCenter.default.publisher(for: TrioCloudBackupCoordinator.uploadNotification)) { _ in
             lastBackup = TrioCloudBackupCoordinator.shared.lastSuccessfulBackupDate
         }
-        .alert("Name Your Backup", isPresented: $naming) {
-            TextField("Name", text: $name)
-            Button("Cancel", role: .cancel) {}
-            Button("Create Backup") {
-                let requestedName = name
-                Task { @MainActor in
-                    backingUp = true
-                    defer { backingUp = false
-                        lastBackup = TrioCloudBackupCoordinator.shared.lastSuccessfulBackupDate }
-                    do {
-                        let entry = try await TrioCloudBackupCoordinator.shared.createManualBackup(name: requestedName)
-                        createdName = entry.name ?? TrioSettingsBackup.normalizedName(requestedName)
-                        name = ""
-                    } catch { message = error.localizedDescription }
-                }
-            }
-            .disabled(TrioSettingsBackup.normalizedName(name) == nil)
+        .sheet(isPresented: $showingExportOptions) {
+            BackupExportOptionsView(purpose: .file) { _, options in runExport(options) }
+        }
+        .sheet(isPresented: $showingBackupOptions) {
+            BackupExportOptionsView(purpose: .iCloud) { name, options in runBackup(name: name, options: options) }
         }
         .alert("Success!", isPresented: Binding(get: { createdName != nil }, set: { if !$0 { createdName = nil } })) {
             Button("Done", role: .cancel) {}
@@ -76,6 +64,7 @@ struct BackupRestoreView: View {
                         entry: opened.snapshot.entry,
                         snapshot: opened.snapshot,
                         warnings: opened.warnings,
+                        plainSensitive: opened.sensitive,
                         allowsExport: false,
                         onSelectForOnboarding: nil
                     )
@@ -127,13 +116,7 @@ struct BackupRestoreView: View {
             Section {
                 Button {
                     guard !exporting, presentation == nil, !importing else { return }
-                    exporting = true
-                    Task { @MainActor in
-                        defer { exporting = false }
-                        do {
-                            presentation = .exported(BackupExportFile(url: try await BackupService.shared.exportBackupFile()))
-                        } catch { message = error.localizedDescription }
-                    }
+                    showingExportOptions = true
                 } label: {
                     HStack {
                         Text("Export Backup File")
@@ -149,7 +132,9 @@ struct BackupRestoreView: View {
                 }
                 .buttonStyle(.borderless)
             } header: { Text("Backup File") } footer: {
-                Text("A backup file holds your therapy, algorithm and app settings. It never contains your pump or CGM pairing or any sign-in details.")
+                Text(
+                    "A backup file holds your therapy, algorithm and app settings. Sign-in details and pump or CGM pairing are only included if you choose to, and are then protected by a passphrase."
+                )
             }.listRowBackground(Color.chart)
         }
         .scrollContentBackground(.hidden)
@@ -163,8 +148,7 @@ struct BackupRestoreView: View {
             Section {
                 Button {
                     guard !backingUp, presentation == nil, !importing else { return }
-                    name = ""
-                    naming = true
+                    showingBackupOptions = true
                 } label: {
                     HStack {
                         Text("Back Up Now")
@@ -192,6 +176,30 @@ struct BackupRestoreView: View {
                 Text("Sign in to iCloud in iPhone Settings and enable iCloud for Trio to back up your settings to iCloud.")
                     .foregroundStyle(.secondary)
             } header: { Text("iCloud Backup") }.listRowBackground(Color.chart)
+        }
+    }
+
+    @MainActor private func runExport(_ options: SensitiveExportOptions?) {
+        guard !exporting else { return }
+        exporting = true
+        Task { @MainActor in
+            defer { exporting = false }
+            do {
+                presentation = .exported(BackupExportFile(url: try await BackupService.shared.exportBackupFile(sensitive: options)))
+            } catch { message = error.localizedDescription }
+        }
+    }
+
+    @MainActor private func runBackup(name requestedName: String?, options: SensitiveExportOptions?) {
+        guard !backingUp else { return }
+        backingUp = true
+        Task { @MainActor in
+            defer { backingUp = false
+                lastBackup = TrioCloudBackupCoordinator.shared.lastSuccessfulBackupDate }
+            do {
+                let entry = try await TrioCloudBackupCoordinator.shared.createManualBackup(name: requestedName, sensitive: options)
+                createdName = entry.name ?? TrioSettingsBackup.normalizedName(requestedName)
+            } catch { message = error.localizedDescription }
         }
     }
 

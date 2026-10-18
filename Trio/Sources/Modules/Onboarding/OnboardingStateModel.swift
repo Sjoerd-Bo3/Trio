@@ -92,6 +92,8 @@ extension Onboarding {
         var pendingBackup: TrioSettingsBackup?
         var pendingBackupWarnings: [String] = []
         var pendingBackupOverview: ImportChangeSet?
+        /// The protected part (sign-in details, pairing) of the chosen backup and what the user switched on.
+        var sensitiveModel = SensitiveRestoreModel()
         /// Set once the engine has restored a backup; the onboarding editors are then prefilled from it.
         var appliedBackupID: UUID?
         var restoreWarnings: [String] = []

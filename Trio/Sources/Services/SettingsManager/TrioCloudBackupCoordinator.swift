@@ -75,10 +75,11 @@ import Swinject
 
     private func snapshot(
         origin: TrioSettingsBackup.Origin,
-        name: String? = nil
+        name: String? = nil,
+        sensitive: SensitiveExportOptions? = nil
     ) async throws -> TrioSettingsBackup {
         if let captureOverride { return try await captureOverride(origin, name).validated() }
-        return try await BackupService.shared.captureSnapshot(origin: origin, name: name)
+        return try await BackupService.shared.captureSnapshot(origin: origin, name: name, sensitive: sensitive)
     }
 
     deinit {
@@ -236,10 +237,12 @@ import Swinject
         return try await operation()
     }
 
-    func createManualBackup(name: String?) async throws -> BackupEntry {
+    /// Only a manual backup can carry the protected tier: it needs a passphrase that is never stored,
+    /// so the automatic daily backups never include it.
+    func createManualBackup(name: String?, sensitive: SensitiveExportOptions? = nil) async throws -> BackupEntry {
         guard let name = TrioSettingsBackup.normalizedName(name) else { throw BackupError.backupNameRequired }
         return try await withBackupOperation {
-            let snapshot = try await snapshot(origin: .manual, name: name)
+            let snapshot = try await snapshot(origin: .manual, name: name, sensitive: sensitive)
             // Manual snapshots stay independent even if the fingerprint is identical.
             var queue = try loadQueue()
             queue.append(snapshot)

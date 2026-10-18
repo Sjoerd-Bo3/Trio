@@ -8,6 +8,8 @@ enum BackupFileService {
         let snapshot: TrioSettingsBackup
         /// Parts of an older file that this version does not restore.
         let warnings: [String]
+        /// Readable protected content of an older file; current files keep theirs sealed in the snapshot.
+        var sensitive: SensitiveTier? = nil
     }
 
     /// Opens a backup file of any supported format. The format is detected from the file's top-level
@@ -20,7 +22,7 @@ enum BackupFileService {
         if LegacyBackupAdapter.isLegacy(raw) {
             let legacy = try JSONCoding.decoder.decode(SettingsBackup.self, from: bytes)
             let converted = try LegacyBackupAdapter.convert(legacy)
-            return Opened(snapshot: converted.snapshot, warnings: converted.warnings)
+            return Opened(snapshot: converted.snapshot, warnings: converted.warnings, sensitive: converted.sensitive)
         }
         guard raw["configuration"] != nil else { throw BackupError.unrecognizedFile }
         guard schema <= TrioSettingsBackup.currentSchema else { throw BackupError.unsupportedSchema }
@@ -47,6 +49,15 @@ enum BackupFileService {
     }
 }
 
+/// What the user opted to put into the protected tier of a new backup.
+struct SensitiveExportOptions {
+    var includeCredentials = false
+    var includeDevices = false
+    var passphrase = ""
+
+    var includesAnything: Bool { includeCredentials || includeDevices }
+}
+
 /// One backup as listed in the Backup & Restore screens.
 struct BackupEntry: Identifiable {
     let id: String
@@ -68,6 +79,7 @@ struct BackupEntry: Identifiable {
     private var deviceManager: DeviceDataManager?
     private var broadcaster: Broadcaster?
     private var fetchGlucoseManager: FetchGlucoseManager?
+    private var keychain: Keychain?
 
     var isReady: Bool { storage != nil && settingsManager != nil && deviceManager != nil }
 
@@ -77,9 +89,21 @@ struct BackupEntry: Identifiable {
         deviceManager = resolver.resolve(DeviceDataManager.self)
         broadcaster = resolver.resolve(Broadcaster.self)
         fetchGlucoseManager = resolver.resolve(FetchGlucoseManager.self)
+        keychain = resolver.resolve(Keychain.self)
     }
 
     var hasPairedPump: Bool { deviceManager?.pumpManager != nil }
+
+    /// Captures the configuration and, when asked, seals the opt-in sign-in and pairing tier into it.
+    func captureSnapshot(
+        origin: TrioSettingsBackup.Origin,
+        name: String? = nil,
+        sensitive: SensitiveExportOptions?
+    ) async throws -> TrioSettingsBackup {
+        let snapshot = try await captureSnapshot(origin: origin, name: name)
+        guard let sensitive, sensitive.includesAnything else { return snapshot }
+        return try snapshot.sealingSensitive(collectSensitiveTier(sensitive), passphrase: sensitive.passphrase)
+    }
 
     func captureSnapshot(origin: TrioSettingsBackup.Origin, name: String? = nil) async throws -> TrioSettingsBackup {
         guard let storage else { throw BackupError.incompleteConfiguration }
@@ -93,9 +117,36 @@ struct BackupEntry: Identifiable {
         return try await TrioSettingsBackup.capture(storage: storage, origin: origin, name: name, deviceInfo: deviceInfo)
     }
 
-    func exportBackupFile() async throws -> URL {
+    func exportBackupFile(sensitive: SensitiveExportOptions? = nil) async throws -> URL {
         guard !SettingsBackupRestore.isRestoring, !BackupActivity.isUploading else { throw BackupError.operationInProgress }
-        return try BackupFileService.export(try await captureSnapshot(origin: .manual))
+        return try BackupFileService.export(try await captureSnapshot(origin: .manual, sensitive: sensitive))
+    }
+
+    /// Reads the opt-in tier from the keychain and the running managers. Nothing here is logged.
+    func collectSensitiveTier(_ options: SensitiveExportOptions) -> SensitiveTier {
+        var tier = SensitiveTier()
+        if options.includeCredentials {
+            var credentials = SensitiveTier.Credentials()
+            credentials.nightscoutURL = keychain?.getValue(String.self, forKey: NightscoutConfig.Config.urlKey)
+            credentials.nightscoutSecret = keychain?.getValue(String.self, forKey: NightscoutConfig.Config.secretKey)
+            credentials.remoteControlSharedSecret = UserDefaults.standard.string(forKey: "trioRemoteControlSharedSecret")
+            tier.credentials = credentials.isEmpty ? nil : credentials
+        }
+        if options.includeDevices {
+            var devices = SensitiveTier.Devices()
+            if let pumpManager = deviceManager?.pumpManager {
+                devices.pumpState = SettingsBackup.encodeManagerState(pumpManager.rawValue)
+            }
+            // Some plugins (LibreTransmitter) keep their pairing outside the manager state and export an empty
+            // dictionary. Skip those instead of promising a restorable pairing.
+            if let cgmManager = fetchGlucoseManager?.cgmManager,
+               (cgmManager.rawValue["state"] as? [String: Any])?.isEmpty == false
+            {
+                devices.cgmState = SettingsBackup.encodeManagerState(cgmManager.rawValue)
+            }
+            tier.devices = devices.isEmpty ? nil : devices
+        }
+        return tier
     }
 
     /// The device's current configuration, for the change overview.
@@ -129,18 +180,26 @@ struct BackupEntry: Identifiable {
         return SettingsImportApplier.changeSet(restoring: prepared.configuration, current: state)
     }
 
-    @discardableResult func restoreConfiguredApp(_ backup: TrioSettingsBackup) async throws -> RestoreReport {
+    @discardableResult func restoreConfiguredApp(
+        _ backup: TrioSettingsBackup,
+        sensitive: SensitiveSelection? = nil
+    ) async throws -> RestoreReport {
         guard let settingsManager, let deviceManager else { throw BackupError.restoreFailed }
         guard deviceManager.pumpManager == nil else { throw BackupError.pumpNotReady }
-        let report = try await SettingsBackupRestore.applyConfigured(
+        var report = try await SettingsBackupRestore.applyConfigured(
             backup, settingsManager: settingsManager, deviceManager: deviceManager
         )
         notifyObservers()
+        // The core restore has committed; the protected tier is a separate step whose failure only warns.
+        if let sensitive { report.warnings += applySensitive(sensitive, onboarding: false) }
         TrioCloudBackupCoordinator.shared.restoreCompleted()
         return report
     }
 
-    @discardableResult func restoreDuringOnboarding(_ backup: TrioSettingsBackup) async throws -> RestoreReport {
+    @discardableResult func restoreDuringOnboarding(
+        _ backup: TrioSettingsBackup,
+        sensitive: SensitiveSelection? = nil
+    ) async throws -> RestoreReport {
         guard let settingsManager, let deviceManager else { throw BackupError.restoreFailed }
         guard deviceManager.pumpManager == nil else { throw BackupError.pumpNotReady }
         let previous = settingsManager.settings
@@ -163,7 +222,80 @@ struct BackupEntry: Identifiable {
                 )
             }
         }
+        if let sensitive { report.warnings += applySensitive(sensitive, onboarding: true) }
         return report
+    }
+
+    /// Writes the chosen sign-in details, then adopts device pairing (onboarding only). Every failure is a
+    /// warning: the core restore has already committed and is never rolled back for these.
+    func applySensitive(_ selection: SensitiveSelection, onboarding: Bool) -> [String] {
+        var warnings: [String] = []
+        if let credentials = selection.credentials {
+            warnings += applyCredentials(credentials)
+        }
+        guard onboarding else { return warnings }
+        if let cgmState = selection.cgmState {
+            warnings += adoptCGM(cgmState)
+        }
+        if let pumpState = selection.pumpState {
+            warnings += adoptPump(pumpState, confirmations: selection.pumpConfirmations, onboarding: onboarding)
+        }
+        return warnings
+    }
+
+    private func applyCredentials(_ credentials: SensitiveTier.Credentials) -> [String] {
+        var warnings: [String] = []
+        if let url = credentials.nightscoutURL, url.isNotEmpty, let secret = credentials.nightscoutSecret {
+            keychain?.setValue(url, forKey: NightscoutConfig.Config.urlKey)
+            keychain?.setValue(secret, forKey: NightscoutConfig.Config.secretKey)
+            if keychain?.getValue(String.self, forKey: NightscoutConfig.Config.urlKey) == url,
+               keychain?.getValue(String.self, forKey: NightscoutConfig.Config.secretKey) == secret
+            {
+                warnings.append(
+                    String(localized: "Nightscout sign-in restored. Check the connection under Settings > Services > Nightscout.")
+                )
+            } else {
+                warnings.append(String(
+                    localized: "Nightscout sign-in could not be saved to the keychain. Enter it again under Settings > Services > Nightscout."
+                ))
+            }
+        }
+        if let sharedSecret = credentials.remoteControlSharedSecret, sharedSecret.isNotEmpty {
+            UserDefaults.standard.set(sharedSecret, forKey: "trioRemoteControlSharedSecret")
+            warnings.append(String(
+                localized: "Remote control secret restored. Remote commands stay off until you open Settings > Services > Remote Control."
+            ))
+        }
+        return warnings
+    }
+
+    private func adoptCGM(_ base64: String) -> [String] {
+        let failure = String(localized: "CGM pairing could not be restored. Add your CGM under Settings > Devices > CGM.")
+        guard let settings = settingsManager?.settings, settings.cgm == .plugin,
+              let rawValue = SettingsBackup.decodeManagerState(base64),
+              fetchGlucoseManager?.adoptCGMManagerState(rawValue, cgmGlucosePluginId: settings.cgmPluginIdentifier) == true
+        else { return [failure] }
+        return [SettingsBackup.cgmPairingNote(forManagerState: base64)].compactMap { $0 }
+    }
+
+    private func adoptPump(_ base64: String, confirmations: PumpAdoptionConfirmations, onboarding: Bool) -> [String] {
+        if let refusal = PumpAdoptionGate.check(
+            managerState: base64,
+            isOnboarding: onboarding && OnboardingManager.shared.shouldShowOnboarding,
+            hasPairedPump: hasPairedPump,
+            confirmations: confirmations
+        ) {
+            return [refusal.localizedDescription]
+        }
+        guard let rawValue = SettingsBackup.decodeManagerState(base64),
+              deviceManager?.adoptPumpManager(fromRawValue: rawValue) == true
+        else {
+            return [String(localized: "Pump pairing could not be restored. Pair your pump under Settings > Devices > Insulin Pump.")]
+        }
+        // No pump command is sent here and Trio stays in Open Loop until the user switches it.
+        return [
+            String(localized: "Pump pairing restored. Trio stays in Open Loop. Check the pump status before returning to Closed Loop.")
+        ] + [SettingsBackup.pumpPairingNote(forManagerState: base64)].compactMap { $0 }
     }
 
     /// Lets screens that cache therapy files reload them after a restore.
