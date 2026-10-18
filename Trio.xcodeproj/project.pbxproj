@@ -2140,7 +2140,7 @@
 		96FC31A21E9D344235D40473 /* SettingsBackupCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupCodableTests.swift; sourceTree = "<group>"; };
 		098FE160E4B4B6A2971034D0 /* SettingsBackupTestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupTestFixtures.swift; sourceTree = "<group>"; };
 		BE4D540152F6226E2AB470F4 /* SettingsImportApplierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImportApplierTests.swift; sourceTree = "<group>"; };
-		BD7D4DC7A2DF1BC417E8D8AC /* OnboardingStateModel+BackupRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStateModel+BackupRestore.swift; sourceTree = "<group>"; };
+		BD7D4DC7A2DF1BC417E8D8AC /* OnboardingStateModel+BackupRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OnboardingStateModel+BackupRestore.swift"; sourceTree = "<group>"; };
 		297B852E29187C6FCED92908 /* RestoreBackupStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreBackupStepView.swift; sourceTree = "<group>"; };
 		0A25DCD6DE688EF27527D0BF /* OnboardingBackupRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingBackupRestoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
