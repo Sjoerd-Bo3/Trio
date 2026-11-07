@@ -48,6 +48,16 @@ final class BaseContactImageManager: NSObject, ContactImageManager, Injectable {
         return formatter
     }
 
+    /// Glucose, IOB and determination updates arrive together every loop cycle. Saving contacts is a
+    /// synchronous call into the Contacts daemon, which can take seconds when the phone is busy (for
+    /// example overnight maintenance). Starting one refresh per update piled up concurrent saves that
+    /// each blocked a thread, starving the system. Refreshes are therefore coalesced: at most one runs,
+    /// and updates that arrive meanwhile collapse into a single follow-up refresh.
+    private let refreshLock = NSLock()
+    private var refreshRunning = false
+    private var refreshPending = false
+    private static let refreshCoalescingDelay: Duration = .seconds(2)
+
     weak var delegate: ContactImageManagerDelegate?
 
     init(resolver: Resolver) {
@@ -64,10 +74,7 @@ final class BaseContactImageManager: NSObject, ContactImageManager, Injectable {
             .receive(on: DispatchQueue.global(qos: .background))
             .sink { [weak self] _ in
                 guard let self = self else { return }
-                Task {
-                    await self.updateContactImageState()
-                    await self.updateContactImages()
-                }
+                self.scheduleContactImageRefresh()
             }
             .store(in: &subscriptions)
 
@@ -75,14 +82,42 @@ final class BaseContactImageManager: NSObject, ContactImageManager, Injectable {
             .receive(on: DispatchQueue.global(qos: .background))
             .sink { [weak self] _ in
                 guard let self = self else { return }
-                Task {
-                    await self.updateContactImageState()
-                    await self.updateContactImages()
-                }
+                self.scheduleContactImageRefresh()
             }
             .store(in: &subscriptions)
 
         registerHandlers()
+    }
+
+    private func scheduleContactImageRefresh() {
+        let shouldStart: Bool = refreshLock.perform {
+            refreshPending = true
+            guard !refreshRunning else { return false }
+            refreshRunning = true
+            return true
+        }
+        guard shouldStart else { return }
+
+        Task.detached(priority: .background) { [weak self] in
+            // Let the updates of one loop cycle arrive before rendering.
+            try? await Task.sleep(for: Self.refreshCoalescingDelay)
+            while let self, self.takePendingRefresh() {
+                await self.updateContactImageState()
+                await self.updateContactImages()
+            }
+        }
+    }
+
+    /// Returns true when another refresh is needed; otherwise marks the refresh loop as finished.
+    private func takePendingRefresh() -> Bool {
+        refreshLock.perform {
+            guard refreshPending else {
+                refreshRunning = false
+                return false
+            }
+            refreshPending = false
+            return true
+        }
     }
 
     // MARK: - Core Data observation
@@ -90,10 +125,7 @@ final class BaseContactImageManager: NSObject, ContactImageManager, Injectable {
     private func registerHandlers() {
         coreDataPublisher?.filteredByEntityName("OrefDetermination").sink { [weak self] _ in
             guard let self = self else { return }
-            Task {
-                await self.updateContactImageState()
-                await self.updateContactImages()
-            }
+            self.scheduleContactImageRefresh()
         }.store(in: &subscriptions)
     }
 
@@ -365,9 +397,13 @@ final class BaseContactImageManager: NSObject, ContactImageManager, Injectable {
                     continue
                 }
 
+                // Skip the save when the picture did not change; every save is a round trip to the Contacts daemon.
+                let newImageData = newImage.pngData()
+                guard newImageData != contact.imageData else { continue }
+
                 // Create a mutable copy of the contact to update its image
                 let mutableContact = contact.mutableCopy() as! CNMutableContact
-                mutableContact.imageData = newImage.pngData() // Set the new image data
+                mutableContact.imageData = newImageData // Set the new image data
 
                 // Prepare a save request to update the contact
                 let saveRequest = CNSaveRequest()
