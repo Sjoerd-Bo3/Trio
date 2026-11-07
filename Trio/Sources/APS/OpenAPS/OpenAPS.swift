@@ -110,7 +110,7 @@ final class OpenAPS {
                 guard context.hasChanges else { return }
                 try context.save()
             } catch {
-                debugPrint("\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to save Determination to Core Data")
+                warning(.storage, "Saving the determination failed", error: error)
             }
         }
     }
@@ -257,8 +257,6 @@ final class OpenAPS {
         simulatedCarbsDate: Date? = nil,
         simulation: Bool = false
     ) async throws -> Determination? {
-        debug(.openAPS, "Start determineBasal")
-
         let context = newContext("determineBasal")
 
         // Perform asynchronous calls in parallel
@@ -281,7 +279,6 @@ final class OpenAPS {
         async let profileAsync = loadFileFromStorageAsync(name: Settings.profile)
         async let basalAsync = loadFileFromStorageAsync(name: Settings.basalProfile)
         async let autosenseAsync = loadFileFromStorageAsync(name: Settings.autosense)
-        async let reservoirAsync = loadFileFromStorageAsync(name: Monitor.reservoir)
         async let hasSufficientTddForDynamic = tddStorage.hasSufficientTDD()
 
         // Await the results of asynchronous tasks
@@ -293,7 +290,6 @@ final class OpenAPS {
             rawProfile,
             rawBasalProfile,
             rawAutosens,
-            rawReservoir,
             hasSufficientTdd
         ) = await (
             try parsePumpHistory(on: context, await pumpHistoryObjectIDs, simulatedBolusAmount: simulatedBolusAmount),
@@ -303,7 +299,6 @@ final class OpenAPS {
             try profileAsync,
             try basalAsync,
             try autosenseAsync,
-            try reservoirAsync,
             try hasSufficientTddForDynamic
         )
 
@@ -315,7 +310,6 @@ final class OpenAPS {
         profile.suspendOnly = dosingMode.automation == .hypoSuspendOnly
         let basalProfile = try JSONBridge.basalProfile(from: rawBasalProfile)
         let autosens = try JSONBridge.autosens(from: rawAutosens.isEmpty ? .null : rawAutosens)
-        let reservoir = Decimal(string: rawReservoir) ?? 100
         let trioCustomOrefVariables = try JSONBridge.trioCustomOrefVariables(from: rawTrioCustomOrefVariables)
 
         // Meal calculation
@@ -342,7 +336,7 @@ final class OpenAPS {
         }
 
         if !hasSufficientTdd, preferences.useNewFormula || (preferences.useNewFormula && preferences.sigmoid) {
-            debug(.openAPS, "Insufficient TDD for dynamic formula; disabling for determine basal run.")
+            debug(.algorithm, "Dynamic ISF off for this run: not enough TDD history")
             preferences.useNewFormula = false
             preferences.sigmoid = false
         }
@@ -356,12 +350,14 @@ final class OpenAPS {
             autosens: autosens,
             meal: meal,
             microBolusAllowed: true,
-            reservoir: reservoir,
             preferences: preferences,
             trioCustomOrefVariables: trioCustomOrefVariables
         )
 
-        debug(.openAPS, "\(simulation ? "[SIMULATION]" : "") OREF DETERMINATION: \(String(describing: orefDetermination))")
+        debug(
+            .algorithm,
+            "Determination\(simulation ? " (simulation)" : ""): BG \(orefDetermination?.bg ?? 0) mg/dL, IOB \(orefDetermination?.iob ?? 0) U, COB \(orefDetermination?.cob ?? 0) g, ISF \(orefDetermination?.isf ?? 0) mg/dL/U, sensitivity ratio \(orefDetermination?.sensitivityRatio ?? 1)"
+        )
 
         if var determination = orefDetermination, let deliverAt = determination.deliverAt {
             // set both timestamp and deliverAt to the SAME date; this will be updated for timestamp once it is enacted
@@ -381,10 +377,7 @@ final class OpenAPS {
 
             return determination
         } else {
-            debug(
-                .openAPS,
-                "\(DebuggingIdentifiers.failed) No determination data. determination: \(String(describing: orefDetermination)), deliverAt: \(String(describing: orefDetermination?.deliverAt))"
-            )
+            warning(.algorithm, "No determination produced\(orefDetermination == nil ? "" : ": missing delivery time")")
             throw APSError.apsError(message: "No determination data.")
         }
     }
@@ -425,8 +418,6 @@ final class OpenAPS {
             let averageTDDLastTenDays = totalTDD / Decimal(totalDaysCount)
             let weightedTDD = weightPercentage * averageTDDLastTwoHours + (1 - weightPercentage) * averageTDDLastTenDays
 
-            let glucose = try self.fetchGlucose(on: context)
-
             // Prepare Trio's custom oref variables
             let trioCustomOrefVariablesData = TrioCustomOrefVariables(
                 average_total_data: currentTDD > 0 ? averageTDDLastTenDays : 0,
@@ -458,8 +449,6 @@ final class OpenAPS {
     }
 
     func autosense(shouldSmoothGlucose: Bool) async throws -> Autosens? {
-        debug(.openAPS, "Start autosens")
-
         let context = newContext("autosense")
 
         // Perform asynchronous calls in parallel
@@ -500,7 +489,7 @@ final class OpenAPS {
             clock: Date()
         )
 
-        debug(.openAPS, "AUTOSENS: \(autosens)")
+        debug(.algorithm, "Autosens ratio \(autosens.ratio)")
         autosens.timestamp = Date()
         await storage.saveAsync(autosens, as: Settings.autosense)
 
@@ -508,8 +497,6 @@ final class OpenAPS {
     }
 
     func createProfiles(for dosingMode: DosingMode) async throws {
-        debug(.openAPS, "Start creating pump profile and user profile")
-
         let context = newContext("createProfiles")
 
         // Load required settings and profiles asynchronously
@@ -557,15 +544,15 @@ final class OpenAPS {
                         autosensMax: preferences.autosensMax
                     ))
                     debug(
-                        .openAPS,
-                        "TempTarget: target=\(targetValue), HBT=\(defaultHalfBasalTarget), effectiveHBT=\(effectiveHBT), percentage=\(percentage)%, adjustmentType=Custom"
+                        .algorithm,
+                        "Temp target \(targetValue) mg/dL: half basal target \(defaultHalfBasalTarget) -> \(effectiveHBT) mg/dL, \(percentage)%"
                     )
                 }
             }
             // Overwrite the lowTTlowersSens if autosensMax does not support it
             if preferences.lowTemptargetLowersSensitivity, preferences.autosensMax <= 1 {
                 adjustedPreferences.lowTemptargetLowersSensitivity = false
-                debug(.openAPS, "Setting lowTTlowersSens to false due to insufficient autosensMax: \(preferences.autosensMax)")
+                debug(.algorithm, "Low temp target lowers sensitivity off: autosens max \(preferences.autosensMax) is 1 or below")
             }
         }
 
@@ -610,10 +597,7 @@ final class OpenAPS {
             await storage.saveAsync(pumpProfile, as: Settings.pumpProfile)
             await storage.saveAsync(profile, as: Settings.profile)
         } catch {
-            debug(
-                .apsManager,
-                "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to create pump profile and normal profile: \(error)"
-            )
+            warning(.algorithm, "Creating profiles failed", error: error)
             throw error
         }
     }
@@ -708,7 +692,6 @@ final class OpenAPS {
         autosens: Autosens?,
         meal: ComputedCarbs?,
         microBolusAllowed: Bool,
-        reservoir: Decimal,
         preferences: Preferences,
         trioCustomOrefVariables: TrioCustomOrefVariables
     ) throws -> Determination? {
@@ -725,7 +708,6 @@ final class OpenAPS {
             iobData: iob,
             mealData: meal,
             autosensData: autosens,
-            reservoirData: reservoir,
             glucose: glucose,
             microBolusAllowed: microBolusAllowed,
             trioCustomOrefVariables: trioCustomOrefVariables,
@@ -801,7 +783,7 @@ final class OpenAPS {
                 guard context.hasChanges else { return }
                 try context.save()
             } catch {
-                print(error.localizedDescription)
+                warning(.storage, "Saving forecasts failed", error: error)
             }
         }
     }
@@ -854,24 +836,5 @@ extension OpenAPS {
             ascending: true,
             propertiesToFetch: ["date", "total"]
         ) as? [[String: Any]] ?? []
-    }
-
-    func fetchGlucose(on context: NSManagedObjectContext) throws -> [GlucoseStored] {
-        let results = try CoreDataStack.shared.fetchEntities(
-            ofType: GlucoseStored.self,
-            onContext: context,
-            predicate: NSPredicate.predicateFor30MinAgo,
-            key: "date",
-            ascending: false,
-            fetchLimit: 4
-        )
-
-        return try context.perform {
-            guard let glucoseResults = results as? [GlucoseStored] else {
-                throw CoreDataError.fetchError(function: #function, file: #file)
-            }
-
-            return glucoseResults
-        }
     }
 }
