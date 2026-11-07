@@ -254,7 +254,13 @@ final class BaseAPSManager: APSManager, Injectable {
 
         // The following three publishers update `@Persisted` properties that
         // are also read from the main thread (UI bindings)
+        //
+        // Pumps report their status many times a minute, and in bursts of dozens while reconnecting.
+        // Each `@Persisted` write is a synchronous round trip to `cfprefsd` on the main thread. On a busy
+        // phone such a burst can block the main thread long enough for the watchdog to kill the app, so
+        // unchanged values are dropped before they reach the main thread.
         deviceDataManager.scheduledBasal
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] scheduledBasal in
                 self?.isScheduledBasal = scheduledBasal
@@ -262,6 +268,7 @@ final class BaseAPSManager: APSManager, Injectable {
             .store(in: &lifetime)
 
         deviceDataManager.suspended
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] suspended in
                 self?.isSuspended = suspended
